@@ -58,5 +58,44 @@ module.exports = {
 - Add Tailwind directives to styles/globals.css
 
 ```css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+```
 
+3. Add Shadcn components
+
+> npx shadcn init
+
+- Add the Form component
+
+> npx shadcn add form
+
+- Repeat for button and card
+
+4. Install Firebase SDK
+
+> npm install firebase
+
+- Set up Firebase
+- Create a firebaseConfig.ts to initialize Firebase
+
+```ts
+import { initializeApp } from 'firebase/app'
+import { FirebaseApp } from 'firebase/app'
+
+// Your Firebase configuration object
+const firebaseConfig = {
+  apiKey: 'YOUR_API_KEY',
+  authDomain: 'YOUR_AUTH_DOMAIN',
+  projectId: 'YOUR_PROJECT_ID',
+  storageBucket: 'YOUR_STORAGE_BUCKET',
+  messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
+  appId: 'YOUR_APP_ID',
+}
+
+// Initialize Firebase
+const app: FirebaseApp = initializeApp(firebaseConfig)
+
+export default app
 ```
