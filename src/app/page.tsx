@@ -32,10 +32,14 @@ export default function LandingPage() {
     try {
       await signUp({ email, password });
       setError(""); // Clear error message after successful sign-up
-    } catch (error: any) {
-      setError(
-        errorMessages[error.code] || "An error occurred. Please try again."
-      );
+    } catch (error) {
+      if (error instanceof Error && "code" in error) {
+        setError(
+          errorMessages[(error as { code: string }).code] || "A sign up error occurred. Please try again."
+        );
+      } else {
+        setError("An unexpected sign up error occurred. Please try again.");
+      }
     }
   };
 
@@ -43,10 +47,14 @@ export default function LandingPage() {
     try {
       await logIn({ email, password });
       setError(""); // Clear error message after successful log-in
-    } catch (error: any) {
-      setError(
-        errorMessages[error.code] || "An error occurred. Please try again."
-      );
+    } catch (error) {
+      if (error instanceof Error && "code" in error) {
+        setError(
+          errorMessages[(error as { code: string }).code] || "A log in error occurred. Please try again."
+        );
+      } else {
+        setError("An unexpected log in error occurred. Please try again.");
+      }
     }
   };
 

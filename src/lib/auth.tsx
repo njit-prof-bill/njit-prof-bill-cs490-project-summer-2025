@@ -41,11 +41,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await signOut(auth);
     };
 
+    // Replace the existing return statement with this
+    const authValue: AuthContextType = {
+        user,
+        isAuthenticated,
+        logIn,
+        signUp,
+        logOut
+    };
+
     return (
-        <AuthContext.Provider value= {{ user, isAuthenticated, logIn, signUp, logOut }
-}>
-    { children }
-    </AuthContext.Provider>
+        <AuthContext.Provider value= { authValue } >
+        { children }
+        </AuthContext.Provider>
   );
 }
 
