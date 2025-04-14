@@ -1,10 +1,10 @@
-import "@/styles/globals.css"; // This should work if the alias is configured correctly
+import { AuthProvider } from "@/lib/auth";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body>
-        <main>{children}</main>
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );

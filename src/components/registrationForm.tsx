@@ -5,13 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export default function LoginForm({
-    onLogIn,
-    onSwitchToSignUp,
+export default function RegistrationForm({
+    onSignUp,
+    onSwitchToLogIn,
     error,
 }: {
-    onLogIn: ({ email, password }: { email: string; password: string }) => void;
-    onSwitchToSignUp: () => void;
+    onSignUp: ({ email, password }: { email: string; password: string }) => void;
+    onSwitchToLogIn: () => void;
     error: string;
 }) {
     const [email, setEmail] = useState("");
@@ -19,12 +19,12 @@ export default function LoginForm({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onLogIn({ email, password });
+        onSignUp({ email, password });
     };
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4 w-full max-w-md">
-            <h1 className="text-2xl font-bold text-center">Log In</h1>
+            <h1 className="text-2xl font-bold text-center">Sign Up</h1>
             {error && <p className="text-sm text-red-500">{error}</p>}
             <div>
                 <Label htmlFor="email">Email</Label>
@@ -49,16 +49,16 @@ export default function LoginForm({
                 />
             </div>
             <Button type="submit" className="w-full">
-                Log In
+                Sign Up
             </Button>
             <p className="text-sm text-center">
-                Don't have an account?{" "}
+                Already have an account?{" "}
                 <button
                     type="button"
-                    onClick={onSwitchToSignUp}
+                    onClick={onSwitchToLogIn}
                     className="text-blue-500 underline"
                 >
-                    Sign Up
+                    Log In
                 </button>
             </p>
         </form>
