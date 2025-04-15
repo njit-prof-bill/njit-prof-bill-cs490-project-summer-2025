@@ -64,7 +64,7 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100">
+    <div className="flex min-h-screen items-center justify-center bg-gray-900">
       {isSignUp ? (
         <RegistrationForm
           onSignUp={handleSignUp}
@@ -79,5 +79,5 @@ export default function LandingPage() {
         />
       )}
     </div>
-  );
+  )
 }

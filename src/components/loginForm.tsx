@@ -1,9 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 
 export default function LoginForm({
     onLogIn,
@@ -23,44 +20,56 @@ export default function LoginForm({
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-4 w-full max-w-md">
-            <h1 className="text-2xl font-bold text-center">Log In</h1>
-            {error && <p className="text-sm text-red-500">{error}</p>}
-            <div>
-                <Label htmlFor="email">Email</Label>
-                <Input
-                    id="email"
-                    type="email"
-                    placeholder="Enter your email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                />
-            </div>
-            <div>
-                <Label htmlFor="password">Password</Label>
-                <Input
-                    id="password"
-                    type="password"
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                />
-            </div>
-            <Button type="submit" className="w-full">
-                Log In
-            </Button>
-            <p className="text-sm text-center">
-                Don't have an account?{" "}
+        <div className="flex min-h-screen items-center justify-center bg-gray-900">
+            <form
+                onSubmit={handleSubmit}
+                className="w-full max-w-sm bg-gray-800 rounded-lg shadow-lg p-6 space-y-6"
+            >
+                <h2 className="text-center text-2xl font-bold text-white">Log In</h2>
+                {error && <p className="text-sm text-red-500 text-center">{error}</p>}
+                <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-300">
+                        Email
+                    </label>
+                    <input
+                        id="email"
+                        type="email"
+                        placeholder="Enter your email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="mt-1 w-full rounded-md border border-gray-600 bg-gray-700 p-2 text-white focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50"
+                    />
+                </div>
+                <div>
+                    <label htmlFor="password" className="block text-sm font-medium text-gray-300">
+                        Password
+                    </label>
+                    <input
+                        id="password"
+                        type="password"
+                        placeholder="Enter your password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="mt-1 w-full rounded-md border border-gray-600 bg-gray-700 p-2 text-white focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50"
+                    />
+                </div>
                 <button
-                    type="button"
-                    onClick={onSwitchToSignUp}
-                    className="text-blue-500 underline"
+                    type="submit"
+                    className="w-full rounded-md bg-blue-600 p-2 text-white font-medium hover:bg-blue-700 focus:outline-none focus:ring focus:ring-blue-500 focus:ring-opacity-50"
                 >
-                    Sign Up
+                    Log In
                 </button>
-            </p>
-        </form>
+                <p className="text-center text-sm text-gray-400">
+                    Don't have an account?{" "}
+                    <button
+                        type="button"
+                        onClick={onSwitchToSignUp}
+                        className="text-blue-500 hover:underline"
+                    >
+                        Sign Up
+                    </button>
+                </p>
+            </form>
+        </div>
     );
 }
