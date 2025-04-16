@@ -1,53 +1,43 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { LoginForm } from "@/components/loginForm";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { onAuthStateChanged, signOut, User } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { RegistrationForm } from "@/components/registrationForm";
 
 export default function Home() {
-  const [user, setUser] = useState<User | null>(null);
+  const [isRegistering, setIsRegistering] = useState(false);
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-    });
-
-    return () => unsubscribe(); // Cleanup the listener on unmount
-  }, []);
-
-  const handleLogout = async () => {
-    await signOut(auth);
-    console.log("User logged out");
-  };
-
-  if (user) {
-    // Render the home page when the user is authenticated
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Card className="w-full max-w-md shadow-lg">
-          <CardHeader>
-            <CardTitle>Marcus App Template</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <CardDescription>
-              This app is a starter template for SaaS applications. To use this template, simply fork the repository and install the app dependencies.
-            </CardDescription>
-            <Button onClick={handleLogout} className="mt-4">
-              Log Out
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // Render the login form when the user is not authenticated
   return (
     <div className="flex items-center justify-center min-h-screen">
-      <LoginForm onLogin={() => setUser(auth.currentUser)} />
+      <div className="w-full max-w-md space-y-4">
+        {isRegistering ? (
+          <>
+            <RegistrationForm onRegister={() => setIsRegistering(false)} />
+            <p className="text-sm text-center text-stone-600 dark:text-stone-400">
+              Already have an account?{" "}
+              <button
+                onClick={() => setIsRegistering(false)}
+                className="text-blue-500 hover:underline"
+              >
+                Sign in here.
+              </button>
+            </p>
+          </>
+        ) : (
+          <>
+            <LoginForm onLogin={() => console.log("Logged in")} />
+            <p className="text-sm text-center text-stone-600 dark:text-stone-400">
+              Do not have an account?{" "}
+              <button
+                onClick={() => setIsRegistering(true)}
+                className="text-blue-500 hover:underline"
+              >
+                Register here.
+              </button>
+            </p>
+          </>
+        )}
+      </div>
     </div>
   );
 }
