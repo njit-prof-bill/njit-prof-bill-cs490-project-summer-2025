@@ -8,7 +8,7 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { FirebaseError } from "firebase/app";
-import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/solid"; // Correct import
+import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline"; // Correct import
 
 interface RegistrationFormValues {
     email: string;
