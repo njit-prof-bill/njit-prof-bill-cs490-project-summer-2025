@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 
-export function LoginForm() {
+export function LoginForm({ onLogin }: { onLogin: () => void }) {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState<string | null>(null);
@@ -18,9 +18,9 @@ export function LoginForm() {
 
         try {
             // Firebase authentication logic
-            const userCredential = await signInWithEmailAndPassword(auth, email, password);
-            console.log("User logged in:", userCredential.user);
-            // Redirect or perform additional actions after successful login
+            await signInWithEmailAndPassword(auth, email, password);
+            console.log("User logged in");
+            onLogin(); // Notify the parent component
         } catch (err: any) {
             console.error("Login failed:", err.message);
             setError("Invalid email or password. Please try again.");
