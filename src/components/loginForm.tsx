@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
+import { FirebaseError } from "firebase/app"; // Import FirebaseError type
 
 export function LoginForm({ onLogin }: { onLogin: () => void }) {
     const [email, setEmail] = useState("");
@@ -21,9 +22,14 @@ export function LoginForm({ onLogin }: { onLogin: () => void }) {
             await signInWithEmailAndPassword(auth, email, password);
             console.log("User logged in");
             onLogin(); // Notify the parent component
-        } catch (err: any) {
-            console.error("Login failed:", err.message);
-            setError("Invalid email or password. Please try again.");
+        } catch (err: unknown) {
+            if (err instanceof FirebaseError) {
+                console.error("Login failed:", err.message);
+                setError("Invalid email or password. Please try again.");
+            } else {
+                console.error("An unexpected error occurred:", err);
+                setError("An unexpected error occurred. Please try again.");
+            }
         }
     };
 
