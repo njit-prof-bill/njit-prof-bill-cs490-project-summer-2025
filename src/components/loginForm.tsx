@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
-import { getFriendlyFirebaseErrorMessage } from "@/utils/firebaseErrorHandler"; // Added reusable function
+import { getFriendlyFirebaseErrorMessage } from "@/utils/firebaseErrorHandler";
+import { useRouter } from "next/navigation"; // Import useRouter
 
 interface LoginFormValues {
     email: string;
@@ -16,8 +17,8 @@ interface LoginFormValues {
 
 export function LoginForm({ onLogin }: { onLogin: () => void }) {
     const [error, setError] = useState<string | null>(null);
+    const router = useRouter(); // Initialize router
 
-    // Initialize react-hook-form
     const form = useForm<LoginFormValues>({
         defaultValues: {
             email: "",
@@ -26,15 +27,14 @@ export function LoginForm({ onLogin }: { onLogin: () => void }) {
     });
 
     const handleLogin = async (values: LoginFormValues) => {
-        setError(null); // Clear any previous errors
+        setError(null);
 
         try {
-            // Firebase authentication logic
             await signInWithEmailAndPassword(auth, values.email, values.password);
             console.log("User logged in");
             onLogin(); // Notify the parent component
+            router.push("/home"); // Redirect to the home page
         } catch (err: unknown) {
-            // Replaced error handling logic with reusable function
             setError(getFriendlyFirebaseErrorMessage(err));
         }
     };

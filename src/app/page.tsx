@@ -1,43 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useAuth } from "@/context/authContext";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { LoginForm } from "@/components/loginForm";
-import { RegistrationForm } from "@/components/registrationForm";
 
-export default function Home() {
-  const [isRegistering, setIsRegistering] = useState(false);
+export default function LandingPage() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && user) {
+      router.push("/home"); // Redirect to home page if authenticated
+    }
+  }, [user, loading, router]);
+
+  if (loading) {
+    return <p>Loading...</p>; // Show a loading state while checking auth
+  }
 
   return (
     <div className="flex items-center justify-center min-h-screen">
-      <div className="w-full max-w-md space-y-4">
-        {isRegistering ? (
-          <>
-            <RegistrationForm onRegister={() => setIsRegistering(false)} />
-            <p className="text-sm text-center text-stone-600 dark:text-stone-400">
-              Already have an account?{" "}
-              <button
-                onClick={() => setIsRegistering(false)}
-                className="text-blue-500 hover:underline"
-              >
-                Sign in here.
-              </button>
-            </p>
-          </>
-        ) : (
-          <>
-            <LoginForm onLogin={() => console.log("Logged in")} />
-            <p className="text-sm text-center text-stone-600 dark:text-stone-400">
-              Do not have an account?{" "}
-              <button
-                onClick={() => setIsRegistering(true)}
-                className="text-blue-500 hover:underline"
-              >
-                Register here.
-              </button>
-            </p>
-          </>
-        )}
-      </div>
+      <LoginForm onLogin={() => router.push("/home")} />
     </div>
   );
 }
