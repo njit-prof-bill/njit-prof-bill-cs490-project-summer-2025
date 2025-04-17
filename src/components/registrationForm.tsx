@@ -10,6 +10,17 @@ import { auth } from "@/lib/firebase";
 import { FirebaseError } from "firebase/app";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline"; // Correct import
 
+const errorMessages = {
+    'auth/invalid-credential': 'Email and Password do not match our records.',
+    'auth/user-not-found': 'No user found with this email.',
+    'auth/wrong-password': 'Email and Password do not match our records.',
+    'auth/email-already-in-use': 'This email is already in use.',
+    'auth/weak-password': 'Password should be at least 6 characters.',
+    'Firebase: Error (auth/invalid-email).': 'Invalid email address.',
+    'An error occurred. Please try again.':
+        'Check your email and password and try again.',
+}
+
 interface RegistrationFormValues {
     email: string;
     password: string;
@@ -45,7 +56,8 @@ export function RegistrationForm({ onRegister }: { onRegister: () => void }) {
         } catch (err: unknown) {
             if (err instanceof FirebaseError) {
                 console.error("Registration failed:", err.message);
-                setError("Registration failed. Please try again.");
+                // Use a fallback message if the error message is not in errorMessages
+                setError(errorMessages[err.message as keyof typeof errorMessages] || err.message);
             } else {
                 console.error("An unexpected error occurred:", err);
                 setError("An unexpected error occurred. Please try again.");
