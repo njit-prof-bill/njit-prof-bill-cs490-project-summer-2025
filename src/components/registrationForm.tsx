@@ -16,7 +16,7 @@ const errorMessages = {
     'auth/wrong-password': 'Email and Password do not match our records.',
     'auth/email-already-in-use': 'This email is already in use.',
     'auth/weak-password': 'Password should be at least 6 characters.',
-    'Firebase: Error (auth/invalid-email).': 'Invalid email address.',
+    'auth/invalid-email': 'Invalid email address.',
     'An error occurred. Please try again.':
         'Check your email and password and try again.',
 }
@@ -56,8 +56,18 @@ export function RegistrationForm({ onRegister }: { onRegister: () => void }) {
         } catch (err: unknown) {
             if (err instanceof FirebaseError) {
                 console.error("Registration failed:", err.message);
-                // Use a fallback message if the error message is not in errorMessages
-                setError(errorMessages[err.message as keyof typeof errorMessages] || err.message);
+
+                // Extract the key between the last set of parentheses
+                const match = err.message.match(/\(([^)]+)\)/); // Matches text inside parentheses
+                console.log("Match:", match);
+                const errorKey = match ? match[1] : null;
+
+                // Use the extracted key to get the error message or fall back to the original message
+                if (errorKey && errorKey in errorMessages) {
+                    setError(errorMessages[errorKey as keyof typeof errorMessages]);
+                } else {
+                    setError(err.message);
+                }
             } else {
                 console.error("An unexpected error occurred:", err);
                 setError("An unexpected error occurred. Please try again.");
