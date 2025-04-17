@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
-import { FirebaseError } from "firebase/app"; // Import FirebaseError type
+import { getFriendlyFirebaseErrorMessage } from "@/utils/firebaseErrorHandler"; // Added reusable function
 
 interface LoginFormValues {
     email: string;
@@ -34,13 +34,8 @@ export function LoginForm({ onLogin }: { onLogin: () => void }) {
             console.log("User logged in");
             onLogin(); // Notify the parent component
         } catch (err: unknown) {
-            if (err instanceof FirebaseError) {
-                console.error("Login failed:", err.message);
-                setError("Invalid email or password. Please try again.");
-            } else {
-                console.error("An unexpected error occurred:", err);
-                setError("An unexpected error occurred. Please try again.");
-            }
+            // Replaced error handling logic with reusable function
+            setError(getFriendlyFirebaseErrorMessage(err));
         }
     };
 

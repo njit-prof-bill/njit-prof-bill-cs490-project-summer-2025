@@ -7,19 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
-import { FirebaseError } from "firebase/app";
-import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline"; // Correct import
-
-const errorMessages = {
-    'auth/invalid-credential': 'Email and Password do not match our records.',
-    'auth/user-not-found': 'No user found with this email.',
-    'auth/wrong-password': 'Email and Password do not match our records.',
-    'auth/email-already-in-use': 'This email is already in use.',
-    'auth/weak-password': 'Password should be at least 6 characters.',
-    'auth/invalid-email': 'Invalid email address.',
-    'An error occurred. Please try again.':
-        'Check your email and password and try again.',
-}
+import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
+import { getFriendlyFirebaseErrorMessage } from "@/utils/firebaseErrorHandler"; // Added reusable function
 
 interface RegistrationFormValues {
     email: string;
@@ -54,24 +43,8 @@ export function RegistrationForm({ onRegister }: { onRegister: () => void }) {
             console.log("User registered");
             onRegister(); // Notify the parent component
         } catch (err: unknown) {
-            if (err instanceof FirebaseError) {
-                console.error("Registration failed:", err.message);
-
-                // Extract the key between the last set of parentheses
-                const match = err.message.match(/\(([^)]+)\)/); // Matches text inside parentheses
-                console.log("Match:", match);
-                const errorKey = match ? match[1] : null;
-
-                // Use the extracted key to get the error message or fall back to the original message
-                if (errorKey && errorKey in errorMessages) {
-                    setError(errorMessages[errorKey as keyof typeof errorMessages]);
-                } else {
-                    setError(err.message);
-                }
-            } else {
-                console.error("An unexpected error occurred:", err);
-                setError("An unexpected error occurred. Please try again.");
-            }
+            // Replaced error handling logic with reusable function
+            setError(getFriendlyFirebaseErrorMessage(err));
         }
     };
 
