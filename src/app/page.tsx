@@ -23,7 +23,7 @@ export default function LandingPage() {
 
   return (
     <div className="flex items-center justify-center min-h-screen">
-      <div className="w-full max-w-md p-6 border border-stone-300 dark:border-stone-700 rounded-lg bg-stone-100 dark:bg-stone-900 shadow-lg">
+      <div className="w-full max-w-md p-6">
         {showLogin ? (
           <>
             <LoginForm onLogin={() => router.push("/home")} />
