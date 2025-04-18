@@ -3,8 +3,8 @@
 import { useAuth } from "@/context/authContext";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { LoginForm } from "@/components/loginForm";
-import { RegistrationForm } from "@/components/registrationForm";
+import { LoginForm } from "@/components/forms/loginForm";
+import { RegistrationForm } from "@/components/forms/registrationForm";
 
 export default function LandingPage() {
   const { user, loading } = useAuth();
