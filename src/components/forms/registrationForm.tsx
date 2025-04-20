@@ -31,6 +31,8 @@ export function RegistrationForm({ onRegister }: { onRegister: () => void }) {
         },
     });
 
+    import { sendEmailVerification } from "firebase/auth";
+
     const handleRegister = async (values: RegistrationFormValues) => {
         setError(null);
 
@@ -40,8 +42,13 @@ export function RegistrationForm({ onRegister }: { onRegister: () => void }) {
         }
 
         try {
-            await createUserWithEmailAndPassword(auth, values.email, values.password);
-            console.log("User registered");
+            const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+            const user = userCredential.user;
+
+            // Send email verification
+            await sendEmailVerification(user);
+            console.log("Verification email sent");
+
             onRegister(); // Notify the parent component
             router.push("/home"); // Redirect to the home page
         } catch (err: unknown) {
