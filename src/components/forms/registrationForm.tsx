@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { getFriendlyFirebaseErrorMessage } from "@/utils/firebaseErrorHandler";
 import { useRouter } from "next/navigation"; // Import useRouter
@@ -30,8 +30,6 @@ export function RegistrationForm({ onRegister }: { onRegister: () => void }) {
             confirmPassword: "",
         },
     });
-
-    import { sendEmailVerification } from "firebase/auth";
 
     const handleRegister = async (values: RegistrationFormValues) => {
         setError(null);
