@@ -8,8 +8,9 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "
 import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { getFriendlyFirebaseErrorMessage } from "@/utils/firebaseErrorHandler";
-import { useRouter } from "next/navigation"; // Import useRouter
-import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline"; // Import icons
+import { useRouter } from "next/navigation";
+import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
+import { toast } from "sonner"; // Import Sonner's toast function
 
 interface RegistrationFormValues {
     email: string;
@@ -19,9 +20,9 @@ interface RegistrationFormValues {
 
 export function RegistrationForm({ onRegister }: { onRegister: () => void }) {
     const [error, setError] = useState<string | null>(null);
-    const [showPassword, setShowPassword] = useState(false); // State for password visibility
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false); // State for confirm password visibility
-    const router = useRouter(); // Initialize router
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const router = useRouter();
 
     const form = useForm<RegistrationFormValues>({
         defaultValues: {
@@ -47,8 +48,11 @@ export function RegistrationForm({ onRegister }: { onRegister: () => void }) {
             await sendEmailVerification(user);
             console.log("Verification email sent");
 
+            // Show toast notification
+            toast.success("Verification email sent! Please check your inbox and verify your email before logging in.");
+
             onRegister(); // Notify the parent component
-            router.push("/home"); // Redirect to the home page
+            router.push("/"); // Redirect to the login page
         } catch (err: unknown) {
             setError(getFriendlyFirebaseErrorMessage(err));
         }
