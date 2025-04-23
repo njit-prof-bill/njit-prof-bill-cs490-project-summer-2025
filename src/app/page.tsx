@@ -39,7 +39,7 @@ export default function LandingPage() {
           </>
         ) : (
           <>
-            <RegistrationForm onRegister={() => router.push("/home")} />
+            <RegistrationForm onRegister={() => setShowLogin(true)} />
             <p className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
               Already have an account?{" "}
               <button
