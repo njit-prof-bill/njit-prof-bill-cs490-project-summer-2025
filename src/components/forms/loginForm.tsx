@@ -5,11 +5,12 @@ import { useForm } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { getFriendlyFirebaseErrorMessage } from "@/utils/firebaseErrorHandler";
-import { useRouter } from "next/navigation"; // Import useRouter
-import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline"; // Import icons
+import { useRouter } from "next/navigation";
+import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
+import { toast } from "sonner"; // Import Sonner's toast function
 
 interface LoginFormValues {
     email: string;
@@ -32,7 +33,17 @@ export function LoginForm({ onLogin }: { onLogin: () => void }) {
         setError(null);
 
         try {
-            await signInWithEmailAndPassword(auth, values.email, values.password);
+            const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
+            const user = userCredential.user;
+
+            // Check if the user's email is verified
+            if (!user.emailVerified) {
+                setError("Verify your account by clicking the link we emailed you.");
+                await sendEmailVerification(user); // Resend verification email
+                toast.success("Verification email resent. Please check your inbox.");
+                return; // Prevent redirection
+            }
+
             console.log("User logged in");
             onLogin(); // Notify the parent component
             router.push("/home"); // Redirect to the home page
@@ -47,7 +58,7 @@ export function LoginForm({ onLogin }: { onLogin: () => void }) {
                 onSubmit={form.handleSubmit(handleLogin)}
                 className="space-y-4 w-full max-w-md p-6 border border-stone-300 dark:border-stone-700 rounded-lg bg-stone-100 dark:bg-stone-900 shadow-lg"
             >
-                {error && <p className="text-sm text-red-500">{error}</p>}
+                {error && <p className="text-sm text-red-500">{error}</p>} {/* Display error message */}
 
                 <FormField
                     name="email"
