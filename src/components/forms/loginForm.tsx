@@ -62,6 +62,7 @@ export function LoginForm({ onLogin }: { onLogin: () => void }) {
             // Send the verification email
             await sendEmailVerification(user);
             toast.success("Verification email resent. Please check your inbox.");
+            setShowResendLink(false); // Hide the resend link
         } catch (err: unknown) {
             toast.error("Failed to resend verification email. Please try again.");
         }
