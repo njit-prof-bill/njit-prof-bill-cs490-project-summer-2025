@@ -19,6 +19,7 @@ interface LoginFormValues {
 
 export function LoginForm({ onLogin }: { onLogin: () => void }) {
     const [error, setError] = useState<string | null>(null);
+    const [showResendLink, setShowResendLink] = useState(false); // State to show resend link
     const [showPassword, setShowPassword] = useState(false); // State for password visibility
     const router = useRouter(); // Initialize router
 
@@ -38,9 +39,8 @@ export function LoginForm({ onLogin }: { onLogin: () => void }) {
 
             // Check if the user's email is verified
             if (!user.emailVerified) {
-                setError("Verify your account by clicking the link we emailed you.");
-                await sendEmailVerification(user); // Resend verification email
-                toast.success("Verification email resent. Please check your inbox.");
+                setError("Your email is not verified.");
+                setShowResendLink(true); // Show the resend link
                 return; // Prevent redirection
             }
 
@@ -52,6 +52,21 @@ export function LoginForm({ onLogin }: { onLogin: () => void }) {
         }
     };
 
+    const handleResendVerification = async () => {
+        try {
+            // Reauthenticate the user
+            const values = form.getValues(); // Get the email and password from the form
+            const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
+            const user = userCredential.user;
+
+            // Send the verification email
+            await sendEmailVerification(user);
+            toast.success("Verification email resent. Please check your inbox.");
+        } catch (err: unknown) {
+            toast.error("Failed to resend verification email. Please try again.");
+        }
+    };
+
     return (
         <Form {...form}>
             <form
@@ -59,6 +74,18 @@ export function LoginForm({ onLogin }: { onLogin: () => void }) {
                 className="space-y-4 w-full max-w-md p-6 border border-stone-300 dark:border-stone-700 rounded-lg bg-stone-100 dark:bg-stone-900 shadow-lg"
             >
                 {error && <p className="text-sm text-red-500">{error}</p>} {/* Display error message */}
+                {showResendLink && (
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Your email is not verified.{" "}
+                        <button
+                            type="button"
+                            onClick={handleResendVerification}
+                            className="text-blue-500 hover:underline"
+                        >
+                            Click here to resend the verification email.
+                        </button>
+                    </p>
+                )}
 
                 <FormField
                     name="email"
