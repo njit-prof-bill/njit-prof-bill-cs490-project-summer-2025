@@ -75,7 +75,7 @@ export function RegistrationForm({ onRegister }: { onRegister: () => void }) {
         <Form {...form}>
             <form
                 onSubmit={form.handleSubmit(handleRegister)}
-                className="space-y-4 w-full max-w-md p-6"
+                className="space-y-4 w-full"
             >
                 {error && <p className="text-sm text-red-500">{error}</p>}
 

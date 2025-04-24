@@ -23,7 +23,7 @@ export default function LandingPage() {
 
   return (
     <div className="flex items-center justify-center min-h-screen">
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-md px-6"> {/* Shared container with consistent padding */}
         {showLogin ? (
           <>
             {/* Form Label */}

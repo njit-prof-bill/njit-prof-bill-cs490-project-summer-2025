@@ -89,7 +89,7 @@ export function LoginForm({ onLogin }: { onLogin: () => void }) {
         <Form {...form}>
             <form
                 onSubmit={form.handleSubmit(handleLogin)}
-                className="space-y-4 w-full max-w-md p-6"
+                className="space-y-4 w-full"
             >
                 {error && <p className="text-sm text-red-500">{error}</p>} {/* Display error message */}
                 {showResendLink && (
@@ -170,7 +170,7 @@ export function LoginForm({ onLogin }: { onLogin: () => void }) {
                 <Button
                     type="button"
                     onClick={handleGoogleSignIn}
-                    className="w-full flex items-center justify-center gap-2 dark:bg-black dark:text-stone-300 dark:border-stone-600 border-1 bg-white text-black border-black"
+                    className="w-full flex items-center justify-center gap-2 dark:bg-black dark:text-stone-300 dark:border-stone-600 border-1 bg- text-black border-black"
                 >
                     <FcGoogle className="h-5 w-5" /> {/* Google Icon */}
                     Sign in with Google
