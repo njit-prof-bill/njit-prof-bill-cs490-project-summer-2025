@@ -23,32 +23,48 @@ export default function LandingPage() {
 
   return (
     <div className="flex items-center justify-center min-h-screen">
-      <div className="w-full max-w-md p-6">
+      <div className="w-full max-w-md">
         {showLogin ? (
           <>
-            <LoginForm onLogin={() => router.push("/home")} />
-            <p className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
-              Do not have an account?{" "}
+            {/* Form Label */}
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+              Sign in
+            </h1>
+
+            {/* Helper Text */}
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+              New to this app?{" "}
               <button
                 onClick={() => setShowLogin(false)}
                 className="text-blue-500 hover:underline"
               >
-                Register here
+                Sign up for an account
               </button>
             </p>
+
+            {/* Login Form */}
+            <LoginForm onLogin={() => router.push("/home")} />
           </>
         ) : (
           <>
-            <RegistrationForm onRegister={() => setShowLogin(true)} />
-            <p className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
+            {/* Form Label */}
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+              Sign up
+            </h1>
+
+            {/* Helper Text */}
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
               Already have an account?{" "}
               <button
                 onClick={() => setShowLogin(true)}
                 className="text-blue-500 hover:underline"
               >
-                Log in here
+                Sign in
               </button>
             </p>
+
+            {/* Registration Form */}
+            <RegistrationForm onRegister={() => setShowLogin(true)} />
           </>
         )}
       </div>
