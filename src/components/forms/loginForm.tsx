@@ -11,6 +11,8 @@ import { getFriendlyFirebaseErrorMessage } from "@/utils/firebaseErrorHandler";
 import { useRouter } from "next/navigation";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import { toast } from "sonner"; // Import Sonner's toast function
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth"; // Import GoogleAuthProvider
+import { FcGoogle } from "react-icons/fc"; // Import Google icon for the button
 
 interface LoginFormValues {
     email: string;
@@ -29,6 +31,21 @@ export function LoginForm({ onLogin }: { onLogin: () => void }) {
             password: "",
         },
     });
+
+    const handleGoogleSignIn = async () => {
+        try {
+            const provider = new GoogleAuthProvider(); // Initialize GoogleAuthProvider
+            const result = await signInWithPopup(auth, provider); // Sign in with Google popup
+            const user = result.user;
+
+            console.log("Google sign-in successful:", user);
+            onLogin(); // Notify the parent component
+            router.push("/home"); // Redirect to the home page
+        } catch (err: unknown) {
+            toast.error("Failed to sign in with Google. Please try again.");
+            console.error("Google sign-in error:", err);
+        }
+    };
 
     const handleLogin = async (values: LoginFormValues) => {
         setError(null);
@@ -140,6 +157,23 @@ export function LoginForm({ onLogin }: { onLogin: () => void }) {
 
                 <Button type="submit" className="w-full">
                     Log In
+                </Button>
+
+                {/* Divider with "or" */}
+                <div className="flex items-center my-4">
+                    <div className="flex-grow border-t border-gray-300 dark:border-gray-600"></div>
+                    <span className="mx-2 text-sm text-gray-500 dark:text-gray-400">or</span>
+                    <div className="flex-grow border-t border-gray-300 dark:border-gray-600"></div>
+                </div>
+
+                {/* Google Sign-In Button */}
+                <Button
+                    type="button"
+                    onClick={handleGoogleSignIn}
+                    className="w-full flex items-center justify-center gap-2 bg-white text-gray-700 border border-gray-300 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700"
+                >
+                    <FcGoogle className="h-5 w-5" /> {/* Google Icon */}
+                    Sign in with Google
                 </Button>
             </form>
         </Form>
