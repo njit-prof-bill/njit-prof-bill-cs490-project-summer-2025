@@ -170,12 +170,12 @@ export function LoginForm({ onLogin }: { onLogin: () => void }) {
                 <Button
                     type="button"
                     onClick={handleGoogleSignIn}
-                    className="w-full flex items-center justify-center gap-2 bg-white text-gray-700 border border-gray-300 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700"
+                    className="w-full flex items-center justify-center gap-2 dark:bg-black dark:text-white bg-white text-black border-gray-300"
                 >
                     <FcGoogle className="h-5 w-5" /> {/* Google Icon */}
                     Sign in with Google
                 </Button>
             </form>
-        </Form>
+        </Form >
     );
 }
