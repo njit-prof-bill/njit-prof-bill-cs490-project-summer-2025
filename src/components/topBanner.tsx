@@ -31,7 +31,7 @@ export default function TopBanner({ toggleSidePanel }: TopBannerProps) {
             </Link>
 
             {/* App Title */}
-            <h1 className="text-xl font-bold text-center flex-1">Marcus App</h1>
+            <h1 className="text-xl text-center flex-1">Marcus</h1>
         </header>
     );
 }
