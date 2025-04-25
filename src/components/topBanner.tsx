@@ -24,8 +24,8 @@ export default function TopBanner({ toggleSidePanel }: TopBannerProps) {
                 <Image
                     src="/logo.png"
                     alt="Marcus Home"
-                    width={32}
-                    height={32}
+                    width={48}
+                    height={48}
                     className="mr-4"
                 />
             </Link>
