@@ -179,7 +179,7 @@ export function RegistrationForm({ onRegister }: { onRegister: () => void }) {
                     className="w-full flex items-center justify-center gap-2 dark:bg-black dark:text-stone-300 dark:border-stone-600 border-1 bg-white text-black border-black"
                 >
                     <FcGoogle className="h-5 w-5" /> {/* Google Icon */}
-                    Sign in with Google
+                    Continue with Google
                 </Button>
             </form>
         </Form>

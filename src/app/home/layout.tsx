@@ -1,10 +1,12 @@
 "use client";
 
 import { ReactNode, useState } from "react";
-import { Bars3Icon } from "@heroicons/react/24/outline"; // Import a hamburger menu icon
+import { Bars3Icon } from "@heroicons/react/24/outline";
+import Link from "next/link";
+import Image from "next/image";
 
 export default function HomeLayout({ children }: { children: ReactNode }) {
-    const [isSidePanelOpen, setIsSidePanelOpen] = useState(false); // State to track side panel visibility
+    const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
 
     const toggleSidePanel = () => {
         setIsSidePanelOpen((prev) => {
@@ -24,6 +26,19 @@ export default function HomeLayout({ children }: { children: ReactNode }) {
                 >
                     <Bars3Icon className="h-6 w-6 text-gray-800 dark:text-gray-200" />
                 </button>
+
+                {/* App Logo */}
+                <Link href="/" className="flex items-center">
+                    <Image
+                        src="/logo.png" // Corrected path
+                        alt="Marcus Home"
+                        width={32}
+                        height={32}
+                        className="mr-4"
+                    />
+                </Link>
+
+                {/* App Title */}
                 <h1 className="text-xl font-bold text-center flex-1">Marcus App</h1>
             </header>
 
