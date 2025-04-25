@@ -1,10 +1,11 @@
 "use client";
 
 import { ReactNode, useState } from "react";
-import TopBanner from "@/components/topBanner"; // Import the new TopBanner component
+import TopBanner from "@/components/topBanner"; // Import the TopBanner component
+import SidePanel from "@/components/sidePanel"; // Import the SidePanel component
 
 export default function HomeLayout({ children }: { children: ReactNode }) {
-    const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
+    const [isSidePanelOpen, setIsSidePanelOpen] = useState(true); // Default to true
 
     const toggleSidePanel = () => {
         setIsSidePanelOpen((prev) => {
@@ -21,25 +22,7 @@ export default function HomeLayout({ children }: { children: ReactNode }) {
             {/* Main Layout */}
             <div className="flex flex-1">
                 {/* Side Navigation */}
-                <aside
-                    className={`bg-stone-100 dark:bg-stone-900 p-4 shadow transform transition-transform duration-300 ${isSidePanelOpen ? "translate-x-0" : "-translate-x-full"
-                        } w-64 flex-shrink-0`}
-                >
-                    <nav>
-                        <ul>
-                            <li className="mb-2">
-                                <a href="#" className="hover:underline">
-                                    Dashboard
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#" className="hover:underline">
-                                    Settings
-                                </a>
-                            </li>
-                        </ul>
-                    </nav>
-                </aside>
+                <SidePanel isSidePanelOpen={isSidePanelOpen} />
 
                 {/* Main Content */}
                 <main className="flex-1 p-4">
