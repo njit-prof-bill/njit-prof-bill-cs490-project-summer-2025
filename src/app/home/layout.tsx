@@ -6,7 +6,7 @@ export default function HomeLayout({ children }: { children: ReactNode }) {
     return (
         <div className="flex flex-col min-h-screen">
             {/* Placeholder for the banner */}
-            <header className="bg-stone-200 dark:bg-stone-800 p-4 shadow">
+            <header className="bg-stone-200 dark:bg-stone-800 p-4 shadow border-b border-stone-600">
                 <h1 className="text-xl font-bold text-center">Marcus App</h1>
             </header>
 
