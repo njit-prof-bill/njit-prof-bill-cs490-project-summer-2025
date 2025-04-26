@@ -3,34 +3,13 @@
 import { Bars3Icon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import Image from "next/image";
-import { Breadcrumb, BreadcrumbItem } from "@/components/ui/breadcrumb";
-import { usePathname } from "next/navigation";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 interface TopBannerProps {
     toggleSidePanel: () => void;
 }
 
 export default function TopBanner({ toggleSidePanel }: TopBannerProps) {
-    const pathname = usePathname();
-
-    // Dynamically generate breadcrumb items based on the current path
-    const pathSegments = pathname.split("/").filter(Boolean);
-    const breadcrumbs = pathSegments.map((segment, index) => {
-        const href = "/" + pathSegments.slice(0, index + 1).join("/");
-        const isLast = index === pathSegments.length - 1;
-
-        return (
-            <BreadcrumbItem key={href}>
-                {isLast ? (
-                    <span className="text-gray-400">{segment.charAt(0).toUpperCase() + segment.slice(1)}</span>
-                ) : (
-                    <Link href={href} className="text-gray-600 hover:underline capitalize">
-                        {segment.charAt(0).toUpperCase() + segment.slice(1)}
-                    </Link>
-                )}
-            </BreadcrumbItem>
-        );
-    });
 
     return (
         <header className="bg-stone-200 dark:bg-stone-800 p-4 shadow border-b border-stone-600 flex items-center justify-between">
@@ -63,7 +42,10 @@ export default function TopBanner({ toggleSidePanel }: TopBannerProps) {
 
             {/* Right Section: Placeholder for Future Items */}
             <div className="flex items-center">
-                <span className="text-gray-400">Right Section</span>
+                <Avatar>
+                    <AvatarImage src="/path-to-avatar-image.jpg" alt="User Avatar" />
+                    <AvatarFallback>BM</AvatarFallback>
+                </Avatar>
             </div>
         </header>
     );
