@@ -42,11 +42,11 @@ export default function TopBanner({ toggleSidePanel }: TopBannerProps) {
 
             {/* Right Section: Placeholder for Future Items */}
             <div className="flex items-center">
-                <Avatar>
+                <Avatar className="w-10 h-10">
                     <AvatarImage src="/path-to-avatar-image.jpg" alt="User Avatar" />
                     <AvatarFallback>BM</AvatarFallback>
                 </Avatar>
             </div>
-        </header>
+        </header >
     );
 }
