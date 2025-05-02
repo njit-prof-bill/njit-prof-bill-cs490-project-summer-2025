@@ -82,22 +82,24 @@ export default function LandingPage() {
             </h1>
 
             {/* Reset Password Form */}
-            <ResetPasswordForm
-              onSuccess={() => setView("login")}
-              buttonText="Send reset link" // Updated button text
-              inputSpacing="mb-6" // Added spacing between input and button
-            />
+            <div className="space-y-4">
+              <ResetPasswordForm
+                onSuccess={() => setView("login")}
+                buttonText="Send reset link" // Updated button text
+                inputSpacing="mb-6" // Added spacing between input and button
+              />
 
-            {/* Helper Text */}
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-4 text-left">
-              Remembered?{" "}
-              <button
-                onClick={() => setView("login")}
-                className="text-blue-500 hover:underline"
-              >
-                Go back to sign in
-              </button>
-            </p>
+              {/* Helper Text */}
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-4 text-left">
+                Remembered?{" "}
+                <button
+                  onClick={() => setView("login")}
+                  className="text-blue-500 hover:underline"
+                >
+                  Go back to sign in
+                </button>
+              </p>
+            </div>
           </>
         )}
       </div>

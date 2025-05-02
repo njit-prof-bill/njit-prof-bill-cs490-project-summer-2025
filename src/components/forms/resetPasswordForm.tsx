@@ -2,15 +2,21 @@
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { toast } from "sonner";
 
-interface ResetPasswordFormValues {
-    email: string;
-}
+// Define schema for form validation
+const resetPasswordSchema = z.object({
+    email: z.string().email("Invalid email address").nonempty("Email is required"),
+});
+
+type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
 
 export function ResetPasswordForm({
     onSuccess,
@@ -23,6 +29,7 @@ export function ResetPasswordForm({
 }) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const form = useForm<ResetPasswordFormValues>({
+        resolver: zodResolver(resetPasswordSchema),
         defaultValues: {
             email: "",
         },
@@ -43,27 +50,33 @@ export function ResetPasswordForm({
     };
 
     return (
-        <form
-            onSubmit={form.handleSubmit(handlePasswordReset)}
-            className="space-y-4 w-full max-w-sm mx-auto"
-        >
-            <div className={inputSpacing}>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Email
-                </label>
-                <Input
-                    id="email"
-                    type="email"
-                    placeholder="Enter your email"
-                    {...form.register("email", { required: "Email is required" })}
+        <Form {...form}>
+            <form
+                onSubmit={form.handleSubmit(handlePasswordReset)}
+                className="space-y-4 w-full"
+            >
+                <FormField
+                    name="email"
+                    control={form.control}
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Email</FormLabel>
+                            <FormControl>
+                                <Input
+                                    id="email"
+                                    type="email"
+                                    placeholder="Enter your email"
+                                    {...field}
+                                />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
                 />
-                {form.formState.errors.email && (
-                    <p className="text-sm text-red-500 mt-1">{form.formState.errors.email.message}</p>
-                )}
-            </div>
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? "Sending..." : buttonText}
-            </Button>
-        </form>
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                    {isSubmitting ? "Sending..." : buttonText}
+                </Button>
+            </form>
+        </Form>
     );
 }
