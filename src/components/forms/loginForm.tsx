@@ -19,7 +19,13 @@ interface LoginFormValues {
     password: string;
 }
 
-export function LoginForm({ onLogin }: { onLogin: () => void }) {
+export function LoginForm({
+    onLogin,
+    onForgotPassword,
+}: {
+    onLogin: () => void;
+    onForgotPassword: () => void;
+}) {
     const [error, setError] = useState<string | null>(null);
     const [showResendLink, setShowResendLink] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
@@ -80,10 +86,6 @@ export function LoginForm({ onLogin }: { onLogin: () => void }) {
         } catch (err: unknown) {
             toast.error("Failed to resend verification email. Please try again.");
         }
-    };
-
-    const handleForgotPasswordClick = () => {
-        alert("You clicked Forgot password.");
     };
 
     return (
@@ -160,7 +162,7 @@ export function LoginForm({ onLogin }: { onLogin: () => void }) {
                 <div className="mt-2 text-left">
                     <button
                         type="button"
-                        onClick={handleForgotPasswordClick}
+                        onClick={onForgotPassword}
                         className="text-sm text-blue-500 hover:underline"
                     >
                         Forgot password?

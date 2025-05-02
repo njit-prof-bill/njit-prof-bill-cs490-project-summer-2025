@@ -12,7 +12,15 @@ interface ResetPasswordFormValues {
     email: string;
 }
 
-export function ResetPasswordForm({ onSuccess }: { onSuccess: () => void }) {
+export function ResetPasswordForm({
+    onSuccess,
+    buttonText = "Reset password",
+    inputSpacing = "mb-4",
+}: {
+    onSuccess: () => void;
+    buttonText?: string;
+    inputSpacing?: string;
+}) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const form = useForm<ResetPasswordFormValues>({
         defaultValues: {
@@ -39,7 +47,7 @@ export function ResetPasswordForm({ onSuccess }: { onSuccess: () => void }) {
             onSubmit={form.handleSubmit(handlePasswordReset)}
             className="space-y-4 w-full max-w-sm mx-auto"
         >
-            <div>
+            <div className={inputSpacing}>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Email
                 </label>
@@ -54,7 +62,7 @@ export function ResetPasswordForm({ onSuccess }: { onSuccess: () => void }) {
                 )}
             </div>
             <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? "Sending..." : "Reset password"}
+                {isSubmitting ? "Sending..." : buttonText}
             </Button>
         </form>
     );
