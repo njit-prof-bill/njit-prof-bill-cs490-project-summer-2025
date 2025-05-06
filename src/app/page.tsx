@@ -26,7 +26,7 @@ export default function LandingPage() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen px-6">
       {/* Branding Section */}
-      <div className="relative w-full mb-16">
+      <div className="relative w-full mb-6" style={{ top: "-200px" }}>
         <div className="flex items-center justify-center">
           <hr className="w-4/5 border-gray-300 dark:border-gray-600" />
           <div className="absolute -top-6 px-4">
