@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link"; // Import Next.js Link component
+
 interface SidePanelProps {
     isSidePanelOpen: boolean;
 }
@@ -13,14 +15,14 @@ export default function SidePanel({ isSidePanelOpen }: SidePanelProps) {
             <nav>
                 <ul>
                     <li className="mb-2">
-                        <a href="#" className="hover:underline">
+                        <Link href="/home" className="hover:underline">
                             Dashboard
-                        </a>
+                        </Link>
                     </li>
                     <li>
-                        <a href="#" className="hover:underline">
+                        <Link href="/home/settings" className="hover:underline">
                             Settings
-                        </a>
+                        </Link>
                     </li>
                 </ul>
             </nav>
