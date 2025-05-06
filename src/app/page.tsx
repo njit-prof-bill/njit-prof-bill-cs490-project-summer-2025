@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { LoginForm } from "@/components/forms/loginForm";
 import { RegistrationForm } from "@/components/forms/registrationForm";
 import { ResetPasswordForm } from "@/components/forms/resetPasswordForm";
+import Image from "next/image";
 
 export default function LandingPage() {
   const { user, loading } = useAuth();
@@ -23,8 +24,27 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="w-full max-w-md px-6">
+    <div className="flex flex-col items-center justify-center min-h-screen px-6 bg-black">
+      {/* Branding Section */}
+      <div className="relative w-full mb-12">
+        <div className="flex items-center justify-center">
+          <hr className="absolute top-1/2 w-full border-gray-300 dark:border-gray-600" />
+          <div className="relative flex items-center space-x-2 px-4 bg-black">
+            <Image
+              src="/logo.png"
+              alt="Marcus Logo"
+              width={40}
+              height={40}
+            />
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+              Marcus
+            </h2>
+          </div>
+        </div>
+      </div>
+
+      {/* Form Section */}
+      <div className="w-full max-w-md">
         {view === "login" && (
           <>
             {/* Form Label */}
@@ -77,29 +97,26 @@ export default function LandingPage() {
         {view === "resetPassword" && (
           <>
             {/* Form Label */}
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4 text-left">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
               Reset your password
             </h1>
 
             {/* Reset Password Form */}
-            <div className="space-y-4">
-              <ResetPasswordForm
-                onSuccess={() => setView("login")}
-                buttonText="Send reset link" // Updated button text
-                inputSpacing="mb-6" // Added spacing between input and button
-              />
+            <ResetPasswordForm
+              onSuccess={() => setView("login")}
+              buttonText="Send reset link"
+            />
 
-              {/* Helper Text */}
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-4 text-left">
-                Remembered?{" "}
-                <button
-                  onClick={() => setView("login")}
-                  className="text-blue-500 hover:underline"
-                >
-                  Go back to sign in
-                </button>
-              </p>
-            </div>
+            {/* Helper Text */}
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-4">
+              Remembered?{" "}
+              <button
+                onClick={() => setView("login")}
+                className="text-blue-500 hover:underline"
+              >
+                Go back to sign in
+              </button>
+            </p>
           </>
         )}
       </div>
