@@ -24,9 +24,9 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen px-6">
+    <div className="relative flex flex-col items-center justify-center min-h-screen px-6">
       {/* Branding Section */}
-      <div className="relative w-full mb-6" style={{ top: "-200px" }}>
+      <div className="absolute top-64 w-full">
         <div className="flex items-center justify-center">
           <hr className="w-4/5 border-gray-300 dark:border-gray-600" />
           <div className="absolute -top-6 px-4">
@@ -46,7 +46,7 @@ export default function LandingPage() {
       </div>
 
       {/* Form Section */}
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-md mt-32">
         {view === "login" && (
           <>
             {/* Form Label */}
