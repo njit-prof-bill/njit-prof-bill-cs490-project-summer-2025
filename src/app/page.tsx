@@ -24,21 +24,23 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen px-6 bg-black">
+    <div className="flex flex-col items-center justify-center min-h-screen px-6">
       {/* Branding Section */}
-      <div className="relative w-full mb-12">
+      <div className="relative w-full max-w-md mb-12">
         <div className="flex items-center justify-center">
-          <hr className="absolute top-1/2 w-full border-gray-300 dark:border-gray-600" />
-          <div className="relative flex items-center space-x-2 px-4 bg-black">
-            <Image
-              src="/logo.png"
-              alt="Marcus Logo"
-              width={40}
-              height={40}
-            />
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-              Marcus
-            </h2>
+          <hr className="w-full border-gray-300 dark:border-gray-600" />
+          <div className="absolute bg-black px-4">
+            <div className="flex items-center space-x-2">
+              <Image
+                src="/logo.png" // Corrected path
+                alt="Marcus Logo"
+                width={40}
+                height={40}
+              />
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                Marcus
+              </h2>
+            </div>
           </div>
         </div>
       </div>
