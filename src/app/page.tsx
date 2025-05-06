@@ -28,20 +28,24 @@ export default function LandingPage() {
       {/* Branding Section */}
       <div className="relative w-full mb-6" style={{ top: "-200px" }}>
         <div className="flex items-center justify-center">
-          <hr className="w-4/5 border-gray-300 dark:border-gray-600" />
-          <div className="absolute -top-6 px-4">
-            <div className="flex items-center space-x-2 bg-transparent">
+          {/* Left Line */}
+          <hr className="w-2/5 border-gray-300 dark:border-gray-600" />
+          {/* Branding */}
+          <div className="px-4">
+            <div className="flex items-center space-x-4 bg-transparent">
               <Image
                 src="/logo.png"
                 alt="Marcus Logo"
-                width={40}
-                height={40}
+                width={60} // Increased size
+                height={60} // Increased size
               />
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
                 Marcus
               </h2>
             </div>
           </div>
+          {/* Right Line */}
+          <hr className="w-2/5 border-gray-300 dark:border-gray-600" />
         </div>
       </div>
 
