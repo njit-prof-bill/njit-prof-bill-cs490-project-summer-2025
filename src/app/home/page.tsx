@@ -43,9 +43,7 @@ export default function HomePage() {
                     </CardDescription>
                 </CardContent>
                 <CardFooter>
-                    <Button onClick={handleLogout} className="w-full">
-                        Log Out
-                    </Button>
+                    <CardDescription>Copyright 2025 Fourier Gauss Labs</CardDescription>
                 </CardFooter>
             </Card>
         </div>

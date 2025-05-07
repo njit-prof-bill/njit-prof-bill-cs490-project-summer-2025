@@ -4,12 +4,31 @@ import { Bars3Icon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import Image from "next/image";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import {
+    DropdownMenu,
+    DropdownMenuTrigger,
+    DropdownMenuContent,
+    DropdownMenuItem,
+} from "@/components/ui/dropdown-menu"; // Import Shadcn dropdown components
+import { useRouter } from "next/navigation";
+import { signOut } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 
 interface TopBannerProps {
     toggleSidePanel: () => void;
 }
 
 export default function TopBanner({ toggleSidePanel }: TopBannerProps) {
+    const router = useRouter();
+
+    const handleLogout = async () => {
+        try {
+            await signOut(auth);
+            router.push("/"); // Redirect to landing page
+        } catch (error) {
+            console.error("Failed to log out:", error);
+        }
+    };
 
     return (
         <header className="bg-stone-200 dark:bg-stone-800 p-4 shadow border-b border-stone-600 flex items-center justify-between">
@@ -40,13 +59,37 @@ export default function TopBanner({ toggleSidePanel }: TopBannerProps) {
                 <h1 className="text-xl font-semibold">Marcus</h1>
             </div>
 
-            {/* Right Section: Placeholder for Future Items */}
-            <div className="flex items-center">
-                <Avatar className="w-10 h-10">
-                    <AvatarImage src="/path-to-avatar-image.jpg" alt="User Avatar" />
-                    <AvatarFallback>BM</AvatarFallback>
-                </Avatar>
+            {/* Right Section: Avatar with Dropdown */}
+            <div className="flex items-center relative">
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <div className="relative cursor-pointer">
+                            <Avatar className="w-10 h-10">
+                                <AvatarImage src="/path-to-avatar-image.jpg" alt="User Avatar" />
+                                <AvatarFallback>BM</AvatarFallback>
+                            </Avatar>
+                            {/* Down Arrow Indicator */}
+                            <span
+                                className="absolute text-gray-800 dark:text-gray-200 text-xs"
+                                style={{
+                                    bottom: "-4px", // Move the arrow slightly lower
+                                    right: "-4px",  // Move the arrow slightly to the right
+                                }}
+                            >
+                                ▼
+                            </span>
+                        </div>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuItem onClick={() => router.push("/home/settings")}>
+                            Settings
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={handleLogout}>
+                            Logout
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </div>
-        </header >
+        </header>
     );
 }
