@@ -4,10 +4,6 @@ import { useAuth } from "@/context/authContext";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { signOut } from "firebase/auth";
-import { auth } from "@/lib/firebase";
-
 export default function HomePage() {
     const { user, loading } = useAuth();
     const router = useRouter();
@@ -17,15 +13,6 @@ export default function HomePage() {
             router.push("/"); // Redirect to landing page if not authenticated
         }
     }, [user, loading, router]);
-
-    const handleLogout = async () => {
-        try {
-            await signOut(auth);
-            router.push("/"); // Redirect to landing page
-        } catch (error) {
-            console.error("Failed to log out:", error);
-        }
-    };
 
     if (loading) {
         return <p>Loading...</p>; // Show a loading state while checking auth
