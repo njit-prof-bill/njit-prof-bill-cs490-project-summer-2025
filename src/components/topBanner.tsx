@@ -10,7 +10,7 @@ import {
     DropdownMenuContent,
     DropdownMenuItem,
 } from "@/components/ui/dropdown-menu"; // Import Shadcn dropdown components
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation"; // Import usePathname
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 
@@ -20,6 +20,15 @@ interface TopBannerProps {
 
 export default function TopBanner({ toggleSidePanel }: TopBannerProps) {
     const router = useRouter();
+    const pathname = usePathname(); // Get the current path
+
+    // Map paths to page titles
+    const pageTitles: { [key: string]: string } = {
+        "/home": "Home",
+        "/home/settings": "Settings",
+    };
+
+    const pageTitle = pageTitles[pathname] || "Page"; // Default to "Page" if no match
 
     const handleLogout = async () => {
         try {
@@ -50,7 +59,7 @@ export default function TopBanner({ toggleSidePanel }: TopBannerProps) {
                     />
                 </Link>
                 <div className="flex space-x-2 text-md">
-                    <p>Home</p>
+                    <p>{pageTitle}</p> {/* Dynamically display the page title */}
                 </div>
             </div>
 
