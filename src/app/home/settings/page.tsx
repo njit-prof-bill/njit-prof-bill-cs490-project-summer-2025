@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -10,28 +9,10 @@ import {
     SelectContent,
     SelectItem,
 } from "@/components/ui/select";
+import { useTheme } from "@/context/themeContext"; // Import the useTheme hook
 
 export default function SettingsPage() {
-    const [theme, setTheme] = useState("system"); // Default to "system"
-
-    // Apply the theme dynamically
-    useEffect(() => {
-        const root = window.document.documentElement;
-
-        if (theme === "light") {
-            root.classList.remove("dark");
-        } else if (theme === "dark") {
-            root.classList.add("dark");
-        } else {
-            // System theme
-            const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-            if (prefersDark) {
-                root.classList.add("dark");
-            } else {
-                root.classList.remove("dark");
-            }
-        }
-    }, [theme]);
+    const { theme, setTheme } = useTheme(); // Use the global theme context
 
     return (
         <div className="flex items-center justify-center min-h-screen text-gray-900 dark:text-gray-100">
@@ -59,7 +40,7 @@ export default function SettingsPage() {
                         <Label htmlFor="theme" className="mb-2 block">
                             Theme
                         </Label>
-                        <Select onValueChange={(value) => setTheme(value)}>
+                        <Select onValueChange={(value) => setTheme(value as "system" | "light" | "dark")} value={theme}>
                             <SelectTrigger id="theme">
                                 <SelectValue placeholder="Select theme" />
                             </SelectTrigger>
