@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -11,6 +12,27 @@ import {
 } from "@/components/ui/select";
 
 export default function SettingsPage() {
+    const [theme, setTheme] = useState("system"); // Default to "system"
+
+    // Apply the theme dynamically
+    useEffect(() => {
+        const root = window.document.documentElement;
+
+        if (theme === "light") {
+            root.classList.remove("dark");
+        } else if (theme === "dark") {
+            root.classList.add("dark");
+        } else {
+            // System theme
+            const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+            if (prefersDark) {
+                root.classList.add("dark");
+            } else {
+                root.classList.remove("dark");
+            }
+        }
+    }, [theme]);
+
     return (
         <div className="flex items-center justify-center min-h-screen text-gray-900 dark:text-gray-100">
             <div className="w-full max-w-md">
@@ -37,7 +59,7 @@ export default function SettingsPage() {
                         <Label htmlFor="theme" className="mb-2 block">
                             Theme
                         </Label>
-                        <Select>
+                        <Select onValueChange={(value) => setTheme(value)}>
                             <SelectTrigger id="theme">
                                 <SelectValue placeholder="Select theme" />
                             </SelectTrigger>
