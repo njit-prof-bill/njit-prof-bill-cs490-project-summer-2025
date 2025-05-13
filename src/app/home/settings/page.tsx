@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button"; // Assuming you have a Button component
 import {
     Select,
     SelectTrigger,
@@ -11,12 +12,14 @@ import {
     SelectItem,
 } from "@/components/ui/select";
 import { useTheme } from "@/context/themeContext"; // Import the useTheme hook
-import { getAuth, onAuthStateChanged } from "firebase/auth"; // Import Firebase Auth
+import { getAuth, onAuthStateChanged, updateProfile } from "firebase/auth"; // Import Firebase Auth
 
 export default function SettingsPage() {
     const { theme, setTheme } = useTheme(); // Use the global theme context
     const [name, setName] = useState<string>(""); // State for the user's name
     const [email, setEmail] = useState<string>(""); // State for the user's email
+    const [isSaving, setIsSaving] = useState<boolean>(false); // State for saving status
+    const [error, setError] = useState<string | null>(null); // State for error messages
 
     useEffect(() => {
         const auth = getAuth(); // Initialize Firebase Auth
@@ -31,6 +34,29 @@ export default function SettingsPage() {
         // Cleanup the listener on unmount
         return () => unsubscribe();
     }, []);
+
+    const handleSaveName = async () => {
+        setIsSaving(true);
+        setError(null);
+
+        try {
+            const auth = getAuth();
+            const user = auth.currentUser;
+
+            if (!user) {
+                throw new Error("No user is currently signed in.");
+            }
+
+            // Update the displayName in Firebase
+            await updateProfile(user, { displayName: name });
+            alert("Name updated successfully!");
+        } catch (err: any) {
+            console.error("Error updating name:", err);
+            setError(err.message || "Failed to update name.");
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
     return (
         <div className="flex items-center justify-center min-h-screen text-gray-900 dark:text-gray-100">
@@ -49,6 +75,15 @@ export default function SettingsPage() {
                             onChange={(e) => setName(e.target.value)} // Allow editing
                             placeholder="Enter your name"
                         />
+                        <Button
+                            type="button"
+                            onClick={handleSaveName}
+                            disabled={isSaving}
+                            className="mt-2"
+                        >
+                            {isSaving ? "Saving..." : "Save Name"}
+                        </Button>
+                        {error && <p className="text-red-500 mt-2">{error}</p>}
                     </div>
 
                     {/* Email Field */}
