@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation"; // Import useRouter for navigation
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button"; // Assuming you have a Button component
@@ -20,6 +21,7 @@ export default function SettingsPage() {
     const [email, setEmail] = useState<string>(""); // State for the user's email
     const [isSaving, setIsSaving] = useState<boolean>(false); // State for saving status
     const [error, setError] = useState<string | null>(null); // State for error messages
+    const router = useRouter(); // Initialize router for navigation
 
     useEffect(() => {
         const auth = getAuth(); // Initialize Firebase Auth
@@ -35,7 +37,8 @@ export default function SettingsPage() {
         return () => unsubscribe();
     }, []);
 
-    const handleSaveName = async () => {
+    const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault(); // Prevent default form submission
         setIsSaving(true);
         setError(null);
 
@@ -48,21 +51,27 @@ export default function SettingsPage() {
             }
 
             // Update the displayName in Firebase
-            await updateProfile(user, { displayName: name });
-            alert("Name updated successfully!");
+            if (name !== user.displayName) {
+                await updateProfile(user, { displayName: name });
+                alert("Changes saved successfully!");
+            }
         } catch (err: any) {
-            console.error("Error updating name:", err);
-            setError(err.message || "Failed to update name.");
+            console.error("Error saving changes:", err);
+            setError(err.message || "Failed to save changes.");
         } finally {
             setIsSaving(false);
         }
+    };
+
+    const handleCancel = () => {
+        router.push("/home"); // Navigate back to the home page
     };
 
     return (
         <div className="flex items-center justify-center min-h-screen text-gray-900 dark:text-gray-100">
             <div className="w-full max-w-md">
                 <h1 className="text-2xl font-bold mb-6">Settings</h1>
-                <form className="space-y-6">
+                <form className="space-y-6" onSubmit={handleSave}>
                     {/* Name Field */}
                     <div>
                         <Label htmlFor="name" className="mb-2 block">
@@ -74,16 +83,8 @@ export default function SettingsPage() {
                             value={name}
                             onChange={(e) => setName(e.target.value)} // Allow editing
                             placeholder="Enter your name"
+                            disabled={isSaving} // Disable input while saving
                         />
-                        <Button
-                            type="button"
-                            onClick={handleSaveName}
-                            disabled={isSaving}
-                            className="mt-2"
-                        >
-                            {isSaving ? "Saving..." : "Save Name"}
-                        </Button>
-                        {error && <p className="text-red-500 mt-2">{error}</p>}
                     </div>
 
                     {/* Email Field */}
@@ -97,6 +98,7 @@ export default function SettingsPage() {
                             value={email}
                             onChange={(e) => setEmail(e.target.value)} // Allow editing
                             placeholder="Enter your email"
+                            disabled={isSaving} // Disable input while saving
                         />
                     </div>
 
@@ -151,6 +153,27 @@ export default function SettingsPage() {
                             placeholder="Confirm your new password"
                         />
                     </div>
+
+                    {/* Buttons */}
+                    <div className="flex justify-end space-x-4">
+                        <Button
+                            type="submit"
+                            disabled={isSaving}
+                            className="w-32 bg-blue-500 hover:bg-blue-600 text-white"
+                        >
+                            {isSaving ? "Saving..." : "Save"}
+                        </Button>
+                        <Button
+                            type="button"
+                            onClick={handleCancel}
+                            className="w-32 bg-gray-500 hover:bg-gray-600 text-white"
+                        >
+                            Cancel
+                        </Button>
+                    </div>
+
+                    {/* Error Message */}
+                    {error && <p className="text-red-500 mt-2">{error}</p>}
                 </form>
             </div>
         </div>
