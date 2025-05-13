@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -10,9 +11,26 @@ import {
     SelectItem,
 } from "@/components/ui/select";
 import { useTheme } from "@/context/themeContext"; // Import the useTheme hook
+import { getAuth, onAuthStateChanged } from "firebase/auth"; // Import Firebase Auth
 
 export default function SettingsPage() {
     const { theme, setTheme } = useTheme(); // Use the global theme context
+    const [name, setName] = useState<string>(""); // State for the user's name
+    const [email, setEmail] = useState<string>(""); // State for the user's email
+
+    useEffect(() => {
+        const auth = getAuth(); // Initialize Firebase Auth
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // Populate the name and email fields if the user is signed in
+                setName(user.displayName || ""); // Use displayName or an empty string
+                setEmail(user.email || ""); // Use email or an empty string
+            }
+        });
+
+        // Cleanup the listener on unmount
+        return () => unsubscribe();
+    }, []);
 
     return (
         <div className="flex items-center justify-center min-h-screen text-gray-900 dark:text-gray-100">
@@ -24,7 +42,13 @@ export default function SettingsPage() {
                         <Label htmlFor="name" className="mb-2 block">
                             Name
                         </Label>
-                        <Input id="name" type="text" placeholder="Enter your name" />
+                        <Input
+                            id="name"
+                            type="text"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)} // Allow editing
+                            placeholder="Enter your name"
+                        />
                     </div>
 
                     {/* Email Field */}
@@ -32,7 +56,13 @@ export default function SettingsPage() {
                         <Label htmlFor="email" className="mb-2 block">
                             Email
                         </Label>
-                        <Input id="email" type="email" placeholder="Enter your email" />
+                        <Input
+                            id="email"
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)} // Allow editing
+                            placeholder="Enter your email"
+                        />
                     </div>
 
                     {/* Theme Field */}
@@ -40,7 +70,10 @@ export default function SettingsPage() {
                         <Label htmlFor="theme" className="mb-2 block">
                             Theme
                         </Label>
-                        <Select onValueChange={(value) => setTheme(value as "system" | "light" | "dark")} value={theme}>
+                        <Select
+                            onValueChange={(value) => setTheme(value as "system" | "light" | "dark")}
+                            value={theme}
+                        >
                             <SelectTrigger id="theme">
                                 <SelectValue placeholder="Select theme" />
                             </SelectTrigger>
