@@ -60,7 +60,6 @@ export function RegistrationForm({ onRegister }: { onRegister: () => void }) {
 
             // Send email verification
             await sendEmailVerification(user);
-            console.log("Verification email sent");
 
             // Show toast notification
             toast.success("Verification email sent! Please check your inbox and verify your email before logging in.");

@@ -9,7 +9,6 @@ export default function HomeLayout({ children }: { children: ReactNode }) {
 
     const toggleSidePanel = () => {
         setIsSidePanelOpen((prev) => {
-            console.log("Side panel toggled:", !prev); // Debugging
             return !prev;
         });
     };

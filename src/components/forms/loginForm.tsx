@@ -66,7 +66,6 @@ export function LoginForm({
                 return;
             }
 
-            console.log("User logged in");
             onLogin();
             router.push("/home");
         } catch (err: unknown) {
