@@ -98,7 +98,7 @@ export default function SettingsPage() {
                             value={email}
                             onChange={(e) => setEmail(e.target.value)} // Allow editing
                             placeholder="Enter your email"
-                            disabled={isSaving} // Disable input while saving
+                            disabled
                         />
                     </div>
 
