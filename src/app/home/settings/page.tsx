@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/select";
 import { useTheme } from "@/context/themeContext"; // Import the useTheme hook
 import { getAuth, onAuthStateChanged, updateProfile } from "firebase/auth"; // Import Firebase Auth
+import { getFirestore, doc, setDoc } from "firebase/firestore";
+
 
 export default function SettingsPage() {
     const { theme, setTheme } = useTheme(); // Use the global theme context
@@ -38,7 +40,7 @@ export default function SettingsPage() {
     }, []);
 
     const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault(); // Prevent default form submission
+        e.preventDefault();
         setIsSaving(true);
         setError(null);
 
@@ -53,8 +55,18 @@ export default function SettingsPage() {
             // Update the displayName in Firebase
             if (name !== user.displayName) {
                 await updateProfile(user, { displayName: name });
-                alert("Changes saved successfully!");
             }
+
+            // Save theme to Firestore
+            const db = getFirestore();
+            const userRef = doc(db, "users", user.uid);
+            await setDoc(
+                userRef,
+                { theme }, // Save theme field
+                { merge: true } // Merge with existing data
+            );
+
+            alert("Changes saved successfully!");
         } catch (err: unknown) {
             console.error("Error saving changes:", err);
             if (err instanceof Error) {
