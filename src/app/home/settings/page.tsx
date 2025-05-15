@@ -55,9 +55,13 @@ export default function SettingsPage() {
                 await updateProfile(user, { displayName: name });
                 alert("Changes saved successfully!");
             }
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("Error saving changes:", err);
-            setError(err.message || "Failed to save changes.");
+            if (err instanceof Error) {
+                setError(err.message || "Failed to save changes.");
+            } else {
+                setError("Failed to save changes.");
+            }
         } finally {
             setIsSaving(false);
         }
