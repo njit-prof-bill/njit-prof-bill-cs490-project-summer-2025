@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
 
 type ThemeType = "system" | "light" | "dark";
 
@@ -10,11 +12,59 @@ interface ThemeContextProps {
 const ThemeContext = createContext<ThemeContextProps | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [theme, setTheme] = useState<ThemeType>("system");
+    const [theme, setThemeState] = useState<ThemeType>("system");
+    const [authChecked, setAuthChecked] = useState(false);
 
+    // Save theme to Firestore when changed by the user
+    const setTheme = async (newTheme: ThemeType) => {
+        setThemeState(newTheme);
+        localStorage.setItem("theme", newTheme);
+
+        const auth = getAuth();
+        const user = auth.currentUser;
+        if (user) {
+            try {
+                const db = getFirestore();
+                const userRef = doc(db, "users", user.uid);
+                await setDoc(userRef, { theme: newTheme }, { merge: true });
+            } catch (err) {
+                console.error("Error saving theme to Firestore:", err);
+            }
+        }
+    };
+
+    // Load theme from Firestore for authenticated users
     useEffect(() => {
-        const savedTheme = (localStorage.getItem("theme") as ThemeType) || "system";
-        setTheme(savedTheme);
+        const auth = getAuth();
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                try {
+                    const db = getFirestore();
+                    const userRef = doc(db, "users", user.uid);
+                    const userSnap = await getDoc(userRef);
+                    if (userSnap.exists()) {
+                        const data = userSnap.data();
+                        if (data.theme) {
+                            setTheme(data.theme);
+                            localStorage.setItem("theme", data.theme); // Keep localStorage in sync
+                        }
+                    } else {
+                        // First-time user: create document with default theme
+                        await setDoc(userRef, { theme: "system" });
+                        setTheme("system");
+                        localStorage.setItem("theme", "system");
+                    }
+                } catch (err) {
+                    console.error("Error loading theme from Firestore:", err);
+                }
+            } else {
+                // Not signed in, fall back to localStorage or system
+                const savedTheme = (localStorage.getItem("theme") as ThemeType) || "system";
+                setTheme(savedTheme);
+            }
+            setAuthChecked(true); // <-- Set to true after auth check
+        });
+        return () => unsubscribe();
     }, []);
 
     useEffect(() => {
@@ -58,6 +108,10 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             }
         };
     }, [theme]);
+
+    if (!authChecked) {
+        return <div>Loading...</div>; // Or your preferred loading UI
+    }
 
     return (
         <ThemeContext.Provider value={{ theme, setTheme }}>
