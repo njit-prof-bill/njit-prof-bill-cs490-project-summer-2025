@@ -60,6 +60,9 @@ export function LoginForm({
             const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
             const user = userCredential.user;
 
+            // Force refresh the user's emailVerified status
+            await user.reload();
+
             if (!user.emailVerified) {
                 setError("Your email is not verified.");
                 setShowResendLink(true);
