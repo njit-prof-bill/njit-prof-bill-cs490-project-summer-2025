@@ -33,7 +33,7 @@ export default function TopBanner({ toggleSidePanel }: TopBannerProps) {
         return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
     };
 
-    const initials = getInitials(user?.displayName);
+    const initials = getInitials(user?.displayName).toLowerCase();
 
 
     // Map paths to page titles
