@@ -22,6 +22,20 @@ export default function TopBanner({ toggleSidePanel }: TopBannerProps) {
     const router = useRouter();
     const pathname = usePathname(); // Get the current path
 
+    // Get current user
+    const user = auth.currentUser;
+
+    // Helper to get initials from displayName
+    const getInitials = (name?: string | null) => {
+        if (!name) return "";
+        const parts = name.trim().split(" ");
+        if (parts.length === 1) return parts[0][0]?.toUpperCase() || "";
+        return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    };
+
+    const initials = getInitials(user?.displayName);
+
+
     // Map paths to page titles
     const pageTitles: { [key: string]: string } = {
         "/home": "Home",
@@ -75,7 +89,7 @@ export default function TopBanner({ toggleSidePanel }: TopBannerProps) {
                         <div className="relative cursor-pointer">
                             <Avatar className="w-10 h-10">
                                 <AvatarImage src="/path-to-avatar-image.jpg" alt="User Avatar" />
-                                <AvatarFallback>BM</AvatarFallback>
+                                <AvatarFallback>{initials || "?"}</AvatarFallback>
                             </Avatar>
                             {/* Down Arrow Indicator */}
                             <span
