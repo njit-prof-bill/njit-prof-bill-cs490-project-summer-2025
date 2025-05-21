@@ -25,6 +25,7 @@ export default function SettingsPage() {
     const [isSaving, setIsSaving] = useState<boolean>(false); // State for saving status
     const [error, setError] = useState<string | null>(null); // State for error messages
     const router = useRouter(); // Initialize router for navigation
+    const [isOAuthUser, setIsOAuthUser] = useState(false);
 
     useEffect(() => {
         const auth = getAuth(); // Initialize Firebase Auth
@@ -33,6 +34,11 @@ export default function SettingsPage() {
                 // Populate the name and email fields if the user is signed in
                 setName(user.displayName || ""); // Use displayName or an empty string
                 setEmail(user.email || ""); // Use email or an empty string
+                // Check if any provider is NOT password (i.e., OAuth)
+                const isOAuth = user.providerData.some(
+                    (provider) => provider.providerId !== "password"
+                );
+                setIsOAuthUser(isOAuth);
             }
         });
 
@@ -148,6 +154,7 @@ export default function SettingsPage() {
                             id="current-password"
                             type="password"
                             placeholder="Enter your current password"
+                            disabled={isOAuthUser}
                         />
                     </div>
                     <div>
@@ -158,6 +165,7 @@ export default function SettingsPage() {
                             id="new-password"
                             type="password"
                             placeholder="Enter your new password"
+                            disabled={isOAuthUser}
                         />
                     </div>
                     <div>
@@ -168,6 +176,7 @@ export default function SettingsPage() {
                             id="confirm-password"
                             type="password"
                             placeholder="Confirm your new password"
+                            disabled={isOAuthUser}
                         />
                     </div>
 
