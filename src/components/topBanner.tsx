@@ -89,7 +89,9 @@ export default function TopBanner({ toggleSidePanel }: TopBannerProps) {
                         <div className="relative cursor-pointer">
                             <Avatar className="w-10 h-10">
                                 <AvatarImage src="/path-to-avatar-image.jpg" alt="User Avatar" />
-                                <AvatarFallback>{initials || "?"}</AvatarFallback>
+                                <AvatarFallback className="bg-blue-500 w-full h-full flex items-center justify-center rounded-full">
+                                    {initials || "?"}
+                                </AvatarFallback>
                             </Avatar>
                             {/* Down Arrow Indicator */}
                             <span
