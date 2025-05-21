@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { useRouter } from "next/navigation"; // Import useRouter for navigation
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -66,7 +67,7 @@ export default function SettingsPage() {
                 { merge: true } // Merge with existing data
             );
 
-            alert("Changes saved successfully!");
+            toast.success("Profile settings saved.");
         } catch (err: unknown) {
             console.error("Error saving changes:", err);
             if (err instanceof Error) {
