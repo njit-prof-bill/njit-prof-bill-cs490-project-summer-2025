@@ -16,6 +16,8 @@ import {
 import { useTheme } from "@/context/themeContext"; // Import the useTheme hook
 import { getAuth, onAuthStateChanged, updateProfile } from "firebase/auth"; // Import Firebase Auth
 import { getFirestore, doc, setDoc } from "firebase/firestore";
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
 
 
 export default function SettingsPage() {
@@ -45,6 +47,30 @@ export default function SettingsPage() {
         // Cleanup the listener on unmount
         return () => unsubscribe();
     }, []);
+
+    const form = useForm({
+        defaultValues: {
+            name: name,
+            email: email,
+            theme: theme,
+            currentPassword: "",
+            newPassword: "",
+            confirmPassword: "",
+        },
+    });
+
+    useEffect(() => {
+        if (name && email && theme) {
+            form.reset({
+                name,
+                email,
+                theme,
+                currentPassword: "",
+                newPassword: "",
+                confirmPassword: "",
+            });
+        }
+    }, [name, email, theme, form]);
 
     const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -94,114 +120,152 @@ export default function SettingsPage() {
         <div className="flex items-center justify-center min-h-screen text-gray-900 dark:text-gray-100">
             <div className="w-full max-w-md">
                 <h1 className="text-2xl font-bold mb-6">Settings</h1>
-                <form className="space-y-6" onSubmit={handleSave}>
-                    {/* Name Field */}
-                    <div>
-                        <Label htmlFor="name" className="mb-2 block">
-                            Name
-                        </Label>
-                        <Input
-                            id="name"
-                            type="text"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)} // Allow editing
-                            placeholder="Enter your name"
-                            disabled={isSaving} // Disable input while saving
+                <Form {...form}>
+                    <form className="space-y-6" onSubmit={handleSave}>
+                        {/* Name Field */}
+                        <FormField
+                            control={form.control}
+                            name="name"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Name</FormLabel>
+                                    <FormControl>
+                                        <Input
+                                            {...field}
+                                            placeholder="Enter your name"
+                                            disabled={isSaving}
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
                         />
-                    </div>
 
-                    {/* Email Field */}
-                    <div>
-                        <Label htmlFor="email" className="mb-2 block">
-                            Email
-                        </Label>
-                        <Input
-                            id="email"
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)} // Allow editing
-                            placeholder="Enter your email"
-                            disabled
+                        {/* Email Field */}
+                        <FormField
+                            control={form.control}
+                            name="email"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Email</FormLabel>
+                                    <FormControl>
+                                        <Input
+                                            {...field}
+                                            placeholder="Enter your email"
+                                            disabled
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
                         />
-                    </div>
 
-                    {/* Theme Field */}
-                    <div>
-                        <Label htmlFor="theme" className="mb-2 block">
-                            Theme
-                        </Label>
-                        <Select
-                            onValueChange={(value) => setTheme(value as "system" | "light" | "dark")}
-                            value={theme}
-                        >
-                            <SelectTrigger id="theme">
-                                <SelectValue placeholder="Select theme" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="light">Light</SelectItem>
-                                <SelectItem value="dark">Dark</SelectItem>
-                                <SelectItem value="system">System</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    {/* Password Fields */}
-                    <div>
-                        <Label htmlFor="current-password" className="mb-2 block">
-                            Current Password
-                        </Label>
-                        <Input
-                            id="current-password"
-                            type="password"
-                            placeholder="Enter your current password"
-                            disabled={isOAuthUser}
+                        {/* Theme Field */}
+                        <FormField
+                            control={form.control}
+                            name="theme"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Theme</FormLabel>
+                                    <FormControl>
+                                        <Select
+                                            onValueChange={field.onChange}
+                                            value={field.value}
+                                            disabled={isSaving}
+                                        >
+                                            <SelectTrigger id="theme">
+                                                <SelectValue placeholder="Select theme" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="light">Light</SelectItem>
+                                                <SelectItem value="dark">Dark</SelectItem>
+                                                <SelectItem value="system">System</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
                         />
-                    </div>
-                    <div>
-                        <Label htmlFor="new-password" className="mb-2 block">
-                            New Password
-                        </Label>
-                        <Input
-                            id="new-password"
-                            type="password"
-                            placeholder="Enter your new password"
-                            disabled={isOAuthUser}
-                        />
-                    </div>
-                    <div>
-                        <Label htmlFor="confirm-password" className="mb-2 block">
-                            Confirm Password
-                        </Label>
-                        <Input
-                            id="confirm-password"
-                            type="password"
-                            placeholder="Confirm your new password"
-                            disabled={isOAuthUser}
-                        />
-                    </div>
 
-                    {/* Buttons */}
-                    <div className="flex justify-end space-x-4">
-                        <Button
-                            type="submit"
-                            disabled={isSaving}
-                            className="w-32 bg-blue-500 hover:bg-blue-600 text-white"
-                        >
-                            {isSaving ? "Saving..." : "Save"}
-                        </Button>
-                        <Button
-                            type="button"
-                            onClick={handleCancel}
-                            className="w-32 bg-gray-500 hover:bg-gray-600 text-white"
-                        >
-                            Cancel
-                        </Button>
-                    </div>
+                        {/* Password Fields */}
+                        <FormField
+                            control={form.control}
+                            name="currentPassword"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Current Password</FormLabel>
+                                    <FormControl>
+                                        <Input
+                                            {...field}
+                                            type="password"
+                                            placeholder="Enter your current password"
+                                            disabled={isOAuthUser}
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="newPassword"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>New Password</FormLabel>
+                                    <FormControl>
+                                        <Input
+                                            {...field}
+                                            type="password"
+                                            placeholder="Enter your new password"
+                                            disabled={isOAuthUser}
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="confirmPassword"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Confirm Password</FormLabel>
+                                    <FormControl>
+                                        <Input
+                                            {...field}
+                                            type="password"
+                                            placeholder="Confirm your new password"
+                                            disabled={isOAuthUser}
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
 
-                    {/* Error Message */}
-                    {error && <p className="text-red-500 mt-2">{error}</p>}
-                </form>
-            </div>
+                        {/* Buttons */}
+                        <div className="flex justify-end space-x-4">
+                            <Button
+                                type="submit"
+                                disabled={isSaving}
+                                className="w-32 bg-blue-500 hover:bg-blue-600 text-white"
+                            >
+                                {isSaving ? "Saving..." : "Save"}
+                            </Button>
+                            <Button
+                                type="button"
+                                onClick={handleCancel}
+                                className="w-32 bg-gray-500 hover:bg-gray-600 text-white"
+                            >
+                                Cancel
+                            </Button>
+                        </div>
+
+                        {/* Error Message */}
+                        {error && <p className="text-red-500 mt-2">{error}</p>}
+                    </form>
+                </Form>            </div>
         </div>
     );
 }
