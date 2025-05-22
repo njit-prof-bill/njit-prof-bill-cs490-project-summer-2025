@@ -18,7 +18,10 @@ import { getAuth, onAuthStateChanged, updateProfile } from "firebase/auth"; // I
 import { getFirestore, doc, setDoc } from "firebase/firestore";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
+import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
+import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 
+type ThemeType = "light" | "dark" | "system";
 
 export default function SettingsPage() {
     const { theme, setTheme } = useTheme(); // Use the global theme context
@@ -28,6 +31,9 @@ export default function SettingsPage() {
     const [error, setError] = useState<string | null>(null); // State for error messages
     const router = useRouter(); // Initialize router for navigation
     const [isOAuthUser, setIsOAuthUser] = useState(false);
+    const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     useEffect(() => {
         const auth = getAuth(); // Initialize Firebase Auth
@@ -80,14 +86,15 @@ export default function SettingsPage() {
         try {
             const auth = getAuth();
             const user = auth.currentUser;
+            const values = form.getValues();
 
             if (!user) {
                 throw new Error("No user is currently signed in.");
             }
 
             // Update the displayName in Firebase
-            if (name !== user.displayName) {
-                await updateProfile(user, { displayName: name });
+            if (values.name !== user.displayName) {
+                await updateProfile(user, { displayName: values.name });
             }
 
             // Save theme to Firestore
@@ -95,11 +102,42 @@ export default function SettingsPage() {
             const userRef = doc(db, "users", user.uid);
             await setDoc(
                 userRef,
-                { theme }, // Save theme field
-                { merge: true } // Merge with existing data
+                { theme: values.theme },
+                { merge: true }
             );
 
+            // Change password if not OAuth and fields are filled
+            if (
+                !isOAuthUser &&
+                values.currentPassword &&
+                values.newPassword &&
+                values.confirmPassword
+            ) {
+                if (values.newPassword !== values.confirmPassword) {
+                    throw new Error("New password and confirmation do not match.");
+                }
+                // Re-authenticate
+                const credential = EmailAuthProvider.credential(
+                    user.email!,
+                    values.currentPassword
+                );
+                await reauthenticateWithCredential(user, credential);
+                await updatePassword(user, values.newPassword);
+                toast.success("Password changed successfully.");
+            }
+
             toast.success("Profile settings saved.");
+
+            // Clear password fields after successful save
+            form.reset({
+                name: values.name,
+                email: values.email,
+                theme: values.theme,
+                currentPassword: "",
+                newPassword: "",
+                confirmPassword: "",
+            });
+
         } catch (err: unknown) {
             console.error("Error saving changes:", err);
             if (err instanceof Error) {
@@ -169,7 +207,10 @@ export default function SettingsPage() {
                                     <FormLabel>Theme</FormLabel>
                                     <FormControl>
                                         <Select
-                                            onValueChange={field.onChange}
+                                            onValueChange={(value) => {
+                                                field.onChange(value);
+                                                setTheme(value as ThemeType);
+                                            }}
                                             value={field.value}
                                             disabled={isSaving}
                                         >
@@ -196,12 +237,26 @@ export default function SettingsPage() {
                                 <FormItem>
                                     <FormLabel>Current Password</FormLabel>
                                     <FormControl>
-                                        <Input
-                                            {...field}
-                                            type="password"
-                                            placeholder="Enter your current password"
-                                            disabled={isOAuthUser}
-                                        />
+                                        <div className="relative">
+                                            <Input
+                                                {...field}
+                                                type={showCurrentPassword ? "text" : "password"}
+                                                placeholder="Enter your current password"
+                                                disabled={isOAuthUser}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowCurrentPassword((v) => !v)}
+                                                className="absolute inset-y-0 right-3 flex items-center text-gray-500 dark:text-gray-400"
+                                                tabIndex={-1}
+                                            >
+                                                {showCurrentPassword ? (
+                                                    <EyeSlashIcon className="h-5 w-5" />
+                                                ) : (
+                                                    <EyeIcon className="h-5 w-5" />
+                                                )}
+                                            </button>
+                                        </div>
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -214,12 +269,26 @@ export default function SettingsPage() {
                                 <FormItem>
                                     <FormLabel>New Password</FormLabel>
                                     <FormControl>
-                                        <Input
-                                            {...field}
-                                            type="password"
-                                            placeholder="Enter your new password"
-                                            disabled={isOAuthUser}
-                                        />
+                                        <div className="relative">
+                                            <Input
+                                                {...field}
+                                                type={showNewPassword ? "text" : "password"}
+                                                placeholder="Enter your new password"
+                                                disabled={isOAuthUser}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowNewPassword((v) => !v)}
+                                                className="absolute inset-y-0 right-3 flex items-center text-gray-500 dark:text-gray-400"
+                                                tabIndex={-1}
+                                            >
+                                                {showNewPassword ? (
+                                                    <EyeSlashIcon className="h-5 w-5" />
+                                                ) : (
+                                                    <EyeIcon className="h-5 w-5" />
+                                                )}
+                                            </button>
+                                        </div>
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -232,12 +301,26 @@ export default function SettingsPage() {
                                 <FormItem>
                                     <FormLabel>Confirm Password</FormLabel>
                                     <FormControl>
-                                        <Input
-                                            {...field}
-                                            type="password"
-                                            placeholder="Confirm your new password"
-                                            disabled={isOAuthUser}
-                                        />
+                                        <div className="relative">
+                                            <Input
+                                                {...field}
+                                                type={showConfirmPassword ? "text" : "password"}
+                                                placeholder="Confirm your password"
+                                                disabled={isOAuthUser}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowConfirmPassword((v) => !v)}
+                                                className="absolute inset-y-0 right-3 flex items-center text-gray-500 dark:text-gray-400"
+                                                tabIndex={-1}
+                                            >
+                                                {showConfirmPassword ? (
+                                                    <EyeSlashIcon className="h-5 w-5" />
+                                                ) : (
+                                                    <EyeIcon className="h-5 w-5" />
+                                                )}
+                                            </button>
+                                        </div>
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
