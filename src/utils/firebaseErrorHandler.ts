@@ -12,17 +12,18 @@ const errorMessages = {
 
 export function getFriendlyFirebaseErrorMessage(err: unknown): string {
     if (err instanceof FirebaseError) {
-        // Extract the key between parentheses
-        const match = err.message.match(/\(([^)]+)\)/); // Matches text inside parentheses
+        // Prefer the code property if available
+        if (err.code && err.code in errorMessages) {
+            return errorMessages[err.code as keyof typeof errorMessages];
+        }
+        // Fallback: Extract the key between parentheses in the message
+        const match = err.message.match(/\(([^)]+)\)/);
         const errorKey = match ? match[1] : null;
-
-        // Return the friendly error message or fallback to the original message
         if (errorKey && errorKey in errorMessages) {
             return errorMessages[errorKey as keyof typeof errorMessages];
         }
         return err.message;
     }
-
     // Fallback for non-Firebase errors
     return "An unexpected error occurred. Please try again.";
 }

@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation"; // Import useRouter for navigation
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button"; // Assuming you have a Button component
 import {
     Select,
@@ -20,6 +19,7 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "
 import { useForm } from "react-hook-form";
 import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
+import { getFriendlyFirebaseErrorMessage } from "@/utils/firebaseErrorHandler";
 
 type ThemeType = "light" | "dark" | "system";
 
@@ -140,11 +140,7 @@ export default function SettingsPage() {
 
         } catch (err: unknown) {
             console.error("Error saving changes:", err);
-            if (err instanceof Error) {
-                setError(err.message || "Failed to save changes.");
-            } else {
-                setError("Failed to save changes.");
-            }
+            setError(getFriendlyFirebaseErrorMessage(err));
         } finally {
             setIsSaving(false);
         }
