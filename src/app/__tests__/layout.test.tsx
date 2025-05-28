@@ -1,7 +1,6 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
 import RootLayout from "../layout";
-import '@testing-library/jest-dom';
 
 // Mock providers and external modules
 jest.mock("@/context/authContext", () => ({
@@ -13,6 +12,26 @@ jest.mock("@/context/themeContext", () => ({
 jest.mock("sonner", () => ({
     Toaster: () => <div data-testid="toaster" />,
 }));
+
+// let consoleErrorSpy: jest.SpyInstance;
+
+const originalConsoleError = console.error;
+
+beforeAll(() => {
+    jest.spyOn(console, 'error').mockImplementation((msg, ...args) => {
+        if (
+            typeof msg === 'string' &&
+            msg.includes('cannot be a child of')
+        ) {
+            return;
+        }
+        originalConsoleError(msg, ...args);
+    });
+});
+
+afterAll(() => {
+    (console.error as jest.Mock).mockRestore();
+});
 
 describe("RootLayout", () => {
     it("renders html, head, and body with children", () => {
