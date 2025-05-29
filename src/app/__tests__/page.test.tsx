@@ -1,6 +1,7 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import LandingPage from "../page";
+import type { MockAuth } from "@/types/auth";
 
 // Mock next/image to avoid Next.js SSR issues
 jest.mock("next/image", () => ({
@@ -15,7 +16,7 @@ jest.mock("next/navigation", () => ({
 }));
 
 // Variable to control useAuth mock
-let mockAuthValue = { user: null, loading: false };
+let mockAuthValue: MockAuth = { user: null, loading: false };
 jest.mock("@/context/authContext", () => ({
     useAuth: () => mockAuthValue,
 }));
