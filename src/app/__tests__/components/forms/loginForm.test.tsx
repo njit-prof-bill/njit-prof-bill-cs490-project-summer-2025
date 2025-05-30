@@ -124,13 +124,13 @@ describe("LoginForm", () => {
     it("handles Google sign-in", async () => {
         signInWithPopupMock.mockResolvedValueOnce({ user: {} });
         render(<LoginForm onLogin={onLogin} onForgotPassword={onForgotPassword} />);
-        // Debug: print all button texts
-        // console.log(screen.getAllByRole("button").map(btn => btn.textContent));
-        const googleButton = screen.getAllByRole("button").find(btn =>
-            btn.textContent?.toLowerCase().includes("sign in with google")
-        );
-        expect(googleButton).toBeTruthy();
-        fireEvent.click(googleButton!);
-        await waitFor(() => expect(onLogin).toHaveBeenCalled());
+
+        fireEvent.click(screen.getByText(/sign in with google/i));
+
+        // Wait for both the Firebase call and the onLogin callback
+        await waitFor(() => {
+            expect(signInWithPopupMock).toHaveBeenCalled();
+            expect(onLogin).toHaveBeenCalled();
+        });
     });
 });
