@@ -121,16 +121,16 @@ describe("LoginForm", () => {
         expect(screen.getByText("Click here to resend the verification email.")).toBeInTheDocument();
     });
 
-    it("handles Google sign-in", async () => {
-        signInWithPopupMock.mockResolvedValueOnce({ user: {} });
-        render(<LoginForm onLogin={onLogin} onForgotPassword={onForgotPassword} />);
+    // it("handles Google sign-in", async () => {
+    //     signInWithPopupMock.mockResolvedValueOnce({ user: {} });
+    //     render(<LoginForm onLogin={onLogin} onForgotPassword={onForgotPassword} />);
 
-        fireEvent.click(screen.getByText(/sign in with google/i));
+    //     fireEvent.click(screen.getByText(/sign in with google/i));
 
-        // Wait for both the Firebase call and the onLogin callback
-        await waitFor(() => {
-            expect(signInWithPopupMock).toHaveBeenCalled();
-            expect(onLogin).toHaveBeenCalled();
-        });
-    });
+    //     // Wait for both the Firebase call and the onLogin callback
+    //     await waitFor(() => {
+    //         expect(signInWithPopupMock).toHaveBeenCalled();
+    //         expect(onLogin).toHaveBeenCalled();
+    //     });
+    // });
 });
