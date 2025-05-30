@@ -38,7 +38,8 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    "next.config.ts"
+    "next.config.ts",
+    "src/app/__tests__/components/forms/registrationForm.test.tsxnotyet"
   ],
   "exclude": [
     "node_modules"
