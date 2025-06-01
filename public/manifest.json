@@ -1,6 +1,7 @@
 {
     "name": "Marcus",
     "short_name": "Marcus",
+    "lang": "en-US",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#f8fafc",
@@ -10,12 +11,14 @@
         {
             "src": "/icon-192x192.png",
             "sizes": "192x192",
-            "type": "image/png"
+            "type": "image/png",
+            "purpose": "any maskable"
         },
         {
             "src": "/icon-512x512.png",
             "sizes": "512x512",
-            "type": "image/png"
+            "type": "image/png",
+            "purpose": "any maskable"
         }
     ]
 }
