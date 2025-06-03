@@ -1,36 +1,77 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+---
 
-## Getting Started
+## 🧑‍💻 Getting Started: Local Development Setup
 
-First, run the development server:
+Follow these steps to set up your local development environment for the project.
+
+---
+
+### **Step 1: Clone the Repository**
+
+1. Open your terminal.
+
+2. Clone the project repository using the GitHub URL provided by your instructor:
+
+```bash
+git clone https://github.com/your-instructor/repository-name.git
+cd repository-name
+```
+
+---
+
+### **Step 2: Install Dependencies**
+
+Install all required Node packages:
+
+```bash
+npm install
+```
+
+---
+
+### **Step 3: Set Up Firebase**
+
+You’ll need to create your own Firebase project and configure Authentication.
+
+Follow these steps:
+
+1. Go to [https://console.firebase.google.com](https://console.firebase.google.com)
+
+2. Create a new Firebase project (you can name it anything).
+
+3. In the Firebase dashboard, click **\</> (Web)** to create a new web app.
+
+4. Firebase will generate configuration values like `apiKey`, `authDomain`, etc.
+
+5. Enable an **Authentication provider** (e.g., Email/Password) under **Build → Authentication → Sign-in method**.
+
+---
+
+### **Step 4: Create Your `.env.local` File**
+
+Create a `.env.local` file in the root of the project and copy the following template:
+
+```env
+NEXT_PUBLIC_FIREBASE_API_KEY="your-api-key"
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="your-project-id.firebaseapp.com"
+NEXT_PUBLIC_FIREBASE_PROJECT_ID="your-project-id"
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET="your-project-id.appspot.com"
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID="your-messaging-sender-id"
+NEXT_PUBLIC_FIREBASE_APP_ID="your-app-id"
+NEXT_PUBLIC_FIREBASE_CLIENT_EMAIL="firebase-adminsdk-xxx@your-project-id.iam.gserviceaccount.com"
+NEXT_PUBLIC_FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nYOUR_PRIVATE_KEY\n-----END PRIVATE KEY-----\n"
+```
+
+> ⚠️ Be sure to replace each value with the actual config from your Firebase project. For the private key, escape each line break with `\n`.
+
+---
+
+### **Step 5: Run the Development Server**
+
+Now that everything is configured, start the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The app should be available at [http://localhost:3000](http://localhost:3000).
