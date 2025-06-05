@@ -30,7 +30,7 @@ export default function SidePanel({ isSidePanelOpen }: SidePanelProps) {
                         </Link>
                     </li>
                     <li>
-                        <Link href="#" className="hover:underline">
+                        <Link href="/home/free-form" className="hover:underline">
                             Write Free-form
                         </Link>
                     </li>
