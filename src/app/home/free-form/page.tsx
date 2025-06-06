@@ -1,22 +1,34 @@
 "use client";
 
 export default function FreeFormPage() {
+    function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+        // Prevent the browser from reloading the page
+        event.preventDefault();
+
+        // Read the form data and then convert it to a JSON object
+        const form = event.target as HTMLFormElement;
+        const formData = new FormData(form);
+        const formJson = Object.fromEntries(formData.entries())
+
+        // For debugging purposes
+        console.log(formJson.text);
+    }
     return (
         <div className="flex items-center justify-center min-h-screen text-gray-900 dark:text-gray-100">
             <div className="w-full max-w-md">
-                <form method="post">
-                    <label>
-                        <h1 className="text-2xl font-bold mb-6">Free-form Text</h1>
-                        <textarea
-                            name="freeFormContent"
-                            placeholder="Enter your professional experience and academic credentials here. When you are done, hit 'Submit'."
-                            rows={24}
-                            cols={50}
-                        ></textarea>
-                    </label>
+                <form method="post" onSubmit={handleSubmit}>
+                    <h1 className="text-2xl font-bold mb-6">Free-form Text</h1>
+                    <textarea
+                        name="text"
+                        placeholder="Enter some text here. When you are done, hit 'Submit'."
+                        rows={24}
+                        cols={50}
+                    ></textarea>
                     <button type="submit">Submit</button>
                 </form>
             </div>
+
         </div>
+
     );
 }
