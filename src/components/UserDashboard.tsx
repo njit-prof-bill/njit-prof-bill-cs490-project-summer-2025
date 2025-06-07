@@ -90,9 +90,17 @@ export function UserDashboard() {
 // can be edited later to show more:
 return (
     <div className="max-w-4xl mx-auto p-8">
-      <h1 className="text-3xl font-bold mb-6">
-        Welcome, {userProfile?.email || user.email}!
-      </h1>
+
+      {/* checks first is email is null, if so, don't attempt to print email: */}
+     <h1 className="text-3xl font-bold mb-6">
+      {userProfile?.email || user?.email ? (
+        `Welcome, ${userProfile?.email || user?.email}!`
+      ) : (
+        'Welcome!'
+      )}
+    </h1>
+
+      
       
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
         <h2 className="text-xl font-semibold mb-4">Your Profile</h2>

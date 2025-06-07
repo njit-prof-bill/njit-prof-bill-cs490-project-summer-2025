@@ -8,6 +8,8 @@ import { RegistrationForm } from "@/components/forms/registrationForm";
 import { ResetPasswordForm } from "@/components/forms/resetPasswordForm";
 import Image from "next/image";
 
+
+
 export default function LandingPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
