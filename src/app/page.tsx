@@ -77,6 +77,8 @@ export default function LandingPage() {
           </>
         )}
 
+
+
         {view === "register" && (
           <>
             {/* Form Label */}
@@ -99,6 +101,9 @@ export default function LandingPage() {
             <RegistrationForm onRegister={() => setView("login")} />
           </>
         )}
+
+
+
 
         {view === "resetPassword" && (
           <>

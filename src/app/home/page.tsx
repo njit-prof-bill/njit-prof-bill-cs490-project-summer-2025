@@ -31,33 +31,6 @@ export default function HomePage() {
 
     
 
-
-// Debugging:
-    useEffect(() => {
-    // Fetch data from the API route
-    fetch('/api/hello')
-      .then((response) => response.json())
-      .then((data) => setMessage(data.message))
-      .catch((error) => console.error('Error fetching API:', error));
-  }, []);
-
-
-// useEffect(() => {
-//     fetch('/api/cat')
-//       .then((res) => {
-//         return res.blob(); // OK to convert to blob here
-//       })
-//       .then((blob) => {
-//         const objectUrl = URL.createObjectURL(blob);
-//         setImgSrc(objectUrl);
-//       })
-//   }, []);
-
-
-
-
-
-
  
     return (
         <div className="flex flex-col items-center">
