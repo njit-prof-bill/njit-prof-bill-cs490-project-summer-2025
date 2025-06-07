@@ -24,6 +24,17 @@ export default function SidePanel({ isSidePanelOpen }: SidePanelProps) {
                             Settings
                         </Link>
                     </li>
+                    <li>
+                        <Link href="/home/upload-resume" className="hover:underline">
+                            Upload Resume
+                        </Link>
+
+                    </li>
+                    <li>
+                        <Link href="/home/free-form" className="hover:underline">
+                            Write Free-form
+                        </Link>
+                    </li>
                 </ul>
             </nav>
         </aside>
