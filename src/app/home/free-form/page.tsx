@@ -11,7 +11,7 @@ export default function FreeFormPage() {
         const formJson = Object.fromEntries(formData.entries())
 
         // For debugging purposes
-        console.log(formJson.text);
+        console.log(formJson);
     }
     return (
         <div className="flex items-center justify-center min-h-screen text-gray-900 dark:text-gray-100">
