@@ -22,15 +22,25 @@ export default function HomePage() {
         <div className="flex items-center justify-center min-h-screen">
             <Card className="w-full max-w-md shadow-lg">
                 <CardHeader>
-                    <CardTitle>Marcus App Template</CardTitle>
+                    <CardTitle>Welcome to Pisces!</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <CardDescription>
-                        This app is a starter template for SaaS applications. To use this template, simply fork the repository and install the app dependencies.
+                        To get started, click "Upload Resume" in the sidebar and then choose a file to upload from your computer.<br></br><br></br>
+                        Supported file formats:
+                        <ul>
+                            <li>PDF (.pdf)</li>
+                            <li>Microsoft Word (.docx)</li>
+                            <li>Plain text (.txt)</li>
+                            <li>Markdown (.md)</li>
+                            <li>OpenDocument (.odf)</li>
+                        </ul>
                     </CardDescription>
                 </CardContent>
                 <CardFooter>
-                    <CardDescription>Copyright 2025 Fourier Gauss Labs</CardDescription>
+                    <CardDescription>
+                        If you'd rather input free-form text for your resume info instead of uploading a file, click "Write Free-form" in the sidebar.
+                    </CardDescription>
                 </CardFooter>
             </Card>
         </div>

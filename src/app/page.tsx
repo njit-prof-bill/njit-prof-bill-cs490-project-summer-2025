@@ -40,7 +40,7 @@ export default function LandingPage() {
                 height={60} // Increased size
               />
               <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-                Marcus
+                Pisces
               </h2>
             </div>
           </div>
