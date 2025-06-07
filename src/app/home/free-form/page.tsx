@@ -1,6 +1,23 @@
 "use client";
 
+import { useAuth } from "@/context/authContext";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+
 export default function FreeFormPage() {
+    const { user, loading } = useAuth();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (!loading && !user) {
+            router.push("/"); // Redirect to landing page if not authenticated
+        }
+    }, [user, loading, router]);
+
+    if (loading) {
+        return <p>Loading...</p>; // Show a loading state while checking auth
+    }
+
     function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
         // Prevent the browser from reloading the page
         event.preventDefault();
