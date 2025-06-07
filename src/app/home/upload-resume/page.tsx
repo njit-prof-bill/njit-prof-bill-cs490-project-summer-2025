@@ -22,7 +22,7 @@ export default function UploadResumePage() {
   };
 
   const onSelect = (e) => {
-    const allowedExtensions = ['pdf', 'PDF', 'docx', 'DOCX', 'txt', 'md', 'odt'];
+    const allowedExtensions = ['pdf', 'PDF', 'docx', 'DOCX', 'txt', 'TXT', 'md', 'MD', 'odt', 'ODT'];
 
     const isValid = e.files.every((file) => {
       const ext = file.name.split('.').pop();
