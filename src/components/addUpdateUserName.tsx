@@ -1,5 +1,5 @@
-// Step 2: Create components/UserDashboard.tsx
-// components/UserDashboard.tsx
+// Step 2: Create components/addUserName.tsx
+// components/addUserName.tsx
 "use client";
 
 import { useEffect, useState } from 'react';
@@ -13,7 +13,7 @@ import { addUserName } from '@/lib/addUserName';
 
 
 
-export function UserDashboard() {
+export function addUpdateUserName() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<any>(null);
