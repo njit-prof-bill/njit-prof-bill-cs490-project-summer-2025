@@ -9,9 +9,8 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter }
 import { UserNameAddUpdate } from '@/components/userNameAddUpdate';
 
 
-import Spinner from '../../components/ui/Spinner';
 
-
+import Spinner, { spinnerStyles } from '../../components/ui/Spinner';
 
 
 
@@ -62,16 +61,7 @@ export default function HomePage() {
                     <CardTitle>Team Phoenix: The Project AI Resume Builder</CardTitle>
                     <p>{message}</p>
                     <img src="/api/cat" alt="Fetched Image" />
-                    <UserNameAddUpdate />;
-
-                    {/* ----------Loading Spinner ------------------------------ */}
-                     <style>{spinnerStyles}</style>
-                        {loading && (
-                          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
-                            <Spinner />
-                          </div>
-                        )}
-
+                    <UserNameAddUpdate />
                 </CardHeader>
             </Card>
 

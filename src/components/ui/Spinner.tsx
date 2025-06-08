@@ -4,20 +4,27 @@ import React from 'react';
 
 
 
-// Notes on using:
+// -----------------Notes: HOW TO USE: ------------------
 // you can include this spinner where a submission or process takes some time, and the 
 // 'loading' variable type is present, which it waits upon.
-//
 
-  // {/* ----------Loading Spinner ------------------------------ */}
-  //     {/* Inject the keyframes globally when loading */}
-  //     <style>{spinnerStyles}</style>
-  //     {loading && (
-  //       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
-  //         <Spinner />
-  //       </div>
-  //     )}
-  //     {/* -------------------------------------------------------- */}
+
+// Note: import this and its style, into the component or page where you need it:
+//
+//  import Spinner, { spinnerStyles } from '../../components/ui/Spinner';
+//
+// 
+//
+//
+// {/* ----------Loading Spinner div segment: put into section where needed ------------------------------ */}
+//     {/* Inject the keyframes globally when loading */}
+//     <style>{spinnerStyles}</style>
+//     {loading && (
+//       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
+//         <Spinner />
+//       </div>
+//     )}
+//     {/* -------------------------------------------------------- */}
 
 
 
