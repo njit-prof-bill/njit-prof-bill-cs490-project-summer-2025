@@ -1,5 +1,5 @@
-// Step 2: Create components/UserDashboard.tsx
-// components/UserDashboard.tsx
+// Step 2: Create components/userNameAddUpdate.tsx
+// components/userNameAddUpdate.tsx
 "use client";
 
 import { useEffect, useState } from 'react';
@@ -8,12 +8,12 @@ import { auth } from '@/lib/firebase';
 import { getCurrentUserProfile} from '@/lib/userOperations';
 
 //----------user name adding method: imported from addUserName.ts file in /lib:-------------
-import { addUserName } from '@/lib/addUserName';
+import { addUserNameDatabase } from '@/lib/addUserNameDatabase';
 
 
 
 
-export function UserDashboard() {
+export function UserNameAddUpdate() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<any>(null);
@@ -75,7 +75,7 @@ export function UserDashboard() {
   // addUserName()
 //
   const handleAddUserName = async () => {
-    await addUserName(userNameField);
+    await addUserNameDatabase(userNameField);
   };
 //----------------------------------
 
