@@ -3,6 +3,9 @@
 import { useAuth } from "@/context/authContext";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { db } from "@/lib/firebase";
+import { collection, doc, setDoc, addDoc, serverTimestamp } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 
 export default function FreeFormPage() {
     const { user, loading } = useAuth();
@@ -18,6 +21,28 @@ export default function FreeFormPage() {
         return <p>Loading...</p>; // Show a loading state while checking auth
     }
 
+    async function setFreeFormCorpus(corpus: string) {
+        // We want to uniquely identify the user's free-form text in the database
+        let uid;
+        if (user) {
+            uid = user.uid;
+        } else {
+            // Don't try to send anything if user is logged out
+            return;
+        }
+
+        // Should overwrite the user's pre-existing submission
+        const newSubmissionRef = doc(db, "users", uid);
+        await setDoc(newSubmissionRef, {
+            freeFormCorpus: corpus,
+            dateSubmitted: serverTimestamp()
+        });
+
+        // For debugging purposes
+        console.log("User    UID: ", user.uid);
+        console.log("Document ID: ", newSubmissionRef.id);
+    }
+
     function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
         // Prevent the browser from reloading the page
         event.preventDefault();
@@ -27,8 +52,11 @@ export default function FreeFormPage() {
         const formData = new FormData(form);
         const formJson = Object.fromEntries(formData.entries())
 
+        // Send the form data to the database
+        setFreeFormCorpus(formJson.text as string);
+
         // For debugging purposes
-        console.log(formJson);
+        //console.log(formJson);
     }
     return (
         <div className="flex items-center justify-center min-h-screen text-gray-900 dark:text-gray-100">
@@ -44,8 +72,6 @@ export default function FreeFormPage() {
                     <button type="submit">Submit</button>
                 </form>
             </div>
-
         </div>
-
     );
 }
