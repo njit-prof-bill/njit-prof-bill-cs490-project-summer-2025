@@ -3,7 +3,7 @@ import { collection, doc, addDoc, updateDoc, getDocs, getDoc, query, where, orde
 import { auth, db } from '@/lib/firebase';
 // import { useAuthState } from 'react-firebase-hooks/auth'; // Popular hook library
 
-
+// GetCurrentUserProfile
 
 // Get current user's profile from Firestore
 export const getCurrentUserProfile = async () => {

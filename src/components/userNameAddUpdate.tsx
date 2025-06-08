@@ -5,7 +5,12 @@
 import { useEffect, useState } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import { getCurrentUserProfile} from '@/lib/userOperations';
+
+
+
+
+//-------------- lib function to get user profile: ----------------
+import { getCurrentUserProfile} from '@/lib/getCurrentUserProfile';
 
 //----------user name adding method: imported from addUserName.ts file in /lib:-------------
 import { addUserNameDatabase } from '@/lib/addUserNameDatabase';
