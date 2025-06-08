@@ -22,7 +22,7 @@ export default function HomePage() {
 
     // Debugging:
     const [message, setMessage] = useState('');
-    const [imgSrc, setImgSrc] = useState('');
+
 
 
     useEffect(() => {
@@ -45,6 +45,10 @@ export default function HomePage() {
                     <CardTitle>Team Phoenix: Project AI Resume Builder</CardTitle>
                 </CardHeader>
                 <CardContent>
+
+                {/* team logo, for now, can be moved. */}
+                <img src="/team-logo-1.jpg" alt="Fetched Image" />
+
                     <CardDescription>
                         This app is a starter template for SaaS applications. To use this template, simply fork the repository and install the app dependencies.
                     </CardDescription>
@@ -58,9 +62,8 @@ export default function HomePage() {
             
             <Card className="w-full max-w-md shadow-lg">
                 <CardHeader>
-                    <CardTitle>Team Phoenix: The Project AI Resume Builder</CardTitle>
-                    <p>{message}</p>
-                    <img src="/api/cat" alt="Fetched Image" />
+                    <CardTitle>Basic User Profile:</CardTitle>
+
                     <UserNameAddUpdate />
                 </CardHeader>
             </Card>
