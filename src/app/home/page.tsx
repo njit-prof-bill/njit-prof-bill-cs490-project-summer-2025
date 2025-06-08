@@ -6,9 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 
-
 import { UserNameAddUpdate } from '@/components/userNameAddUpdate';
-
 
 // import { useState, useEffect } from 'react';
 
@@ -59,9 +57,7 @@ export default function HomePage() {
                     <CardTitle>Team Phoenix: The Project AI Resume Builder</CardTitle>
                     <p>{message}</p>
                     <img src="/api/cat" alt="Fetched Image" />
-
                     <UserNameAddUpdate />;
-
                 </CardHeader>
             </Card>
 
