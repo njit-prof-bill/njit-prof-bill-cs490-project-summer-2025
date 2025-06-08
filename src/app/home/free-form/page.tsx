@@ -98,13 +98,14 @@ export default function FreeFormPage() {
             <div className="w-full max-w-md">
                 <form method="post" onSubmit={handleSubmit}>
                     <h1 className="text-2xl font-bold mb-6">Free-form Text</h1>
+                    <p>Enter some text in the box below. <br></br>When you are done, hit 'Submit'.</p>
                     <textarea
                         name="text"
                         // Using defaultValue since I just want to pre-fill the text field once
                         // with whatever the user entered there in a past session,
                         // instead of updating the field while the user is typing in it.
                         defaultValue={corpusValue}
-                        placeholder="Enter some text here. When you are done, hit 'Submit'."
+                        placeholder="Start typing here"
                         rows={24}
                         cols={50}
                     ></textarea>
