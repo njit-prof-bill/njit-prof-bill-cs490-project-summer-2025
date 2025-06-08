@@ -8,7 +8,11 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter }
 
 import { UserNameAddUpdate } from '@/components/userNameAddUpdate';
 
-// import { useState, useEffect } from 'react';
+
+
+import Spinner, { spinnerStyles } from '../../components/ui/Spinner';
+
+
 
 export default function HomePage() {
 
@@ -57,7 +61,7 @@ export default function HomePage() {
                     <CardTitle>Team Phoenix: The Project AI Resume Builder</CardTitle>
                     <p>{message}</p>
                     <img src="/api/cat" alt="Fetched Image" />
-                    <UserNameAddUpdate />;
+                    <UserNameAddUpdate />
                 </CardHeader>
             </Card>
 
