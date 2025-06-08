@@ -56,7 +56,7 @@ export default function HomePage() {
             
             <Card className="w-full max-w-md shadow-lg">
                 <CardHeader>
-                    <CardTitle>ATeam Phoenix: The Project AI Resume Builder</CardTitle>
+                    <CardTitle>Team Phoenix: The Project AI Resume Builder</CardTitle>
                     <p>{message}</p>
                     <img src="/api/cat" alt="Fetched Image" />
 
