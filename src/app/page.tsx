@@ -8,6 +8,7 @@ import { RegistrationForm } from "@/components/forms/registrationForm";
 import { ResetPasswordForm } from "@/components/forms/resetPasswordForm";
 import Image from "next/image";
 
+import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 
 
 export default function LandingPage() {
@@ -50,6 +51,28 @@ export default function LandingPage() {
           <hr className="w-2/5 border-gray-300 dark:border-gray-600" />
         </div>
       </div>
+
+
+              <Card className="w-full max-w-md shadow-lg">
+                <CardHeader>
+                    <CardTitle>Team Phoenix: Project AI Resume Builder</CardTitle>
+                </CardHeader>
+                <CardContent>
+
+                {/* team logo, for now, can be moved. */}
+                <img src="/team-logo-1.jpg" alt="Fetched Image" />
+
+                    <CardDescription>
+                        Use AI to help build a competitive resume for your career needs.
+                    </CardDescription>
+                </CardContent>
+                <CardFooter>
+                    <CardDescription>Copyright 2025 Phoenix Team Ltd.</CardDescription>
+                </CardFooter>
+            </Card>
+
+          <br />
+
 
       {/* Form Section */}
       <div className="w-full max-w-md">

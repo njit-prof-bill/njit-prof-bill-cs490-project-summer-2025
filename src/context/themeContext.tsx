@@ -50,16 +50,16 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                         }
                     } else {
                         // First-time user: create document with default theme
-                        await setDoc(userRef, { theme: "system" });
-                        setTheme("system");
-                        localStorage.setItem("theme", "system");
+                        await setDoc(userRef, { theme: "dark" });
+                        setTheme("dark");
+                        localStorage.setItem("theme", "dark");
                     }
                 } catch (err) {
                     console.error("Error loading theme from Firestore:", err);
                 }
             } else {
                 // Not signed in, fall back to localStorage or system
-                const savedTheme = (localStorage.getItem("theme") as ThemeType) || "system";
+                const savedTheme = (localStorage.getItem("theme") as ThemeType) || "dark";
                 setTheme(savedTheme);
             }
             setAuthChecked(true); // <-- Set to true after auth check

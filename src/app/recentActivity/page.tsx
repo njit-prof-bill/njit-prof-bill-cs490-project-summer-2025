@@ -41,10 +41,29 @@ export default function HomePage() {
     return (
         <div className="flex flex-col items-center">
          
+         <Card className="w-full max-w-md shadow-lg">
+
+                <CardHeader>
+                    <CardTitle>Placeholder: recent activity </CardTitle>
+                </CardHeader>
+
+                <CardContent>
+                    <CardDescription>
+              
+                    
+
+                    </CardDescription>
+                </CardContent>
+
+
+                <CardFooter>
+                    <CardDescription></CardDescription>
+                </CardFooter>
+
+            </Card>
 
 
 
-         
 
         </div>
     );

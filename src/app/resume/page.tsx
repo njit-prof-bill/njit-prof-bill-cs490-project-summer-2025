@@ -46,13 +46,13 @@ export default function HomePage() {
         <Card className="w-full max-w-md shadow-lg">
 
                 <CardHeader>
-                    <CardTitle>Placeholder: For </CardTitle>
+                    <CardTitle>Placeholder: For resume generator </CardTitle>
                 </CardHeader>
 
                 <CardContent>
                     <CardDescription>
-                       
-
+                    <img src="/resume-page-example.jpg" alt="Fetched Image" />   
+                    <img src="/resume-page-example-2.jpg" alt="Fetched Image" />  
                         <br />
                     
 

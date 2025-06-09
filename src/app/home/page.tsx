@@ -52,7 +52,7 @@ export default function HomePage() {
                     <CardDescription>
                         Add all 4 components here: pdf getter, docx getter, user text input, txt file getter:
                         Arrange in box pattern, 
-                        
+                         <img src="/home-page-example.jpg" alt="Fetched Image" />
                         <br />
                         <br />
                         [pdf]  [docx]
