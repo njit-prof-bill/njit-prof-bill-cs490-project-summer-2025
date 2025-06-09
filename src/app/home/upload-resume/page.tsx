@@ -88,7 +88,7 @@ export default function UploadResumePage() {
         ref={fileUploadRef}
         name="file"
         url="/api/upload"
-        accept=".pdf,.PDF,.docx,.DOCX,.txt,.md,.odt"
+        accept=".pdf,.PDF,.docx,.DOCX,.txt,.md,.odt,.TXT,.MD,.ODT"
         customUpload
         auto
         onUpload={onUpload}
