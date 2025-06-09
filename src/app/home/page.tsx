@@ -52,7 +52,7 @@ export default function HomePage() {
                     <CardDescription>
                         Add all 4 components here: pdf getter, docx getter, user text input, txt file getter:
                         Arrange in box pattern, 
-                         <img src="/home-page-example.jpg" alt="Fetched Image" />
+                         {/* <img src="/home-page-example.jpg" alt="Fetched Image" /> */}
                         <br />
                         <br />
                         [pdf]  [docx]
@@ -70,7 +70,104 @@ export default function HomePage() {
             </Card>
 
 
-            {/*  ------------------------ */}
+{/* ---------------------  Document Input components Here: ------------------------------------------------- */}
+
+     <div className="grid grid-cols-2 gap-4 p-4">
+      {/* Card 1 */}
+      <div className="bg-gray-800 p-4 rounded shadow h-64 flex flex-col">
+        <h2 className="font-bold mb-2">PDF-Document:</h2>
+        <div className="flex-1 overflow-hidden">
+
+         <Card className="w-full max-w-md shadow-lg">
+                <CardHeader>
+                    <CardTitle>Place Respective Component In Here:</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <CardDescription>
+                        Use AI to help build a competitive resume for your career needs.
+                    </CardDescription>
+                </CardContent>
+               
+            </Card>
+
+
+
+        </div>
+      </div>
+      
+      {/* Card 2 */}
+      <div className="bg-gray-800 p-4 rounded shadow h-64 flex flex-col">
+        <h2 className="font-bold mb-2">Docx Document:</h2>
+        <div className="flex-1 overflow-hidden">
+         
+        <Card className="w-full max-w-md shadow-lg">
+                <CardHeader>
+                    <CardTitle>Place Respective Component In Here:</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <CardDescription>
+                        Use AI to help build a competitive resume for your career needs.
+                    </CardDescription>
+                </CardContent>
+               
+            </Card>
+
+        </div>
+      </div>
+      
+      {/* Card 3 */}
+      <div className="bg-gray-800 p-4 rounded shadow h-64 flex flex-col">
+        <h2 className="font-bold mb-2">Txt Document:</h2>
+        <div className="flex-1 overflow-hidden">
+
+
+          <Card className="w-full max-w-md shadow-lg">
+                <CardHeader>
+                    <CardTitle>Place Respective Component In Here:</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <CardDescription>
+                        Use AI to help build a competitive resume for your career needs.
+                    </CardDescription>
+                </CardContent>
+               
+            </Card>
+
+        </div>
+      </div>
+      
+      {/* Card 4 */}
+      <div className="bg-gray-800 p-4 rounded shadow h-64 flex flex-col">
+        <h2 className="font-bold mb-2">Freeform Text Input:</h2>
+        <div className="flex-1 overflow-hidden">
+          
+        <Card className="w-full max-w-md shadow-lg">
+                <CardHeader>
+                    <CardTitle>Place Respective Component In Here:</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <CardDescription>
+                        Use AI to help build a competitive resume for your career needs.
+                    </CardDescription>
+                </CardContent>
+               
+            </Card>
+
+
+        </div>
+      </div>
+    </div>
+
+
+{/*  ------------------------------------------------------- */}
+
+
+
+
+
+
+
+            {/*  ------- Etc placeholder for team logo stuff: ----------------- */}
             <br />
             <br />
 
