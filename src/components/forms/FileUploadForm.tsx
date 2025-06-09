@@ -22,8 +22,6 @@ export default function FileUploadForm() {
 
         setIsSubmitting(true);
 
-        // This is for demo testing
-        await new Promise((resolve) => setTimeout(resolve, 1000));
         // If nothing is selected
         if(!selectedFile && biographyText.trim() == "") {
             setFeedbackMessage("Please upload a file or enter biography text before submitting.");
@@ -32,22 +30,46 @@ export default function FileUploadForm() {
             return;
         }
 
-        // Prioritize the file submission over the text
-        if(selectedFile) {
-            setFeedbackMessage(`Uploaded file: ${selectedFile.name}`);
-            setIsError(false);
-        }
-        else if(biographyText.trim() !== "") {
-            setFeedbackMessage(`Uploaded biography text.`);
-            setIsError(false);
-        }
-        else {
-            setFeedbackMessage("");
-            setIsError(false);
-        }
+        try {
+            const formData = new FormData();
 
-        setIsSubmitting(false);
-    };
+            if(selectedFile) {
+                formData.append("file", selectedFile);
+            }
+
+            if(biographyText.trim() !== "") {
+                formData.append("biography", biographyText.trim());
+            }
+
+            const response = await fetch("http://localhost:5000/upload", {
+                method: "POST",
+                body: formData,
+            });
+
+            const data = await response.json();
+
+            if(response.ok) {
+                setFeedbackMessage(`Success: ${data.message}`);
+                setIsError(false);
+            }
+            else {
+                setFeedbackMessage(`Error: ${data.error || 'Unknown error'}`);
+                setIsError(true);
+            }
+        }
+        catch(error) {
+            if (error instanceof Error) {
+                setFeedbackMessage(`Error: ${error.message}`);
+            }
+            else {
+                setFeedbackMessage("An unknown error occurred.");
+            }
+            setIsError(true);
+        }
+        finally {
+            setIsSubmitting(false);
+        }
+    }
 
     const handleChooseFileClick = () => {
         fileInputRef.current?.click();
