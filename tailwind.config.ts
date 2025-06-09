@@ -8,12 +8,25 @@ const config: Config = {
         extend: {
             colors: {
                 background: {
-                    DEFAULT: "#f3f4f6", // Light mode background (gray-100)
+
+                    // DEFAULT: "#f3f4f6", // Light mode background (gray-100)
+                    // dark: "#111827", // Dark mode background (gray-900)
+
+                    
+                    DEFAULT: "#303030", // Light mode background (gray-100)
                     dark: "#111827", // Dark mode background (gray-900)
                 },
                 foreground: {
-                    DEFAULT: "#111827", // Light mode text (gray-900)
+                    // DEFAULT: "#111827", // Light mode text (gray-900)
+
+                    // dark: "#f3f4f6", // Dark mode text (gray-100)
+
+
+
+                    DEFAULT: "#303030", // Light mode text (gray-900)
+
                     dark: "#f3f4f6", // Dark mode text (gray-100)
+
                 },
             },
         },

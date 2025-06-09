@@ -40,24 +40,21 @@ export default function HomePage() {
  
     return (
         <div className="flex flex-col items-center">
-        
-        
-            <Card className="w-full max-w-md shadow-lg">
+
+
+
+        <Card className="w-full max-w-md shadow-lg">
 
                 <CardHeader>
-                    <CardTitle>Placeholder: For Components... <br /> <br /> "Get started now: upload a resume:"</CardTitle>
+                    <CardTitle>Placeholder: For </CardTitle>
                 </CardHeader>
 
                 <CardContent>
                     <CardDescription>
-                        Add all 4 components here: pdf getter, docx getter, user text input, txt file getter:
-                        Arrange in box pattern, 
-                        
+                       
+
                         <br />
-                        <br />
-                        [pdf]  [docx]
-                        <br />
-                        [txt]  [free text]
+                    
 
                     </CardDescription>
                 </CardContent>
@@ -69,31 +66,9 @@ export default function HomePage() {
 
             </Card>
 
-
-            {/*  ------------------------ */}
-            <br />
-            <br />
-
-            <Card className="w-full max-w-md shadow-lg">
-                <CardHeader>
-                    <CardTitle>Team Phoenix: Project AI Resume Builder</CardTitle>
-                </CardHeader>
-                <CardContent>
-
-                {/* team logo, for now, can be moved. */}
-                <img src="/team-logo-1.jpg" alt="Fetched Image" />
-
-                    <CardDescription>
-                        Use AI to help build a competitive resume for your career needs.
-                    </CardDescription>
-                </CardContent>
-                <CardFooter>
-                    <CardDescription>Copyright 2025 Phoenix Team Ltd.</CardDescription>
-                </CardFooter>
-            </Card>
-
-
-
+        
+            
+         
         </div>
     );
 }
