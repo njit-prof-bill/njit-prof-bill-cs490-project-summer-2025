@@ -48,7 +48,7 @@ export function LoginForm({
             onLogin();
             router.push("/home");
         } catch (err: unknown) {
-            toast.error("Failed to sign in with Google. Please try again.");
+            toast.error(getFriendlyFirebaseErrorMessage(err));
             console.error("Google sign-in error:", err);
         }
     };
