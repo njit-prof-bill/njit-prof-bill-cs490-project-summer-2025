@@ -3,7 +3,8 @@
 import { useAuth } from "@/context/authContext";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
+import FileUploadForm from "@/components/forms/FileUploadForm";
+
 export default function HomePage() {
     const { user, loading } = useAuth();
     const router = useRouter();
@@ -19,20 +20,9 @@ export default function HomePage() {
     }
 
     return (
-        <div className="flex items-center justify-center min-h-screen">
-            <Card className="w-full max-w-md shadow-lg">
-                <CardHeader>
-                    <CardTitle>Marcus App Template</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <CardDescription>
-                        This app is a starter template for SaaS applications. To use this template, simply fork the repository and install the app dependencies.
-                    </CardDescription>
-                </CardContent>
-                <CardFooter>
-                    <CardDescription>Copyright 2025 Fourier Gauss Labs</CardDescription>
-                </CardFooter>
-            </Card>
+        <div className="flex flex-col items-center justify-center flex-1 px-4 py-8">
+            <h1 className="text-4xl font-bold text-center mb-6">Build Your Resume</h1>
+            <FileUploadForm />
         </div>
     );
 }
