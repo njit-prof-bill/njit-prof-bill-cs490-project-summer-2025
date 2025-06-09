@@ -40,6 +40,40 @@ export default function HomePage() {
  
     return (
         <div className="flex flex-col items-center">
+        
+        
+            <Card className="w-full max-w-md shadow-lg">
+
+                <CardHeader>
+                    <CardTitle>Placeholder: For Components... <br /> <br /> "Get started now: upload a resume:"</CardTitle>
+                </CardHeader>
+
+                <CardContent>
+                    <CardDescription>
+                        Add all 4 components here: pdf getter, docx getter, user text input, txt file getter:
+                        Arrange in box pattern, 
+                         <img src="/home-page-example.jpg" alt="Fetched Image" />
+                        <br />
+                        <br />
+                        [pdf]  [docx]
+                        <br />
+                        [txt]  [free text]
+
+                    </CardDescription>
+                </CardContent>
+
+
+                <CardFooter>
+                    <CardDescription></CardDescription>
+                </CardFooter>
+
+            </Card>
+
+
+            {/*  ------------------------ */}
+            <br />
+            <br />
+
             <Card className="w-full max-w-md shadow-lg">
                 <CardHeader>
                     <CardTitle>Team Phoenix: Project AI Resume Builder</CardTitle>
@@ -50,23 +84,15 @@ export default function HomePage() {
                 <img src="/team-logo-1.jpg" alt="Fetched Image" />
 
                     <CardDescription>
-                        This app is a starter template for SaaS applications. To use this template, simply fork the repository and install the app dependencies.
+                        Use AI to help build a competitive resume for your career needs.
                     </CardDescription>
                 </CardContent>
                 <CardFooter>
-                    <CardDescription>Copyright 2025 Fourier Gauss Labs</CardDescription>
+                    <CardDescription>Copyright 2025 Phoenix Team Ltd.</CardDescription>
                 </CardFooter>
             </Card>
 
-            <br />
-            
-            <Card className="w-full max-w-md shadow-lg">
-                <CardHeader>
-                    <CardTitle>Basic User Profile:</CardTitle>
 
-                    <UserNameAddUpdate />
-                </CardHeader>
-            </Card>
 
         </div>
     );
