@@ -41,7 +41,7 @@ export function RegistrationForm({ onRegister }: { onRegister: () => void }) {
             console.log("Google sign-in successful:", user);
             onRegister(); // Notify the parent component
         } catch (err: unknown) {
-            toast.error("Failed to sign in with Google. Please try again.");
+            toast.error(getFriendlyFirebaseErrorMessage(err));
             console.error("Google sign-in error:", err);
         }
     };

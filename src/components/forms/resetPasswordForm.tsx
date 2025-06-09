@@ -1,5 +1,6 @@
 "use client";
 
+import { getFriendlyFirebaseErrorMessage } from "@/utils/firebaseErrorHandler";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -42,7 +43,7 @@ export function ResetPasswordForm({
             toast.success("Password reset email sent. Please check your inbox.");
             onSuccess(); // Notify parent of success
         } catch (error: unknown) {
-            toast.error("Failed to send password reset email. Please try again.");
+            toast.error(getFriendlyFirebaseErrorMessage(error));
             console.error("Password reset error:", error);
         } finally {
             setIsSubmitting(false);
