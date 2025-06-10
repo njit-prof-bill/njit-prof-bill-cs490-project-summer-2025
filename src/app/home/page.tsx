@@ -38,15 +38,17 @@ export default function HomePage() {
     }
 
     const handleSubmit = () => {
-        // Simulate a submission
-        const success = Math.random() > 0.5; // randomly pass/fail
-    
-        if (success) {
-          setSubmissionStatus({ type: "success", message: "Submission successful!" });
-        } else {
-          setSubmissionStatus({ type: "error", message: "Submission failed. Please try again." });
-        }
+        setSubmissionStatus(null); // clear current state first
+      
+        setTimeout(() => {
+          const success = false; // or random
+          setSubmissionStatus({
+            type: success ? "success" : "error",
+            message: success ? "Submission successful!" : "Submission failed. Please try again.",
+          });
+        }, 0);
       };
+      
 
  
     return (
