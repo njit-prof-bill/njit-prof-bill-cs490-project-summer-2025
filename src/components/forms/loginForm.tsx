@@ -13,11 +13,18 @@ import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import { toast } from "sonner";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { FcGoogle } from "react-icons/fc";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Checkbox } from "@/components/ui/checkbox";
 
-interface LoginFormValues {
-    email: string;
-    password: string;
-}
+// Define schema for form validation
+const loginSchema = z.object({
+    email: z.string().email("Invalid email address").nonempty("Email is required"),
+    password: z.string().min(6, "Password must be at least 6 characters").nonempty("Password is required"),
+    rememberMe: z.boolean().optional(),
+});
+
+type LoginFormValues = z.infer<typeof loginSchema>;
 
 export function LoginForm({
     onLogin,
@@ -29,16 +36,21 @@ export function LoginForm({
     const [error, setError] = useState<string | null>(null);
     const [showResendLink, setShowResendLink] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [isGoogleLoading, setIsGoogleLoading] = useState(false);
     const router = useRouter();
 
     const form = useForm<LoginFormValues>({
+        resolver: zodResolver(loginSchema),
         defaultValues: {
             email: "",
             password: "",
+            rememberMe: false,
         },
     });
 
     const handleGoogleSignIn = async () => {
+        setIsGoogleLoading(true);
         try {
             const provider = new GoogleAuthProvider();
             const result = await signInWithPopup(auth, provider);
@@ -50,11 +62,14 @@ export function LoginForm({
         } catch (err: unknown) {
             toast.error(getFriendlyFirebaseErrorMessage(err));
             console.error("Google sign-in error:", err);
+        } finally {
+            setIsGoogleLoading(false);
         }
     };
 
     const handleLogin = async (values: LoginFormValues) => {
         setError(null);
+        setIsLoading(true);
 
         try {
             const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
@@ -69,10 +84,18 @@ export function LoginForm({
                 return;
             }
 
+            // Handle remember me
+            if (values.rememberMe) {
+                // Set persistence to LOCAL (default is SESSION)
+                await auth.setPersistence('local');
+            }
+
             onLogin();
             router.push("/home");
         } catch (err: unknown) {
             setError(getFriendlyFirebaseErrorMessage(err));
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -160,8 +183,25 @@ export function LoginForm({
                     )}
                 />
 
-                {/* Forgot Password Link */}
-                <div className="mt-2 text-left">
+                <div className="flex items-center justify-between">
+                    <FormField
+                        name="rememberMe"
+                        control={form.control}
+                        render={({ field }) => (
+                            <FormItem className="flex items-center space-x-2">
+                                <FormControl>
+                                    <Checkbox
+                                        checked={field.value}
+                                        onCheckedChange={field.onChange}
+                                    />
+                                </FormControl>
+                                <FormLabel className="text-sm font-normal">
+                                    Remember me
+                                </FormLabel>
+                            </FormItem>
+                        )}
+                    />
+
                     <button
                         type="button"
                         onClick={onForgotPassword}
@@ -171,8 +211,8 @@ export function LoginForm({
                     </button>
                 </div>
 
-                <Button type="submit" className="w-full">
-                    Log In
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? "Logging in..." : "Log In"}
                 </Button>
 
                 {/* Divider with "or" */}
@@ -186,10 +226,11 @@ export function LoginForm({
                 <Button
                     type="button"
                     onClick={handleGoogleSignIn}
-                    className="w-full flex items-center justify-center gap-2 dark:bg-black dark:text-stone-300 dark:border-stone-600 border-1 bg- text-black border-black"
+                    disabled={isGoogleLoading}
+                    className="w-full flex items-center justify-center gap-2 dark:bg-black dark:text-stone-300 dark:border-stone-600 border-1 bg-white text-black border-black"
                 >
                     <FcGoogle className="h-5 w-5" />
-                    Sign in with Google
+                    {isGoogleLoading ? "Signing in..." : "Sign in with Google"}
                 </Button>
             </form>
         </Form>
