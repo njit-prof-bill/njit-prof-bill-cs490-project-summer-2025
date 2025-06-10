@@ -4,7 +4,7 @@ import { useAuth } from "@/context/authContext";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
-import { collection, doc, setDoc, addDoc, getDoc, serverTimestamp } from "firebase/firestore";
+import { collection, doc, setDoc, addDoc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
 export default function FreeFormPage() {
@@ -44,14 +44,11 @@ export default function FreeFormPage() {
 
         // Should overwrite the user's pre-existing submission
         const newSubmissionRef = doc(db, "users", uid);
-        await setDoc(newSubmissionRef, {
-            freeFormCorpus: corpus,
-            dateSubmitted: serverTimestamp()
-        });
+        await updateDoc(newSubmissionRef, { freeFormText: { text: corpus } });
 
         // For debugging purposes
-        console.log("User    UID: ", user.uid);
-        console.log("Document ID: ", newSubmissionRef.id);
+        //console.log("User    UID: ", user.uid);
+        //console.log("Document ID: ", newSubmissionRef.id);
     }
 
     async function getFreeFormCorpus() {
@@ -72,8 +69,8 @@ export default function FreeFormPage() {
         }
         const data = document.data();
         // Check if the data exists before attempting to parse it
-        if (data && typeof data.freeFormCorpus === "string") {
-            corpus = data.freeFormCorpus;
+        if (data && typeof data.freeFormText.text === "string") {
+            corpus = data.freeFormText.text;
         }
         return corpus;
     }
