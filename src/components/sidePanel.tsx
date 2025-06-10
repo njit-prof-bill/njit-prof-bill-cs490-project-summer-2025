@@ -25,9 +25,10 @@ export default function SidePanel({ isSidePanelOpen }: SidePanelProps) {
                         </Link>
                     </li>
                     <li>
-                        <Link href="#" className="hover:underline">
+                        <Link href="/home/upload-resume" className="hover:underline">
                             Upload Resume
                         </Link>
+
                     </li>
                     <li>
                         <Link href="/home/free-form" className="hover:underline">
