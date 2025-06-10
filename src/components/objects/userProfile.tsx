@@ -270,6 +270,8 @@ class freeForm {
 
 // The class which I intend to use directly.
 export class userProfile {
+    // theme is a variable set by src/context/themeContext.tsx
+    theme: string = "";
     freeFormText: freeForm = new freeForm;
     resumeFields: resume = new resume;
 }
