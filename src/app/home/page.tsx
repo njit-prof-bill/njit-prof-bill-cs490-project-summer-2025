@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 import FileUpload from "@/components/FileUpload";
+import BioSubmission from "@/components/forms/BioSubmission";
 export default function HomePage() {
     const { user, loading } = useAuth();
     const router = useRouter();
@@ -40,6 +41,9 @@ export default function HomePage() {
             <div className="w-full max-w-md bg-gray-900/40 backdrop-blur-sm p-6 rounded-lg shadow-lg">
                 <h2 className="text-xl font-semibold text-white mb-4 text-center">Upload Your Resume</h2>
                 <FileUpload />
+            </div>
+            <div className="mt-10">
+                <BioSubmission />
             </div>
         </div>
     );
