@@ -5,7 +5,7 @@ import { useAuth } from "@/context/authContext";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
-
+import SubmissionFeedback from "@/components/SubmissionFeedback";
 import { UserNameAddUpdate } from '@/components/userNameAddUpdate';
 
 
@@ -23,6 +23,8 @@ export default function HomePage() {
     // Debugging:
     const [message, setMessage] = useState('');
 
+    const [submissionStatus, setSubmissionStatus] = useState<null | { type: "success" | "error"; message: string }>(null);
+
 
 
     useEffect(() => {
@@ -35,7 +37,16 @@ export default function HomePage() {
         return <p>Loading...</p>; // Show a loading state while checking auth
     }
 
+    const handleSubmit = () => {
+        // Simulate a submission
+        const success = Math.random() > 0.5; // randomly pass/fail
     
+        if (success) {
+          setSubmissionStatus({ type: "success", message: "Submission successful!" });
+        } else {
+          setSubmissionStatus({ type: "error", message: "Submission failed. Please try again." });
+        }
+      };
 
  
     return (
@@ -60,6 +71,22 @@ export default function HomePage() {
                         [txt]  [free text]
 
                     </CardDescription>
+
+                    <button
+            onClick={handleSubmit}
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+          >
+            Upload
+          </button>
+
+          {submissionStatus && (
+            <div className="mt-4">
+              <SubmissionFeedback
+                type={submissionStatus.type}
+                message={submissionStatus.message}
+              />
+            </div>
+          )}
                 </CardContent>
 
 
