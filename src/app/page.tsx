@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { LoginForm } from "@/components/forms/loginForm";
 import { RegistrationForm } from "@/components/forms/registrationForm";
 import { ResetPasswordForm } from "@/components/forms/resetPasswordForm";
+import LoadingLayout from "@/components/LoadingLayout";
 import Image from "next/image";
 
 export default function LandingPage() {
@@ -20,7 +21,7 @@ export default function LandingPage() {
   }, [user, loading, router]);
 
   if (loading) {
-    return <p>Loading...</p>; // Show a loading state while checking auth
+    return <LoadingLayout />; // Show a loading state while checking auth
   }
 
   return (
