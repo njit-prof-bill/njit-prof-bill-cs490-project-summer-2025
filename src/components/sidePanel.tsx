@@ -35,6 +35,11 @@ export default function SidePanel({ isSidePanelOpen }: SidePanelProps) {
                             Write Free-form
                         </Link>
                     </li>
+                    <li>
+                        <Link href="/home/edit-resume-fields" className="hover:underline">
+                            Edit Resume Fields
+                        </Link>
+                    </li>
                 </ul>
             </nav>
         </aside>
