@@ -14,6 +14,13 @@ import Spinner, { spinnerStyles } from '../../components/ui/Spinner';
 
 
 
+
+
+
+
+
+
+
 export default function HomePage() {
 
     const { user, loading } = useAuth();
@@ -24,6 +31,10 @@ export default function HomePage() {
     const [message, setMessage] = useState('');
 
     const [submissionStatus, setSubmissionStatus] = useState<null | { type: "success" | "error"; message: string }>(null);
+
+
+
+
 
 
 
@@ -49,6 +60,8 @@ export default function HomePage() {
         }, 0);
       };
       
+
+
 
  
     return (

@@ -12,8 +12,6 @@ import { UserNameAddUpdate } from '@/components/userNameAddUpdate';
 
 import Spinner, { spinnerStyles } from '../../components/ui/Spinner';
 
-
-
 import { ChatSection } from '@/components/ChatSection';
 
 
@@ -26,12 +24,9 @@ export default function HomePage() {
 
 
     // Debugging:
-    const [message, setMessage] = useState('');
+    // const [message, setMessage] = useState('');
 
-
-
-    
-        // ---------------Groq, API variables, types:------------------
+    // ---------------Groq, API variables, types:------------------
     const [responseMsg, setResponseMsg] = useState<string | null>(null);
     const [gloading, setLoading] = useState(false);
     //---------------------------------------------------
@@ -39,9 +34,7 @@ export default function HomePage() {
 
 
 
-
-
-
+    
     useEffect(() => {
         if (!loading && !user) {
             router.push("/"); // Redirect to landing page if not authenticated
@@ -51,8 +44,6 @@ export default function HomePage() {
     if (loading) {
         return <p>Loading...</p>; // Show a loading state while checking auth
     }
-
-    
 
 
 
@@ -76,6 +67,9 @@ const callApi = async () => {
 
     // now set local response variable to the json response and print to display:
       setResponseMsg(data.choices?.[0]?.message?.content || 'No response');
+
+
+
     } catch (err) {
       setResponseMsg('Error calling API');
     } finally {
@@ -86,37 +80,40 @@ const callApi = async () => {
 
 
 
-
-
-
-
-
-
-
  
     return (
         <div className="flex flex-col items-center">
-
-
-
-        <Card className="w-full max-w-md shadow-lg">
-
+            <Card className="w-full max-w-md shadow-lg">
                 <CardHeader>
-                    <CardTitle>Placeholder: For resume generator </CardTitle>
+                    <CardTitle>Team Phoenix: Project AI Resume Builder</CardTitle>
                 </CardHeader>
-
                 <CardContent>
+
+                {/* team logo, for now, can be moved. */}
+                <img src="/team-logo-1.jpg" alt="Fetched Image" />
+
                     <CardDescription>
-                    <img src="/resume-page-example.jpg" alt="Fetched Image" />   
-                    <img src="/resume-page-example-2.jpg" alt="Fetched Image" />  
-                        <br />
-                    
-
+                        This app is a starter template for SaaS applications. To use this template, simply fork the repository and install the app dependencies.
                     </CardDescription>
+                </CardContent>
+                <CardFooter>
+                    <CardDescription>Copyright 2025 Fourier Gauss Labs</CardDescription>
+                </CardFooter>
+            </Card>
+
+            <br />
+            
+            <Card className="w-full max-w-md shadow-lg">
+                <CardHeader>
+                    <CardTitle>Basic User Profile:</CardTitle>
+
+                    <UserNameAddUpdate />
 
 
 
-                       <div>
+
+
+                    <div>
                     <h1>Test Groq Chat API</h1>
                     <button onClick={callApi} disabled={gloading}>
                         {gloading ? 'Loading...' : 'Send Request'}
@@ -136,20 +133,17 @@ const callApi = async () => {
 
 
 
+                </CardHeader>
+
+                
+                               {/* Add the chat section */}
+        <ChatSection />
+         
 
 
-                </CardContent>
-
-
-                <CardFooter>
-                    <CardDescription></CardDescription>
-                </CardFooter>
-
+ 
             </Card>
 
-        
-            
-         
         </div>
     );
 }
