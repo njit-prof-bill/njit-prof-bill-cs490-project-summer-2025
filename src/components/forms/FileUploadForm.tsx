@@ -13,6 +13,7 @@ export default function FileUploadForm() {
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             setSelectedFile(e.target.files[0])
+            setBiographyText("");
             setFeedbackMessage("");
         }
     };
@@ -41,6 +42,7 @@ export default function FileUploadForm() {
                 formData.append("biography", biographyText.trim());
             }
 
+            // Send to backend
             const response = await fetch("http://localhost:5000/upload", {
                 method: "POST",
                 body: formData,
@@ -69,7 +71,8 @@ export default function FileUploadForm() {
         finally {
             setIsSubmitting(false);
         }
-    }
+
+    };
 
     const handleChooseFileClick = () => {
         fileInputRef.current?.click();

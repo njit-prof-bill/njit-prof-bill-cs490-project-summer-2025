@@ -1,54 +1,63 @@
-import os
-from flask import Blueprint, request, jsonify, current_app
-from werkzeug.utils import secure_filename
-from utils.file_utils import allowed_file
-from firebase_client import db
-from firebase_admin import storage
+from flask import Blueprint, request, jsonify
+from db import biography_collection
 
-# Create Blueprint for upload routes
-upload_bp = Blueprint('upload_bp', __name__)
+# Max File Size
+MAX_FILE_SIZE = 15 * 1024 * 1024
+ALLOWED_EXTENSIONS = {"pdf", "docx", "txt", "md", "odt"}
 
-@upload_bp.route('/upload', methods=['POST'])
+# Define the Blueprint
+upload_bp = Blueprint("upload", __name__)
+
+@upload_bp.route("/upload", methods=["POST"])
 def upload():
-    file = request.files.get('file')
-    biography = request.form.get('biography', '').strip()
+    # Checks if the user submitted a file or a biography text
+    file = request.files.get("file")
+    biography_text = request.form.get("biography")
 
-    # Validation
-    if not file or file.filename == '':
-        return jsonify({'error': 'No file provided'}), 400
-    
-    if not allowed_file(file.filename):
-        return jsonify({'error': 'File type not allowed'}), 400
-    
-    filename = secure_filename(file.filename)
-    
-    # Upload file to Firebase Storage
-    try:
-        bucket = storage.bucket()
-        blob = bucket.blob(f'resumes/{filename}')
+    # If neither were submitted error
+    if not file and not biography_text:
+        return jsonify({"error": "No file or biography text provided"}), 400
+
+    doc = {}
+
+    # If a file was submitted
+    if file:
+        filename = file.filename
+
+        # Check file extensions
+        extension = filename.rsplit(".", 1)[-1].lower()
+        if extension not in ALLOWED_EXTENSIONS:
+            return jsonify({"error": "Unsupported file type"}), 400
         
-        # Upload file content to storage
-        blob.upload_from_file(file.stream, content_type=file.content_type)
-        blob.make_public()
+        # Check file size
+        file.seek(0,2)
+        file_size = file.tell()
+        file.seek(0)
 
-        file_url = blob.public_url
+        if file_size > MAX_FILE_SIZE:
+            return jsonify({"error": "File too large (max 15MB)"}), 400
+        
+        # Read file content
+        file_content = file.read()
 
-    except Exception as e:
-        return jsonify({'error': f'Failed to save file: {str(e)}'}), 500
-    
-    # Save metadata to Firestore
+        # Check empty file
+        if not file_content:
+            return jsonify({"error": "Uploaded file is empty"}), 400
+        
+        # Save file into doc
+        doc["filename"] = filename
+        doc["file_type"] = extension
+        doc["file_content"] = file_content
+
+    # If a biography text was submitted
+    if biography_text:
+        doc["biography_text"] = biography_text.strip()
+
+    # The data being submitted
     try:
-        db.collection('submissions').add({
-            'filename': filename,
-            'biography': biography,
-            'file_url': file_url
-        })
+        result = biography_collection.insert_one(doc)
     except Exception as e:
-        return jsonify({'error': f'Failed to save to Firestore: {str(e)}'}), 500
-    
-    return jsonify({
-        'message': 'File and biography saved successfully',
-        'filename': filename,
-        'file_url': file_url,
-        'biography': biography
-    })
+        return jsonify({"error": f"Database error: {str(e)}"}), 500
+
+    # Success
+    return jsonify({"message": "Upload successful", "id": str(result.inserted_id)}), 200
