@@ -79,7 +79,7 @@ export default function TopBanner({ toggleSidePanel }: TopBannerProps) {
 
             {/* Center Section: Title */}
             <div className="flex-grow flex justify-center">
-                <h1 className="text-xl font-semibold">Marcus</h1>
+                <h1 className="text-xl font-semibold">Five Guys</h1>
             </div>
 
             {/* Right Section: Avatar with Dropdown */}
