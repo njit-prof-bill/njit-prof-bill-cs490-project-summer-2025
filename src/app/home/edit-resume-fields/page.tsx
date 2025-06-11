@@ -18,6 +18,8 @@ export default function EditResumeFieldsPage() {
     const [ email, setEmail ] = useState("");
     // For retrieving the user's location (as parsed from their resume)
     const [ location, setLocation ] = useState("");
+    // For retrieving the user's phone number (as parsed from their resume)
+    const [ phone, setPhone ] = useState("");
     
     useEffect(() => {
         if (!loading && user) {
@@ -39,6 +41,11 @@ export default function EditResumeFieldsPage() {
             getLocation().then((text) => {
                 if (text) {
                     setLocation(text);
+                }
+            });
+            getPhone().then((text) => {
+                if (text) {
+                    setPhone(text);
                 }
             });
         }
@@ -69,7 +76,7 @@ export default function EditResumeFieldsPage() {
     }
 
     async function getFullName() {
-        // Retrieve the user's full name (from info parsed from their resume, not the logged-in account)
+        // Retrieve the user's full name (as it was parsed from their resume, not the logged-in account)
         let text = "";
         if (user) {
             const documentRef = doc(db, "users", user.uid);
@@ -85,7 +92,7 @@ export default function EditResumeFieldsPage() {
         return text;
     }
     async function getEmail() {
-        // Retrieve the user's email address (from info parsed from their resume, not the logged-in account)
+        // Retrieve the user's email address (as it was parsed from their resume, not the logged-in account)
         let text = "";
         if (user) {
             const documentRef = doc(db, "users", user.uid);
@@ -101,7 +108,7 @@ export default function EditResumeFieldsPage() {
         return text;
     }
     async function getLocation() {
-        // Retrieve the user's email address (from info parsed from their resume)
+        // Retrieve the user's email address (as it was parsed from their resume)
         let text = "";
         if (user) {
             const documentRef = doc(db, "users", user.uid);
@@ -112,6 +119,22 @@ export default function EditResumeFieldsPage() {
             const data = document.data();
             if (data && typeof data.resumeFields.contact.location === "string") {
                 text = data.resumeFields.contact.location;
+            }
+        }
+        return text;
+    }
+    async function getPhone() {
+        // Retrieve the user's phone number (as it was parsed from their resume)
+        let text = "";
+        if (user) {
+            const documentRef = doc(db, "users", user.uid);
+            const document = await getDoc(documentRef);
+            if (!document.exists) {
+                return text;
+            }
+            const data = document.data();
+            if (data && typeof data.resumeFields.contact.phone === "string") {
+                text = data.resumeFields.contact.phone;
             }
         }
         return text;
@@ -147,6 +170,14 @@ export default function EditResumeFieldsPage() {
             await updateDoc(newSummaryRef, { "resumeFields.contact.location": text });
         }
     }
+
+    async function submitPhone(text: string) {
+        // User profiles are identified in the database by the user's UID
+        if (user) {
+            const newSummaryRef = doc(db, "users", user.uid);
+            await updateDoc(newSummaryRef, { "resumeFields.contact.phone": text });
+        }
+    }
     function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
         // Prevent the browser from reloading the page
         event.preventDefault();
@@ -165,6 +196,7 @@ export default function EditResumeFieldsPage() {
         submitFullName(formObj.fullName as string);
         submitEmail(formObj.email as string);
         submitLocation(formObj.location as string);
+        submitPhone(formObj.phone as string);
     }
     return (
         <div className="flex items-center justify-center min-h-screen text-gray-900 dark:text-gray-100">
@@ -188,9 +220,10 @@ export default function EditResumeFieldsPage() {
                     <h2 className="text-l font-bold mb-6">Phone Number (Format: 123-456-7890):</h2>
                     <input
                         type="tel"
-                        name="phoneNumber"
+                        name="phone"
                         placeholder="Enter your number here"
                         pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}"
+                        defaultValue={phone}
                     ></input>
                     <h2 className="text-l font-bold mb-6">Location:</h2>
                     <input
