@@ -36,8 +36,8 @@ export default function SidePanel({ isSidePanelOpen }: SidePanelProps) {
                         </Link>
                     </li>
                     <li>
-                        <Link href="/home/edit-resume-fields" className="hover:underline">
-                            Edit Resume Fields
+                        <Link href="/home/edit-contact-info" className="hover:underline">
+                            Edit Contact Info
                         </Link>
                     </li>
                 </ul>

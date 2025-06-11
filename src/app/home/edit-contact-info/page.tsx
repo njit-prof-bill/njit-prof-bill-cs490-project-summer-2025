@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 
-export default function EditResumeFieldsPage() {
+export default function EditContactInfoPage() {
     // For checking whether the user is logged in and redirecting them accordingly
     const { user, loading } = useAuth();
     const router = useRouter();
@@ -201,7 +201,7 @@ export default function EditResumeFieldsPage() {
     return (
         <div className="flex items-center justify-center min-h-screen text-gray-900 dark:text-gray-100">
             <div className="w-full max-w-md">
-                <h1 className="text-2xl font-bold mb-6">Edit Resume Info</h1>
+                <h1 className="text-2xl font-bold mb-6">Edit Contact Info</h1>
                 <form method="post" onSubmit={handleSubmit}>
                     <h2 className="text-l font-bold mb-6">Full Name:</h2>
                     <input
