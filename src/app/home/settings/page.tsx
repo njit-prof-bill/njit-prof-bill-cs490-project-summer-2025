@@ -19,7 +19,10 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "
 import { useForm, useFieldArray } from "react-hook-form"; // Import useFieldArray
 import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
 import { EyeIcon, EyeSlashIcon, PlusCircleIcon, MinusCircleIcon } from "@heroicons/react/24/outline"; // Import new icons
+
+// Assuming this utility exists for error handling
 import { getFriendlyFirebaseErrorMessage } from "@/utils/firebaseErrorHandler";
+
 
 type ThemeType = "light" | "dark" | "system";
 
@@ -30,6 +33,12 @@ interface JobEntry {
     role: string;
     startDate: string; // Format: YYYY-MM
     endDate: string;   // Format: YYYY-MM or "Present"
+}
+
+// Define the type for a single skill entry
+interface SkillEntry {
+    id: string; // Unique ID for React key and internal management
+    name: string; // Name of the skill
 }
 
 export default function SettingsPage() {
@@ -45,9 +54,9 @@ export default function SettingsPage() {
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-    // State for job history (managed by react-hook-form's useFieldArray, but initialized here)
+    // State for job history and skills, initialized with empty arrays
     const [initialJobHistory, setInitialJobHistory] = useState<JobEntry[]>([]);
-
+    const [initialSkills, setInitialSkills] = useState<SkillEntry[]>([]); // ADDED: State for skills
 
     useEffect(() => {
         const auth = getAuth();
@@ -63,10 +72,11 @@ export default function SettingsPage() {
                 if (docSnap.exists()) {
                     const data = docSnap.data();
                     setCareerObjective(data.careerObjective || "");
+
                     // Fetch jobHistory from Firestore and ensure it's an array
                     const fetchedJobHistory: JobEntry[] = Array.isArray(data.jobHistory)
                         ? data.jobHistory.map((entry: any) => ({
-                              id: entry.id || Math.random().toString(36).substring(2, 9), // Ensure ID for React keys
+                              id: entry.id || Math.random().toString(36).substring(2, 9),
                               company: entry.company || '',
                               role: entry.role || '',
                               startDate: entry.startDate || '',
@@ -74,9 +84,20 @@ export default function SettingsPage() {
                           }))
                         : [];
                     setInitialJobHistory(fetchedJobHistory);
+
+                    // ADDED: Fetch skills from Firestore and ensure it's an array
+                    const fetchedSkills: SkillEntry[] = Array.isArray(data.skills)
+                        ? data.skills.map((skill: any) => ({
+                              id: skill.id || Math.random().toString(36).substring(2, 9),
+                              name: skill.name || '',
+                          }))
+                        : [];
+                    setInitialSkills(fetchedSkills);
+
                 } else {
                     setCareerObjective("");
-                    setInitialJobHistory([]); // Reset if no data
+                    setInitialJobHistory([]);
+                    setInitialSkills([]); // ADDED: Reset skills if no data
                 }
 
                 const isOAuth = user.providerData.some(
@@ -96,7 +117,8 @@ export default function SettingsPage() {
             email: email,
             theme: theme,
             careerObjective: careerObjective,
-            jobHistory: initialJobHistory, // Initialize jobHistory with fetched data
+            jobHistory: initialJobHistory,
+            skills: initialSkills, // ADDED: Initialize skills with fetched data
             currentPassword: "",
             newPassword: "",
             confirmPassword: "",
@@ -104,9 +126,15 @@ export default function SettingsPage() {
     });
 
     // Use useFieldArray to manage dynamic job history fields
-    const { fields, append, remove } = useFieldArray({
+    const { fields: jobFields, append: appendJob, remove: removeJob } = useFieldArray({ // Renamed for clarity
         control: form.control,
         name: "jobHistory",
+    });
+
+    // ADDED: Use useFieldArray to manage dynamic skills fields
+    const { fields: skillFields, append: appendSkill, remove: removeSkill } = useFieldArray({
+        control: form.control,
+        name: "skills",
     });
 
     // Reset form when initial data or theme changes
@@ -118,13 +146,14 @@ export default function SettingsPage() {
                 email,
                 theme,
                 careerObjective,
-                jobHistory: initialJobHistory, // Reset jobHistory with fetched data
+                jobHistory: initialJobHistory,
+                skills: initialSkills, // ADDED: Reset skills with fetched data
                 currentPassword: "",
                 newPassword: "",
                 confirmPassword: "",
             });
         }
-    }, [name, email, theme, careerObjective, initialJobHistory, form, form.formState.isDirty]); // Added initialJobHistory and form.formState.isDirty
+    }, [name, email, theme, careerObjective, initialJobHistory, initialSkills, form, form.formState.isDirty]); // ADDED initialSkills to dependency array
 
     const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -145,7 +174,7 @@ export default function SettingsPage() {
                 await updateProfile(user, { displayName: values.name });
             }
 
-            // Save theme, careerObjective, and jobHistory to Firestore
+            // Save theme, careerObjective, jobHistory, and skills to Firestore
             const db = getFirestore();
             const userRef = doc(db, "users", user.uid);
             await setDoc(
@@ -154,6 +183,7 @@ export default function SettingsPage() {
                     theme: values.theme,
                     careerObjective: values.careerObjective || "",
                     jobHistory: values.jobHistory, // Save the entire job history array
+                    skills: values.skills, // ADDED: Save the entire skills array
                 },
                 { merge: true }
             );
@@ -179,8 +209,9 @@ export default function SettingsPage() {
 
             toast.success("Profile settings saved.");
 
-            // Update initialJobHistory state to reflect saved changes
+            // Update initial states to reflect saved changes
             setInitialJobHistory(values.jobHistory);
+            setInitialSkills(values.skills); // ADDED: Update initialSkills state
 
             // Clear password fields after successful save, but keep other fields updated
             form.reset({
@@ -188,7 +219,8 @@ export default function SettingsPage() {
                 email: values.email,
                 theme: values.theme,
                 careerObjective: values.careerObjective,
-                jobHistory: values.jobHistory, // Ensure jobHistory is reset with current values
+                jobHistory: values.jobHistory,
+                skills: values.skills, // ADDED: Ensure skills are reset with current values
                 currentPassword: "",
                 newPassword: "",
                 confirmPassword: "",
@@ -276,11 +308,11 @@ export default function SettingsPage() {
                         {/* Job History Section */}
                         <div className="space-y-4 border border-gray-300 dark:border-gray-600 p-4 rounded-lg">
                             <h2 className="text-lg font-semibold">Job History</h2>
-                            {fields.map((item, index) => (
+                            {jobFields.map((item, index) => ( // Using jobFields
                                 <div key={item.id} className="relative p-4 border border-gray-200 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-700 space-y-3">
                                     <Button
                                         type="button"
-                                        onClick={() => remove(index)}
+                                        onClick={() => removeJob(index)} // Using removeJob
                                         disabled={isSaving}
                                         className="absolute top-2 right-2 p-1 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center h-8 w-8"
                                     >
@@ -344,7 +376,7 @@ export default function SettingsPage() {
                             ))}
                             <Button
                                 type="button"
-                                onClick={() => append({ id: Math.random().toString(36).substring(2, 9), company: "", role: "", startDate: "", endDate: "" })}
+                                onClick={() => appendJob({ id: Math.random().toString(36).substring(2, 9), company: "", role: "", startDate: "", endDate: "" })} // Using appendJob
                                 disabled={isSaving}
                                 className="w-full flex items-center justify-center space-x-2 bg-green-500 hover:bg-green-600 text-white rounded-md"
                             >
@@ -352,6 +384,46 @@ export default function SettingsPage() {
                                 <span>Add Job Entry</span>
                             </Button>
                         </div>
+
+                        {/* ADDED: Skills Section */}
+                        <div className="space-y-4 border border-gray-300 dark:border-gray-600 p-4 rounded-lg">
+                            <h2 className="text-lg font-semibold">Skills</h2>
+                            {skillFields.map((item, index) => ( // Using skillFields
+                                <div key={item.id} className="relative p-4 border border-gray-200 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-700 flex items-center space-x-3">
+                                    <FormField
+                                        control={form.control}
+                                        name={`skills.${index}.name`} // Name property for skill
+                                        render={({ field }) => (
+                                            <FormItem className="flex-grow">
+                                                <FormLabel className="sr-only">Skill Name</FormLabel> {/* Hidden label for accessibility */}
+                                                <FormControl>
+                                                    <Input {...field} placeholder="e.g., JavaScript, Project Management" disabled={isSaving} className="rounded-md dark:bg-gray-800 dark:border-gray-600" />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <Button
+                                        type="button"
+                                        onClick={() => removeSkill(index)} // Using removeSkill
+                                        disabled={isSaving}
+                                        className="p-1 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center h-8 w-8 flex-shrink-0"
+                                    >
+                                        <MinusCircleIcon className="h-5 w-5" />
+                                    </Button>
+                                </div>
+                            ))}
+                            <Button
+                                type="button"
+                                onClick={() => appendSkill({ id: Math.random().toString(36).substring(2, 9), name: "" })} // Using appendSkill
+                                disabled={isSaving}
+                                className="w-full flex items-center justify-center space-x-2 bg-purple-500 hover:bg-purple-600 text-white rounded-md"
+                            >
+                                <PlusCircleIcon className="h-5 w-5" />
+                                <span>Add Skill</span>
+                            </Button>
+                        </div>
+
 
                         {/* Theme Field */}
                         <FormField
