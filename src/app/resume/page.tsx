@@ -6,16 +6,11 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 
-import { UserNameAddUpdate } from '@/components/userNameAddUpdate';
-
-
-
-import Spinner, { spinnerStyles } from '../../components/ui/Spinner';
-
-
 
 import { ChatSection } from '@/components/ChatSection';
 
+
+import BaseLayout from '../../components/BaseLayout';
 
 
 
@@ -27,17 +22,6 @@ export default function HomePage() {
 
     // Debugging:
     const [message, setMessage] = useState('');
-
-
-
-    
-        // ---------------Groq, API variables, types:------------------
-    const [responseMsg, setResponseMsg] = useState<string | null>(null);
-    const [gloading, setLoading] = useState(false);
-    //---------------------------------------------------
-
-
-
 
 
 
@@ -53,50 +37,15 @@ export default function HomePage() {
     }
 
     
-
-
-
-
-    
-const callApi = async () => {
-    setLoading(true);
-    try {
-
-        // request sent to the API for groq, with message asking for house stark:
-      const res = await fetch('/api/groq-chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ message: 'Recite the words of House Stark.' }),
-      });
-
-    //   turn the response message into json format:
-      const data = await res.json();
-
-    // now set local response variable to the json response and print to display:
-      setResponseMsg(data.choices?.[0]?.message?.content || 'No response');
-    } catch (err) {
-      setResponseMsg('Error calling API');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-
-
-
-
-
-
-
-
-
-
- 
     return (
         <div className="flex flex-col items-center">
 
+
+    <BaseLayout
+      leftContent={<div>Left Sidebar</div>}
+      middleContent={<div>Main Content (majority space)</div>}
+      rightContent={ <div>Left Sidebar</div>}
+    />
 
 
         <Card className="w-full max-w-md shadow-lg">
@@ -110,30 +59,14 @@ const callApi = async () => {
                     <img src="/resume-page-example.jpg" alt="Fetched Image" />   
                     <img src="/resume-page-example-2.jpg" alt="Fetched Image" />  
                         <br />
-                    
-
                     </CardDescription>
 
 
 
-                    <div>
-                    <h1>Test Groq Chat API</h1>
-                    <button onClick={callApi} disabled={gloading}>
-                        {gloading ? 'Loading...' : 'Send Request'}
-                    </button>
-
-                        {/* Spinner */}
-                            <style>{spinnerStyles}</style>
-                            {gloading && (
-                                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
-                                    <Spinner />
-                                </div>
-                            )}
-
-                    {responseMsg && <p>Response: {responseMsg}</p>}
-                    </div>
-
-
+ {/* -------------------Groq category json request component:---------------- */}
+                {/*---------- Add the groq chat request component: --------------*/}
+                <ChatSection />
+                {/* ----------------------- */}
 
 
 

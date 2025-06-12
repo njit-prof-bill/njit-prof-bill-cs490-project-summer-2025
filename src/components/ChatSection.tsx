@@ -7,6 +7,7 @@ import {
   addDoc, 
   doc, 
   setDoc, 
+  getDoc,
   serverTimestamp,
   query,
   orderBy,
@@ -24,9 +25,14 @@ interface Message {
 export const ChatSection: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [documentText, setDocumentText] = useState('');
+  const [fetchingDoc, setFetchingDoc] = useState(false);
+  const [docError, setDocError] = useState<string | null>(null);
+  const [systemPrompt, setSystemPrompt] = useState('');
+  const [promptLoading, setPromptLoading] = useState(false);
+  const [promptError, setPromptError] = useState<string | null>(null);
 
   // Listen to authentication state changes
   useEffect(() => {
@@ -39,30 +45,110 @@ export const ChatSection: React.FC = () => {
     return () => unsubscribe();
   }, []);
 
-  // Function to send message and store conversation
-  const sendMessage = async (userMessage: string, customPrompt?: string) => {
+  // Fetch user's document text when user is available
+  useEffect(() => {
+    if (user) {
+      fetchUserDocument();
+    }
+  }, [user]);
+
+  // Fetch system prompt from public folder
+  useEffect(() => {
+    fetchSystemPrompt();
+  }, []);
+
+  // Function to fetch system prompt from txt file
+  const fetchSystemPrompt = async () => {
+    setPromptLoading(true);
+    setPromptError(null);
+    
+    try {
+
+      const response = await fetch('/prompts/extract-data-prompt-1.txt');
+      if (!response.ok) {
+        throw new Error(`Failed to fetch prompt: ${response.status}`);
+      }
+      const promptText = await response.text();
+      // setSystemPrompt(promptText.trim());
+
+
+    } catch (error) {
+      console.log("Got alt prompt....")
+      console.error('Error fetching prompt:', error);
+      setPromptError('Failed to load system prompt');
+      // Fallback to default prompt   
+      
+      // setSystemPrompt("You are a helpful resume building assistant.\nYou will assist in receiving user resume text, and filling in the json\nobject format below with the user's extracted data. \nStriclty use the format provided in this prompt.\nDo not rearrange any of the json object.\nDo not include any extra comments, strictly return the json file. The fullname of a person\nis usually found in the first couple of lines.\nDo not forget to include the full name of a person in the output.\n\nUse This Example json object, and populate a similar json with the data from the input:\n\n```json\n{\n  \"fullName\": \"\",\n  \"contact\": {\n    \"email\": \"\",\n    \"phone\": \"\",\n    \"location\": \"\"\n  },\n  \"summary\": \"\": [\n    {\n      \"jobTitle\": \"\",\n      \"company\": \"\",\n      \"startDate\": \"\",\n      \"endDate\": \"\",\n      \"responsibilities\": [\n        \"\",\n        \"\",\n        \"\"\n      ]\n    },\n    {\n      \"jobTitle\": \"\",\n      \"company\": \"\",\n      \"startDate\": \"\",\n      \"endDate\": \"\",\n      \"responsibilities\": [\n        \"\",\n        \"\",\n        \"\"\n      ]\n    }\n  ],\n  \"education\": [\n    {\n      \"degree\": \"\",\n      \"institution\": \"\",\n      \"startDate\": \"\",\n      \"endDate\": \"\",\n      \"gpa\": \"\"\n    }\n  ],\n  \"skills\": [\n    \"\",\n    \"\",\n    \"\",\n    \"\",\n    \"\",\n    \"\"\n  ]\n}\n```\n\nImportant: Do not call work items as 'achievements', call it 'responsibilities'. Follow the above example strictly.");
+      
+
+
+
+    } finally {
+      setPromptLoading(false);
+    }
+  };
+
+
+
+
+
+  // Function to fetch text from user's Firebase document
+  const fetchUserDocument = async () => {
+    if (!user) return;
+    
+    setFetchingDoc(true);
+    setDocError(null);
+    
+    try {
+      // Adjust this path to match where your text document is stored
+      // Example: fetching from users/{uid}/documents/resumeText
+      const userDocRef = doc(db, 'users', user.uid, 'userDocuments', 'documentText');
+      const docSnap = await getDoc(userDocRef);
+      
+      if (docSnap.exists()) {
+        const userData = docSnap.data();
+        // Adjust 'content' to match your document field name
+        const textContent = userData.rawResumeText || '';
+        setDocumentText(textContent);
+        
+        if (!textContent) {
+          setDocError('Document exists but contains no text content');
+        }
+      } else {
+        setDocError('No document found. Please upload your resume first.');
+      }
+    } catch (error) {
+      console.error('Error fetching document:', error);
+      setDocError('Error fetching document. Please try again.');
+    } finally {
+      setFetchingDoc(false);
+    }
+  };
+
+  // Function to send message using document text and store conversation
+  const processDocumentWithAI = async (customPrompt?: string) => {
     if (!user) {
-      alert('Please log in to chat');
+      alert('Please log in to process document');
       return;
     }
 
-    if (!userMessage.trim()) {
-      alert('Please enter a message');
+    if (!documentText.trim()) {
+      alert('No text found in your document. Please upload a document first.');
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      // Step 1: Call your API to get AI response
-      console.log('Calling API...');
+      // Step 1: Call your API to get AI response using document text
+      console.log('Processing document with AI...');
       const response = await fetch('/api/groq-chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ 
-          message: userMessage, 
+          message: documentText, // Use document text instead of user input
           prompt: customPrompt 
         }),
       });
@@ -76,14 +162,13 @@ export const ChatSection: React.FC = () => {
       console.log('Got AI response:', data.response);
 
       // Step 2: Store conversation in Firebase
-      // This works because we're on the client-side with authenticated user
       const conversationData = {
         userId: user.uid,
-        userMessage: userMessage,
-        systemPrompt: customPrompt || "You are a helpful resume building assistant. You will assist in receiving a resume, and extracting five categories of data which are: 1: Contact Info, 2: Career Objectives, 3: Skills, 4: Job History, 5: Education. Please return it in json format with each section named strictly named on these five titles.",
+        userMessage: documentText, // Store the document text as the "user message"
+        systemPrompt: customPrompt || systemPrompt,
         aiResponse: data.response,
         model: data.metadata.model,
-        timestamp: serverTimestamp(), // This works on client-side
+        timestamp: serverTimestamp(),
         groqId: data.metadata.groqId,
         usage: data.metadata.usage,
         createdAt: new Date().toISOString(),
@@ -98,15 +183,14 @@ export const ChatSection: React.FC = () => {
 
       // Update local state to show the message immediately
       const newMessage: Message = {
-        id: 'categoryData', // Use consistent ID since we're overwriting
-        userMessage: userMessage,
+        id: 'categoryData',
+        userMessage: 'Document processed', // Display friendly message instead of full document text
         aiResponse: data.response,
         timestamp: new Date(),
         createdAt: new Date().toISOString()
       };
 
-      setMessages([newMessage]); // Replace messages array with single message
-      setMessage(''); // Clear input
+      setMessages([newMessage]);
 
       return {
         success: true,
@@ -115,18 +199,12 @@ export const ChatSection: React.FC = () => {
       };
 
     } catch (error) {
-      console.error('Error in sendMessage:', error);
+      console.error('Error in processDocumentWithAI:', error);
       alert(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       return { success: false, error };
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  // Handle form submission
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await sendMessage(message);
   };
 
   // Show loading state
@@ -137,17 +215,65 @@ export const ChatSection: React.FC = () => {
 
   return (
     <div className="max-w-2xl mx-auto p-4">
-      <h2 className="text-2xl font-bold mb-4">AI Chat</h2>
+      <h2 className="text-2xl font-bold mb-4">AI Document Processor</h2>
       
+      {/* System Prompt Status */}
+      <div className="mb-4 p-3 border rounded ">
+        <h3 className="font-semibold mb-2">System Prompt:</h3>
+        {promptLoading && <p className="text-blue-600">Loading prompt...</p>}
+        {promptError && <p className="text-red-600">{promptError}</p>}
+        {systemPrompt && !promptLoading && (
+          <div>
+            <p className="text-green-600 mb-2">✓ Prompt loaded successfully</p>
+            <div className="bg-white p-2 rounded max-h-24 overflow-y-auto">
+              <p className="text-sm text-gray-700">
+                {systemPrompt.substring(0, 150)}...
+              </p>
+            </div>
+          </div>
+        )}
+        <button
+          onClick={fetchSystemPrompt}
+          disabled={promptLoading}
+          className="mt-2 bg-blue-500 text-white px-3 py-1 rounded text-sm"
+        >
+          {promptLoading ? 'Refreshing...' : 'Refresh Prompt'}
+        </button>
+      </div>
+
+      {/* Document Status */}
+      <div className="mb-4 p-3 border rounded">
+        <h3 className="font-semibold mb-2">Document Status:</h3>
+        {fetchingDoc && <p className="text-blue-600">Loading document...</p>}
+        {docError && <p className="text-red-600">{docError}</p>}
+        {documentText && !fetchingDoc && (
+          <div>
+            <p className="text-green-600 mb-2">✓ Document loaded successfully</p>
+            <div className="bg-gray-100 p-2 rounded max-h-32 overflow-y-auto">
+              <p className="text-sm text-gray-700">
+                Preview: {documentText.substring(0, 200)}...
+              </p>
+            </div>
+          </div>
+        )}
+        <button
+          onClick={fetchUserDocument}
+          disabled={fetchingDoc}
+          className="mt-2 bg-gray-500 text-white px-3 py-1 rounded text-sm"
+        >
+          {fetchingDoc ? 'Refreshing...' : 'Refresh Document'}
+        </button>
+      </div>
+
       {/* Messages Display */}
       <div className="mb-4 space-y-4 max-h-96 overflow-y-auto">
         {messages.map((msg) => (
           <div key={msg.id} className="border rounded p-3">
             <div className="font-semibold text-blue-600 mb-2">
-              You: {msg.userMessage}
+              Input: {msg.userMessage}
             </div>
             <div className="text-gray-700">
-              AI: {msg.aiResponse}
+              AI Response: {msg.aiResponse}
             </div>
             <div className="text-xs text-gray-500 mt-2">
               {msg.createdAt}
@@ -156,40 +282,32 @@ export const ChatSection: React.FC = () => {
         ))}
       </div>
 
-      {/* Message Input Form */}
-      <form onSubmit={handleSubmit} className="flex gap-2">
-        <input
-          type="text"
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          placeholder="Type your message..."
-          className="flex-1 border rounded px-3 py-2"
-          disabled={isSubmitting}
-        />
+      {/* Process Document Button */}
+      <div className="mb-4">
         <button
-          type="submit"
-          disabled={isSubmitting || !message.trim()}
-          className="bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-50"
+          onClick={() => processDocumentWithAI()}
+          disabled={isSubmitting || !documentText || fetchingDoc}
+          className="w-full bg-blue-500 text-white px-4 py-3 rounded disabled:opacity-50 font-semibold"
         >
-          {isSubmitting ? 'Sending...' : 'Send'}
+          {isSubmitting ? 'Processing Document...' : 'Process Document with AI'}
         </button>
-      </form>
+      </div>
 
       {/* Test Buttons */}
       <div className="mt-4 space-x-2">
         <button
-          onClick={() => sendMessage("Hello, how are you today?")}
-          disabled={isSubmitting}
+          onClick={() => processDocumentWithAI("You are a helpful resume building assistant. Extract and categorize the resume information.")}
+          disabled={isSubmitting || !documentText}
           className="bg-green-500 text-white px-3 py-1 rounded text-sm"
         >
-          Test Message
+          Extract Resume Categories
         </button>
         <button
-          onClick={() => sendMessage("What's the weather like?", "You are a helpful weather assistant.")}
-          disabled={isSubmitting}
+          onClick={() => processDocumentWithAI("You are a career counselor. Analyze this resume and provide improvement suggestions.")}
+          disabled={isSubmitting || !documentText}
           className="bg-purple-500 text-white px-3 py-1 rounded text-sm"
         >
-          Test with Custom Prompt
+          Get Resume Feedback
         </button>
       </div>
     </div>
