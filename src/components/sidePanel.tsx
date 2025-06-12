@@ -40,6 +40,11 @@ export default function SidePanel({ isSidePanelOpen }: SidePanelProps) {
                             Edit Contact Info
                         </Link>
                     </li>
+                    <li>
+                        <Link href="/home/edit-summary" className="hover:underline">
+                            Edit Professional Summary
+                        </Link>
+                    </li>
                 </ul>
             </nav>
         </aside>
