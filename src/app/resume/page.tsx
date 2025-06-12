@@ -19,9 +19,7 @@ export default function HomePage() {
 
 
     // Debugging:
-    const [message, setMessage] = useState('');
-
-
+    // const [message, setMessage] = useState('');
 
 
     useEffect(() => {
@@ -39,13 +37,17 @@ export default function HomePage() {
         <div className="flex flex-col items-center">
 
 
-    <BaseLayout
+        
+
+
+
+    <BaseLayout    
       leftContent={<div>Left Sidebar</div>}
       middleContent={<div>Main Content (majority space)</div>}
       rightContent={ <div>Left Sidebar</div>}
     />
 
-            
+          
          
         </div>
     );
