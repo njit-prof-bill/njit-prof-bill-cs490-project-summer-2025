@@ -8,9 +8,7 @@ export default function HomeLayout({ children }: { children: ReactNode }) {
     const [isSidePanelOpen, setIsSidePanelOpen] = useState(true); // Default to true
 
     const toggleSidePanel = () => {
-        setIsSidePanelOpen((prev) => {
-            return !prev;
-        });
+        setIsSidePanelOpen((prev) => !prev);
     };
 
     return (
@@ -20,8 +18,8 @@ export default function HomeLayout({ children }: { children: ReactNode }) {
 
             {/* Main Layout */}
             <div className="flex flex-1">
-                {/* Side Navigation */}
-                <SidePanel isSidePanelOpen={isSidePanelOpen} />
+                {/* Conditionally render SidePanel with the prop */}
+                {isSidePanelOpen && <SidePanel isSidePanelOpen={isSidePanelOpen} />}
 
                 {/* Main Content */}
                 <main className="flex-1 p-4">

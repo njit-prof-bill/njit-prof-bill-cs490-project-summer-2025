@@ -13,6 +13,13 @@ import Spinner, { spinnerStyles } from '../../components/ui/Spinner';
 
 
 
+
+
+
+
+
+
+
 export default function HomePage() {
 
     const { user, loading } = useAuth();
@@ -21,6 +28,10 @@ export default function HomePage() {
 
     // Debugging:
     const [message, setMessage] = useState('');
+
+
+
+
 
 
     useEffect(() => {
@@ -33,6 +44,8 @@ export default function HomePage() {
         return <p>Loading...</p>; // Show a loading state while checking auth
     }
       
+
+
 
  
     return (
