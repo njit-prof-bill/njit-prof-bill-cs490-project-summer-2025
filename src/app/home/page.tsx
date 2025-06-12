@@ -13,6 +13,13 @@ import Spinner, { spinnerStyles } from '../../components/ui/Spinner';
 
 
 
+
+
+
+
+
+
+
 export default function HomePage() {
 
     const { user, loading } = useAuth();
@@ -21,6 +28,10 @@ export default function HomePage() {
 
     // Debugging:
     const [message, setMessage] = useState('');
+
+
+
+
 
 
     useEffect(() => {
@@ -34,9 +45,31 @@ export default function HomePage() {
     }
       
 
+
+
  
     return (
         <div className="flex flex-col items-center">
+
+
+
+
+        <Card className="w-full shadow-lg items-center">
+                <CardContent>
+                    <CardDescription>
+                        Use AI to help build a competitive resume for your career needs.
+                        
+                    </CardDescription>
+                </CardContent>   
+            </Card>
+
+
+
+
+
+
+
+
 
 
 {/* ---------------------  Document Input components Here: ------------------------------------------------- */}

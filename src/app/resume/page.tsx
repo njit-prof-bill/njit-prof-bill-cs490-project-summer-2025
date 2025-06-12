@@ -1,5 +1,6 @@
 "use client";
 
+import BaseLayout from '../../components/BaseLayout';
 import { useAuth } from "@/context/authContext";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -56,12 +57,12 @@ export default function HomePage() {
         body: formData,
       });
 
-        let data;
-        try {
+      let data;
+      try {
         data = await res.json();
-        } catch {
+      } catch {
         throw new Error("Invalid server response");
-        }
+      }
 
       setSubmissionStatus({
         type: res.ok ? "success" : "error",
@@ -75,60 +76,48 @@ export default function HomePage() {
     }
   };
 
-  if (loading) return <p>Loading...</p>;
+    if (loading) {
+        return <p>Loading...</p>; // Show a loading state while checking auth
+    }
 
-  return (
-    <div className="flex flex-col items-center">
-      <Card className="w-full max-w-md shadow-lg">
-        <CardHeader>
-          <CardTitle>Upload Your Resume</CardTitle>
-        </CardHeader>
 
-        <CardContent className="space-y-4">
+return (
+  <BaseLayout
+    leftContent={<div>Left Sidebar</div>}
+    middleContent={
+      <div className="flex flex-col items-center">
+        <Card className="w-full max-w-md shadow-lg">
+          <CardHeader>
+            <CardTitle>Upload Your Resume</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <CardDescription>Click below to upload a .docx resume file.</CardDescription>
-                <input
-                id="docx-upload"
-                type="file"
-                accept=".docx"
-                onChange={(e) => {
-                    handleUploadAfterPick(e);
-                    if (fileInputRef.current) {
-                    fileInputRef.current.value = ""; // clears the input after use
-                    }
-                }}
-                ref={fileInputRef}
-                className="hidden"
-                />
-
-
+            <input
+              id="docx-upload"
+              type="file"
+              accept=".docx"
+              onChange={handleUploadAfterPick}
+              ref={fileInputRef}
+              className="hidden"
+            />
             <label htmlFor="docx-upload" className="cursor-pointer">
-                <div className="inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
+              <div className="inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
                 {uploading ? "Uploading..." : "Select and Upload"}
-                </div>
+              </div>
             </label>
-
             {submissionStatus && (
-                <SubmissionFeedback
+              <SubmissionFeedback
                 type={submissionStatus.type}
                 message={submissionStatus.message}
-                />
+              />
             )}
-            </CardContent>
-        <CardFooter />
-      </Card>
+          </CardContent>
+          <CardFooter />
+        </Card>
+      </div>
+    }
+    rightContent={<div>Right Sidebar</div>}
+  />
+);
 
-      <Card className="w-full max-w-md shadow-lg mt-6">
-        <CardHeader>
-          <CardTitle>Placeholder: For resume generator</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <CardDescription>
-            <img src="/resume-page-example.jpg" alt="Example" />
-            <img src="/resume-page-example-2.jpg" alt="Example" />
-          </CardDescription>
-        </CardContent>
-        <CardFooter />
-      </Card>
-    </div>
-  );
 }

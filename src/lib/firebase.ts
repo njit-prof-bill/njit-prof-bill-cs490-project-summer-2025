@@ -2,7 +2,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 
- import { getFirestore } from 'firebase/firestore';
+import { getFirestore } from 'firebase/firestore';
 
 // Firebase configuration using environment variables
 const firebaseConfig = {
@@ -17,7 +17,11 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
+const firestore = getFirestore(app);
+
 // Initialize Firebase Authentication
 export const auth = getAuth(app);
 
 export const db = getFirestore(app);
+
+export { firestore };
