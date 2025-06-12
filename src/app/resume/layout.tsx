@@ -5,7 +5,7 @@ import TopBanner from "@/components/topBanner"; // Import the TopBanner componen
 import SidePanel from "@/components/sidePanel"; // Import the SidePanel component
 
 export default function HomeLayout({ children }: { children: ReactNode }) {
-    const [isSidePanelOpen, setIsSidePanelOpen] = useState(true); // Default to true
+    const [isSidePanelOpen, setIsSidePanelOpen] = useState(false); // Default to true
 
     const toggleSidePanel = () => {
         setIsSidePanelOpen((prev) => !prev);

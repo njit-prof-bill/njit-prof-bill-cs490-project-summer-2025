@@ -7,8 +7,6 @@ import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 
 
-import { ChatSection } from '@/components/ChatSection';
-
 
 import BaseLayout from '../../components/BaseLayout';
 
@@ -47,40 +45,6 @@ export default function HomePage() {
       rightContent={ <div>Left Sidebar</div>}
     />
 
-
-        <Card className="w-full max-w-md shadow-lg">
-
-                <CardHeader>
-                    <CardTitle>Placeholder: For resume generator </CardTitle>
-                </CardHeader>
-
-                <CardContent>
-                    <CardDescription>
-                    <img src="/resume-page-example.jpg" alt="Fetched Image" />   
-                    <img src="/resume-page-example-2.jpg" alt="Fetched Image" />  
-                        <br />
-                    </CardDescription>
-
-
-
- {/* -------------------Groq category json request component:---------------- */}
-                {/*---------- Add the groq chat request component: --------------*/}
-                <ChatSection />
-                {/* ----------------------- */}
-
-
-
-
-                </CardContent>
-
-
-                <CardFooter>
-                    <CardDescription></CardDescription>
-                </CardFooter>
-
-            </Card>
-
-        
             
          
         </div>

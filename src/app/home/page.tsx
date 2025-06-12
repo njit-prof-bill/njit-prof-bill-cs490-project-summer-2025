@@ -80,10 +80,7 @@ export default function HomePage() {
                         Arrange in box pattern, 
                          {/* <img src="/home-page-example.jpg" alt="Fetched Image" /> */}
                         <br />
-                        <br />
-                        [pdf]  [docx]
-                        <br />
-                        [txt]  [free text]
+
 
                     </CardDescription>
 
