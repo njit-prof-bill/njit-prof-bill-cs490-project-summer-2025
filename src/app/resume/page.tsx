@@ -39,7 +39,8 @@ export default function HomePage() {
         
         <div className="flex flex-col items-center">
             
-         
+   
+        
 
     <BaseLayout    
       leftContent={<div>Left Sidebar</div>}

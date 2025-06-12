@@ -46,7 +46,7 @@ const ResumeCenter: React.FC = () => {
         <Card className="w-full max-w shadow-lg">
 
                 <CardHeader>
-                    <CardTitle>Placeholder: For resume generator </CardTitle>
+                    <CardTitle>Placeholder: For resume generator:  GENERATE button </CardTitle>
                 </CardHeader>
 
                 <CardContent>

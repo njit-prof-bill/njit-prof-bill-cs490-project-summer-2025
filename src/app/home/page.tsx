@@ -52,6 +52,26 @@ export default function HomePage() {
         <div className="flex flex-col items-center">
 
 
+
+
+        <Card className="w-full shadow-lg items-center">
+                <CardContent>
+                    <CardDescription>
+                        Use AI to help build a competitive resume for your career needs.
+                        
+                    </CardDescription>
+                </CardContent>   
+            </Card>
+
+
+
+
+
+
+
+
+
+
 {/* ---------------------  Document Input components Here: ------------------------------------------------- */}
 
      <div className="grid grid-cols-2 gap-4 p-4">

@@ -5,10 +5,7 @@ import { doc, getDoc } from 'firebase/firestore';
 
 
 
-
-
-
-
+import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 
 
 
@@ -92,6 +89,14 @@ const UserText: React.FC = () => {
         borderRadius: '8px',
         boxShadow: 'inset 0 0 15px rgba(74, 74, 74, 0.6)',
       }}>
+
+
+        <CardHeader>
+            <CardTitle>Placeholder: For resume generator:  GENERATE button </CardTitle>
+        </CardHeader>
+      <br />
+      
+
 
         <h2>Name: {jsonObject.fullName}</h2>
         <h2>Contact:</h2>

@@ -2,10 +2,12 @@
 import React from 'react';
 
 
-import UserText from '../components/UserText';
+import UserText from './ResumeUserText';
 import ResumeCenter from '../components/ResumeCenter';
 
 import ResumeLeftTop from '../components/ResumeLeftTop';
+
+import ResumeLeftBottom from '../components/ResumeLeftBottom';
 
 
 
@@ -25,6 +27,7 @@ const BaseLayout: React.FC<{
       <div style={{ flex: 1, padding: '0.2rem' }}>
         
         <ResumeLeftTop />
+        <ResumeLeftBottom/>
 
       </div>
       

@@ -9,7 +9,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter }
 
 
 
-const ResumeLeftTop: React.FC = () => {
+const ResumeLeftBottom: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [jsonObject, setJsonObject] = useState<any | null>(null);
   const [rawText, setRawText] = useState<string | null>(null);
@@ -46,13 +46,13 @@ const ResumeLeftTop: React.FC = () => {
         <Card className="w-full max-w shadow-lg">
 
                 <CardHeader>
-                    <CardTitle>Placeholder: For Job Description Input </CardTitle>
+                    <CardTitle>Placeholder: AI Resume Advice </CardTitle>
                 </CardHeader>
 
                 <CardContent>
                     <CardDescription>
-                   
-                    <img src="/resume-page-example-2.jpg" alt="Fetched Image" />  
+                    <img src="/resume-page-example.jpg" alt="Fetched Image" />   
+            
                         <br />
                     </CardDescription>
 
@@ -76,4 +76,4 @@ const ResumeLeftTop: React.FC = () => {
   );
 };
 
-export default ResumeLeftTop;
+export default ResumeLeftBottom;
