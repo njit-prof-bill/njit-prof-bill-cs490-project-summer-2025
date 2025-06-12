@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/select";
 import { useTheme } from "@/context/themeContext"; // Import the useTheme hook
 import { getAuth, onAuthStateChanged, updateProfile } from "firebase/auth"; // Import Firebase Auth
-import { getFirestore, doc, setDoc } from "firebase/firestore";
+import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore"; // Ensure getDoc is imported
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
@@ -27,6 +27,7 @@ export default function SettingsPage() {
     const { theme, setTheme } = useTheme(); // Use the global theme context
     const [name, setName] = useState<string>(""); // State for the user's name
     const [email, setEmail] = useState<string>(""); // State for the user's email
+    const [careerObjective, setCareerObjective] = useState<string>(""); // State for career objective // ADDED
     const [isSaving, setIsSaving] = useState<boolean>(false); // State for saving status
     const [error, setError] = useState<string | null>(null); // State for error messages
     const router = useRouter(); // Initialize router for navigation
@@ -36,29 +37,46 @@ export default function SettingsPage() {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     useEffect(() => {
-        const auth = getAuth(); // Initialize Firebase Auth
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
+        const auth = getAuth();
+
+        // Define an async function to handle user data fetching
+        const fetchUserData = async (user: any) => {
             if (user) {
-                // Populate the name and email fields if the user is signed in
-                setName(user.displayName || ""); // Use displayName or an empty string
-                setEmail(user.email || ""); // Use email or an empty string
-                // Check if any provider is NOT password (i.e., OAuth)
+                setName(user.displayName || "");
+                setEmail(user.email || "");
+
+                // Fetch careerObjective from Firestore
+                const db = getFirestore();
+                const userRef = doc(db, "users", user.uid);
+                const docSnap = await getDoc(userRef);
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    setCareerObjective(data.careerObjective || "");
+                } else {
+                    setCareerObjective("");
+                }
+
+                // Existing OAuth check
                 const isOAuth = user.providerData.some(
-                    (provider) => provider.providerId !== "password"
+                    (provider: any) => provider.providerId !== "password"
                 );
                 setIsOAuthUser(isOAuth);
             }
-        });
+        };
+
+        // Subscribe to auth state changes using the async function
+        const unsubscribe = onAuthStateChanged(auth, fetchUserData);
 
         // Cleanup the listener on unmount
         return () => unsubscribe();
-    }, []);
+    }, []); // No change here, dependency array is empty as it listens to auth state changes
 
     const form = useForm({
         defaultValues: {
             name: name,
             email: email,
             theme: theme,
+            careerObjective: careerObjective, // ADDED
             currentPassword: "",
             newPassword: "",
             confirmPassword: "",
@@ -71,12 +89,13 @@ export default function SettingsPage() {
                 name,
                 email,
                 theme,
+                careerObjective, // ADDED
                 currentPassword: "",
                 newPassword: "",
                 confirmPassword: "",
             });
         }
-    }, [name, email, theme, form]);
+    }, [name, email, theme, careerObjective, form]); // ADDED careerObjective to dependency array
 
     const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -97,12 +116,15 @@ export default function SettingsPage() {
                 await updateProfile(user, { displayName: values.name });
             }
 
-            // Save theme to Firestore
+            // Save theme and careerObjective to Firestore
             const db = getFirestore();
             const userRef = doc(db, "users", user.uid);
             await setDoc(
                 userRef,
-                { theme: values.theme },
+                {
+                    theme: values.theme,
+                    careerObjective: values.careerObjective || "", // MODIFIED: Save careerObjective
+                },
                 { merge: true }
             );
 
@@ -133,6 +155,7 @@ export default function SettingsPage() {
                 name: values.name,
                 email: values.email,
                 theme: values.theme,
+                careerObjective: values.careerObjective, // MODIFIED: Clear careerObjective after save
                 currentPassword: "",
                 newPassword: "",
                 confirmPassword: "",
@@ -187,6 +210,27 @@ export default function SettingsPage() {
                                             {...field}
                                             placeholder="Enter your email"
                                             disabled
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        {/* Career Objective / Summary Field - ADDED */}
+                        <FormField
+                            control={form.control}
+                            name="careerObjective"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Career Objective / Summary</FormLabel>
+                                    <FormControl>
+                                        <textarea // Use textarea for multi-line input
+                                            {...field}
+                                            placeholder="Write your career objective or summary here"
+                                            className="w-full p-2 border rounded" // Basic Tailwind styling
+                                            disabled={isSaving}
+                                            rows={4} // Set the number of visible rows
                                         />
                                     </FormControl>
                                     <FormMessage />
@@ -344,7 +388,8 @@ export default function SettingsPage() {
                         {/* Error Message */}
                         {error && <p className="text-red-500 mt-2">{error}</p>}
                     </form>
-                </Form>            </div>
+                </Form>
+            </div>
         </div>
     );
 }
