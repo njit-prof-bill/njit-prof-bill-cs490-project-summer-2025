@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation"; // Import useRouter for navigation
+import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button"; // Assuming you have a Button component
+import { Button } from "@/components/ui/button";
 import {
     Select,
     SelectTrigger,
@@ -12,51 +12,73 @@ import {
     SelectContent,
     SelectItem,
 } from "@/components/ui/select";
-import { useTheme } from "@/context/themeContext"; // Import the useTheme hook
-import { getAuth, onAuthStateChanged, updateProfile } from "firebase/auth"; // Import Firebase Auth
-import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore"; // Ensure getDoc is imported
+import { useTheme } from "@/context/themeContext";
+import { getAuth, onAuthStateChanged, updateProfile } from "firebase/auth";
+import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form"; // Import useFieldArray
 import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
-import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
+import { EyeIcon, EyeSlashIcon, PlusCircleIcon, MinusCircleIcon } from "@heroicons/react/24/outline"; // Import new icons
 import { getFriendlyFirebaseErrorMessage } from "@/utils/firebaseErrorHandler";
 
 type ThemeType = "light" | "dark" | "system";
 
+// Define the type for a single job history entry
+interface JobEntry {
+    id: string; // Unique ID for React key and internal management
+    company: string;
+    role: string;
+    startDate: string; // Format: YYYY-MM
+    endDate: string;   // Format: YYYY-MM or "Present"
+}
+
 export default function SettingsPage() {
-    const { theme, setTheme } = useTheme(); // Use the global theme context
-    const [name, setName] = useState<string>(""); // State for the user's name
-    const [email, setEmail] = useState<string>(""); // State for the user's email
-    const [careerObjective, setCareerObjective] = useState<string>(""); // State for career objective // ADDED
-    const [isSaving, setIsSaving] = useState<boolean>(false); // State for saving status
-    const [error, setError] = useState<string | null>(null); // State for error messages
-    const router = useRouter(); // Initialize router for navigation
+    const { theme, setTheme } = useTheme();
+    const [name, setName] = useState<string>("");
+    const [email, setEmail] = useState<string>("");
+    const [careerObjective, setCareerObjective] = useState<string>("");
+    const [isSaving, setIsSaving] = useState<boolean>(false);
+    const [error, setError] = useState<string | null>(null);
+    const router = useRouter();
     const [isOAuthUser, setIsOAuthUser] = useState(false);
     const [showCurrentPassword, setShowCurrentPassword] = useState(false);
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+    // State for job history (managed by react-hook-form's useFieldArray, but initialized here)
+    const [initialJobHistory, setInitialJobHistory] = useState<JobEntry[]>([]);
+
+
     useEffect(() => {
         const auth = getAuth();
 
-        // Define an async function to handle user data fetching
         const fetchUserData = async (user: any) => {
             if (user) {
                 setName(user.displayName || "");
                 setEmail(user.email || "");
 
-                // Fetch careerObjective from Firestore
                 const db = getFirestore();
                 const userRef = doc(db, "users", user.uid);
                 const docSnap = await getDoc(userRef);
                 if (docSnap.exists()) {
                     const data = docSnap.data();
                     setCareerObjective(data.careerObjective || "");
+                    // Fetch jobHistory from Firestore and ensure it's an array
+                    const fetchedJobHistory: JobEntry[] = Array.isArray(data.jobHistory)
+                        ? data.jobHistory.map((entry: any) => ({
+                              id: entry.id || Math.random().toString(36).substring(2, 9), // Ensure ID for React keys
+                              company: entry.company || '',
+                              role: entry.role || '',
+                              startDate: entry.startDate || '',
+                              endDate: entry.endDate || '',
+                          }))
+                        : [];
+                    setInitialJobHistory(fetchedJobHistory);
                 } else {
                     setCareerObjective("");
+                    setInitialJobHistory([]); // Reset if no data
                 }
 
-                // Existing OAuth check
                 const isOAuth = user.providerData.some(
                     (provider: any) => provider.providerId !== "password"
                 );
@@ -64,38 +86,45 @@ export default function SettingsPage() {
             }
         };
 
-        // Subscribe to auth state changes using the async function
         const unsubscribe = onAuthStateChanged(auth, fetchUserData);
-
-        // Cleanup the listener on unmount
         return () => unsubscribe();
-    }, []); // No change here, dependency array is empty as it listens to auth state changes
+    }, []);
 
     const form = useForm({
         defaultValues: {
             name: name,
             email: email,
             theme: theme,
-            careerObjective: careerObjective, // ADDED
+            careerObjective: careerObjective,
+            jobHistory: initialJobHistory, // Initialize jobHistory with fetched data
             currentPassword: "",
             newPassword: "",
             confirmPassword: "",
         },
     });
 
+    // Use useFieldArray to manage dynamic job history fields
+    const { fields, append, remove } = useFieldArray({
+        control: form.control,
+        name: "jobHistory",
+    });
+
+    // Reset form when initial data or theme changes
     useEffect(() => {
-        if (name && email && theme) {
+        // Only reset if form is not dirty, to avoid overwriting user input
+        if (name && email && theme && !form.formState.isDirty) {
             form.reset({
                 name,
                 email,
                 theme,
-                careerObjective, // ADDED
+                careerObjective,
+                jobHistory: initialJobHistory, // Reset jobHistory with fetched data
                 currentPassword: "",
                 newPassword: "",
                 confirmPassword: "",
             });
         }
-    }, [name, email, theme, careerObjective, form]); // ADDED careerObjective to dependency array
+    }, [name, email, theme, careerObjective, initialJobHistory, form, form.formState.isDirty]); // Added initialJobHistory and form.formState.isDirty
 
     const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -116,14 +145,15 @@ export default function SettingsPage() {
                 await updateProfile(user, { displayName: values.name });
             }
 
-            // Save theme and careerObjective to Firestore
+            // Save theme, careerObjective, and jobHistory to Firestore
             const db = getFirestore();
             const userRef = doc(db, "users", user.uid);
             await setDoc(
                 userRef,
                 {
                     theme: values.theme,
-                    careerObjective: values.careerObjective || "", // MODIFIED: Save careerObjective
+                    careerObjective: values.careerObjective || "",
+                    jobHistory: values.jobHistory, // Save the entire job history array
                 },
                 { merge: true }
             );
@@ -138,7 +168,6 @@ export default function SettingsPage() {
                 if (values.newPassword !== values.confirmPassword) {
                     throw new Error("New password and confirmation do not match.");
                 }
-                // Re-authenticate
                 const credential = EmailAuthProvider.credential(
                     user.email!,
                     values.currentPassword
@@ -150,12 +179,16 @@ export default function SettingsPage() {
 
             toast.success("Profile settings saved.");
 
-            // Clear password fields after successful save
+            // Update initialJobHistory state to reflect saved changes
+            setInitialJobHistory(values.jobHistory);
+
+            // Clear password fields after successful save, but keep other fields updated
             form.reset({
                 name: values.name,
                 email: values.email,
                 theme: values.theme,
-                careerObjective: values.careerObjective, // MODIFIED: Clear careerObjective after save
+                careerObjective: values.careerObjective,
+                jobHistory: values.jobHistory, // Ensure jobHistory is reset with current values
                 currentPassword: "",
                 newPassword: "",
                 confirmPassword: "",
@@ -170,13 +203,13 @@ export default function SettingsPage() {
     };
 
     const handleCancel = () => {
-        router.push("/home"); // Navigate back to the home page
+        router.push("/home");
     };
 
     return (
         <div className="flex items-center justify-center min-h-screen text-gray-900 dark:text-gray-100">
-            <div className="w-full max-w-md">
-                <h1 className="text-2xl font-bold mb-6">Settings</h1>
+            <div className="w-full max-w-md p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+                <h1 className="text-2xl font-bold mb-6 text-center">Settings</h1>
                 <Form {...form}>
                     <form className="space-y-6" onSubmit={handleSave}>
                         {/* Name Field */}
@@ -191,6 +224,7 @@ export default function SettingsPage() {
                                             {...field}
                                             placeholder="Enter your name"
                                             disabled={isSaving}
+                                            className="rounded-md"
                                         />
                                     </FormControl>
                                     <FormMessage />
@@ -210,6 +244,7 @@ export default function SettingsPage() {
                                             {...field}
                                             placeholder="Enter your email"
                                             disabled
+                                            className="rounded-md"
                                         />
                                     </FormControl>
                                     <FormMessage />
@@ -217,7 +252,7 @@ export default function SettingsPage() {
                             )}
                         />
 
-                        {/* Career Objective / Summary Field - ADDED */}
+                        {/* Career Objective / Summary Field */}
                         <FormField
                             control={form.control}
                             name="careerObjective"
@@ -225,18 +260,98 @@ export default function SettingsPage() {
                                 <FormItem>
                                     <FormLabel>Career Objective / Summary</FormLabel>
                                     <FormControl>
-                                        <textarea // Use textarea for multi-line input
+                                        <textarea
                                             {...field}
                                             placeholder="Write your career objective or summary here"
-                                            className="w-full p-2 border rounded" // Basic Tailwind styling
+                                            className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
                                             disabled={isSaving}
-                                            rows={4} // Set the number of visible rows
+                                            rows={4}
                                         />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
                         />
+
+                        {/* Job History Section */}
+                        <div className="space-y-4 border border-gray-300 dark:border-gray-600 p-4 rounded-lg">
+                            <h2 className="text-lg font-semibold">Job History</h2>
+                            {fields.map((item, index) => (
+                                <div key={item.id} className="relative p-4 border border-gray-200 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-700 space-y-3">
+                                    <Button
+                                        type="button"
+                                        onClick={() => remove(index)}
+                                        disabled={isSaving}
+                                        className="absolute top-2 right-2 p-1 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center h-8 w-8"
+                                    >
+                                        <MinusCircleIcon className="h-5 w-5" />
+                                    </Button>
+                                    <FormField
+                                        control={form.control}
+                                        name={`jobHistory.${index}.company`}
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Company</FormLabel>
+                                                <FormControl>
+                                                    <Input {...field} placeholder="Company Name" disabled={isSaving} className="rounded-md dark:bg-gray-800 dark:border-gray-600" />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name={`jobHistory.${index}.role`}
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Role</FormLabel>
+                                                <FormControl>
+                                                    <Input {...field} placeholder="Your Role" disabled={isSaving} className="rounded-md dark:bg-gray-800 dark:border-gray-600" />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <div className="flex space-x-4">
+                                        <FormField
+                                            control={form.control}
+                                            name={`jobHistory.${index}.startDate`}
+                                            render={({ field }) => (
+                                                <FormItem className="flex-1">
+                                                    <FormLabel>Start Date (YYYY-MM)</FormLabel>
+                                                    <FormControl>
+                                                        <Input {...field} placeholder="YYYY-MM" disabled={isSaving} className="rounded-md dark:bg-gray-800 dark:border-gray-600" />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name={`jobHistory.${index}.endDate`}
+                                            render={({ field }) => (
+                                                <FormItem className="flex-1">
+                                                    <FormLabel>End Date (YYYY-MM or Present)</FormLabel>
+                                                    <FormControl>
+                                                        <Input {...field} placeholder="YYYY-MM or Present" disabled={isSaving} className="rounded-md dark:bg-gray-800 dark:border-gray-600" />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                            <Button
+                                type="button"
+                                onClick={() => append({ id: Math.random().toString(36).substring(2, 9), company: "", role: "", startDate: "", endDate: "" })}
+                                disabled={isSaving}
+                                className="w-full flex items-center justify-center space-x-2 bg-green-500 hover:bg-green-600 text-white rounded-md"
+                            >
+                                <PlusCircleIcon className="h-5 w-5" />
+                                <span>Add Job Entry</span>
+                            </Button>
+                        </div>
 
                         {/* Theme Field */}
                         <FormField
@@ -254,10 +369,10 @@ export default function SettingsPage() {
                                             value={field.value}
                                             disabled={isSaving}
                                         >
-                                            <SelectTrigger id="theme">
+                                            <SelectTrigger id="theme" className="rounded-md dark:bg-gray-700 dark:border-gray-600">
                                                 <SelectValue placeholder="Select theme" />
                                             </SelectTrigger>
-                                            <SelectContent>
+                                            <SelectContent className="dark:bg-gray-700 dark:border-gray-600">
                                                 <SelectItem value="light">Light</SelectItem>
                                                 <SelectItem value="dark">Dark</SelectItem>
                                                 <SelectItem value="system">System</SelectItem>
@@ -283,6 +398,7 @@ export default function SettingsPage() {
                                                 type={showCurrentPassword ? "text" : "password"}
                                                 placeholder="Enter your current password"
                                                 disabled={isOAuthUser}
+                                                className="rounded-md dark:bg-gray-700 dark:border-gray-600"
                                             />
                                             <button
                                                 type="button"
@@ -315,6 +431,7 @@ export default function SettingsPage() {
                                                 type={showNewPassword ? "text" : "password"}
                                                 placeholder="Enter your new password"
                                                 disabled={isOAuthUser}
+                                                className="rounded-md dark:bg-gray-700 dark:border-gray-600"
                                             />
                                             <button
                                                 type="button"
@@ -347,6 +464,7 @@ export default function SettingsPage() {
                                                 type={showConfirmPassword ? "text" : "password"}
                                                 placeholder="Confirm your password"
                                                 disabled={isOAuthUser}
+                                                className="rounded-md dark:bg-gray-700 dark:border-gray-600"
                                             />
                                             <button
                                                 type="button"
@@ -368,25 +486,25 @@ export default function SettingsPage() {
                         />
 
                         {/* Buttons */}
-                        <div className="flex justify-end space-x-4">
+                        <div className="flex justify-end space-x-4 mt-6">
                             <Button
                                 type="submit"
                                 disabled={isSaving}
-                                className="w-32 bg-blue-500 hover:bg-blue-600 text-white"
+                                className="w-32 bg-blue-500 hover:bg-blue-600 text-white rounded-md shadow-md transition-all duration-200"
                             >
                                 {isSaving ? "Saving..." : "Save"}
                             </Button>
                             <Button
                                 type="button"
                                 onClick={handleCancel}
-                                className="w-32 bg-gray-500 hover:bg-gray-600 text-white"
+                                className="w-32 bg-gray-500 hover:bg-gray-600 text-white rounded-md shadow-md transition-all duration-200"
                             >
                                 Cancel
                             </Button>
                         </div>
 
                         {/* Error Message */}
-                        {error && <p className="text-red-500 mt-2">{error}</p>}
+                        {error && <p className="text-red-500 mt-2 text-center">{error}</p>}
                     </form>
                 </Form>
             </div>
