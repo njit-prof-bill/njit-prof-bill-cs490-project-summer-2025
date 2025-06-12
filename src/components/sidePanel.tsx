@@ -35,6 +35,16 @@ export default function SidePanel({ isSidePanelOpen }: SidePanelProps) {
                             Write Free-form
                         </Link>
                     </li>
+                    <li>
+                        <Link href="/home/edit-contact-info" className="hover:underline">
+                            Edit Contact Info
+                        </Link>
+                    </li>
+                    <li>
+                        <Link href="/home/edit-summary" className="hover:underline">
+                            Edit Professional Summary
+                        </Link>
+                    </li>
                 </ul>
             </nav>
         </aside>
