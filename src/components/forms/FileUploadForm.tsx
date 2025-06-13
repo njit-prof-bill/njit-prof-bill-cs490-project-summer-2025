@@ -1,12 +1,15 @@
 "use client";
 
 import React, { useRef, useState } from "react";
+import { Button } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
+import { IconCheck, IconX } from '@tabler/icons-react';
 
 export default function FileUploadForm() {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [biographyText, setBiographyText] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [feedbackMessage, setFeedbackMessage] = useState("");
+    const [feedbackMessageID, setFeedbackMessageID] = useState("");
     const [isError, setIsError] = useState(false);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -14,7 +17,7 @@ export default function FileUploadForm() {
         if (e.target.files && e.target.files[0]) {
             setSelectedFile(e.target.files[0])
             setBiographyText("");
-            setFeedbackMessage("");
+            notifications.clean();
         }
     };
 
@@ -25,7 +28,16 @@ export default function FileUploadForm() {
 
         // If nothing is selected
         if(!selectedFile && biographyText.trim() == "") {
-            setFeedbackMessage("Please upload a file or enter biography text before submitting.");
+            notifications.update({
+                        id: feedbackMessageID,
+                        color: 'red',
+                        title: 'No data found',
+                        message: 'Please upload a file or enter biography text before submitting.',
+                        icon: <IconX size={18} />,
+                        loading: false,
+                        autoClose: 2000,
+                        withCloseButton: true
+                    });
             setIsSubmitting(false);
             setIsError(true);
             return;
@@ -51,20 +63,56 @@ export default function FileUploadForm() {
             const data = await response.json();
 
             if(response.ok) {
-                setFeedbackMessage(`Success: ${data.message}`);
+                notifications.update({
+                        id: feedbackMessageID,
+                        color: 'teal',
+                        title: 'Success',
+                        message: `${data.message}`,
+                        icon: <IconCheck size={18} />,
+                        loading: false,
+                        autoClose: 2000,
+                        withCloseButton: true
+                    });
                 setIsError(false);
             }
             else {
-                setFeedbackMessage(`Error: ${data.error || 'Unknown error'}`);
+                notifications.update({
+                        id: feedbackMessageID,
+                        color: 'red',
+                        title: 'Error',
+                        message: `${data.error || 'Unknown error'}`,
+                        icon: <IconX size={18} />,
+                        loading: false,
+                        autoClose: 2000,
+                        withCloseButton: true
+                    });
                 setIsError(true);
             }
         }
         catch(error) {
             if (error instanceof Error) {
-                setFeedbackMessage(`Error: ${error.message}`);
+                notifications.update({
+                        id: feedbackMessageID,
+                        color: 'red',
+                        title: 'Error',
+                        message: `${error.message}`,
+                        icon: <IconX size={18} />,
+                        loading: false,
+                        autoClose: 2000,
+                        withCloseButton: true
+                    });
             }
             else {
-                setFeedbackMessage("An unknown error occurred.");
+                notifications.update({
+                        id: feedbackMessageID,
+                        color: 'red',
+                        title: 'Error',
+                        message: "An unknown error occurred.",
+                        icon: <IconX size={18} />,
+                        loading: false,
+                        autoClose: 2000,
+                        withCloseButton: true
+                    });
             }
             setIsError(true);
         }
@@ -103,21 +151,27 @@ export default function FileUploadForm() {
                 onChange={(e) => {
                     setBiographyText(e.target.value);
                     setSelectedFile(null);
-                    setFeedbackMessage("");
+                    notifications.clean();
                 }}
                 placeholder="Type your biography here..."
                 className="border p-2 rounded min-h-[150px]"
             />
-            
-            <button type="submit" disabled={isSubmitting} className={`p-2 rounded text-white ${isSubmitting ? "bg-gray-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600"}`}>
+            <Button
+                type="submit"
+                disabled={isSubmitting}
+                onClick={() => {
+                    const id = notifications.show({
+                    loading: true,
+                    title: 'Loading your data',
+                    message: 'Data Loading..',
+                    autoClose: false,
+                    withCloseButton: false,
+                    });
+                    setFeedbackMessageID(id);
+                }}
+                >
                 {isSubmitting ? "Uploading..." : "Upload"}
-            </button>
-
-            {feedbackMessage && (
-                <div className={`mt-2 font-medium ${isError ? "text-red-600" : "text-green-600"}`}>
-                    {feedbackMessage}
-                </div>
-            )}
+            </Button>
         </form>
     );
 }

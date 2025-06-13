@@ -21,8 +21,8 @@ export default function HomeLayout({ children }: { children: ReactNode }) {
             {/* Main Layout */}
             <div className="flex flex-1">
                 {/* Side Navigation */}
-                <SidePanel isSidePanelOpen={isSidePanelOpen} />
-
+                <SidePanel hidden={!isSidePanelOpen}/>
+            
                 {/* Main Content */}
                 <main className="flex-1 p-4">
                     {children}
