@@ -30,14 +30,20 @@ function SkillsForm({skillsList, setSkillsList, user}: SkillsFormProps) {
         const formObj = Object.fromEntries(formData.entries());
 
         // For debugging purposes
-        console.log(formObj);
+        //console.log(formObj);
 
         // Convert the object back into an array of strings,
         // ignoring any duplicate strings by using Set()
-        const skillsArr = [...new Set(Object.values(formObj).map(String))];
+        let skillsArr = [...new Set(Object.values(formObj).map(String))];
+        // Remove empty strings
+        skillsArr = skillsArr.filter((str) => str !== '');
+        //console.log(skillsArr);
+        // if (skillsArr && (skillsArr.length == 1) && (skillsArr[0] === '')) {
+        //     skillsArr.splice(0,1);
+        // }
 
         // For debugging purposes
-        console.log(skillsArr);
+        //console.log(skillsArr);
 
         // Update the form to remove duplicates
         setSkillsList(skillsArr);
