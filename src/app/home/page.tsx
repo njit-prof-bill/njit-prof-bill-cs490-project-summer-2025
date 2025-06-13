@@ -40,14 +40,14 @@ export default function HomePage() {
         <Card shadow="sm" padding="lg" radius="md" withBorder onClick={() => router.push('/home/resume_builder')} style={{cursor:"pointer"}}>
           <Card.Section component="span">
             <Image
-              src="https://raw.githubusercontent.com/mantinedev/mantine/master/.demo/images/bg-8.png" // Find image for Resume Builder
+              src="/resume_builder_image.png" // Find image for Resume Builder
               height={160}
-              alt="Norway"
+              alt="Resume_Png"
             />
           </Card.Section>
 
           <Group justify="space-between" mt="md" mb="xs">
-            <Text fw={500}>Resume Builder</Text>{" "}
+            <Text fw={500}>Resume Builder</Text>{"Filler Text"}
             {/* Input Text for description*/}
           </Group>
         </Card>
@@ -64,7 +64,7 @@ export default function HomePage() {
               </Card.Section>
 
               <Group justify="space-between" mt="md" mb="xs">
-                <Text fw={500}>Norway Fjord Adventures</Text>{" "}
+                <Text fw={500}>Continue Editing</Text>{" "}
                 {/* Input Text for description*/}
               </Group>
             </Card>
@@ -81,7 +81,7 @@ export default function HomePage() {
               </Card.Section>
 
               <Group justify="space-between" mt="md" mb="xs">
-                <Text fw={500}>Norway Fjord Adventures</Text>{" "}
+                <Text fw={500}>View Completed Resumes</Text>{" "}
                 {/* Input Text for description*/}
               </Group>
             </Card>
@@ -98,7 +98,7 @@ export default function HomePage() {
               </Card.Section>
 
               <Group justify="space-between" mt="md" mb="xs">
-                <Text fw={500}>Norway Fjord Adventures</Text>{" "}
+                <Text fw={500}>About Us</Text>{" "}
                 {/* Input Text for description*/}
               </Group>
             </Card>

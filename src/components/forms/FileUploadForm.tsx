@@ -5,6 +5,7 @@ import { Button } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconCheck, IconX } from '@tabler/icons-react';
 
+
 export default function FileUploadForm() {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [biographyText, setBiographyText] = useState("");
@@ -35,7 +36,7 @@ export default function FileUploadForm() {
                         message: 'Please upload a file or enter biography text before submitting.',
                         icon: <IconX size={18} />,
                         loading: false,
-                        autoClose: 2000,
+                        autoClose: 4000,
                         withCloseButton: true
                     });
             setIsSubmitting(false);
@@ -70,7 +71,7 @@ export default function FileUploadForm() {
                         message: `${data.message}`,
                         icon: <IconCheck size={18} />,
                         loading: false,
-                        autoClose: 2000,
+                        autoClose: 4000,
                         withCloseButton: true
                     });
                 setIsError(false);
@@ -83,7 +84,7 @@ export default function FileUploadForm() {
                         message: `${data.error || 'Unknown error'}`,
                         icon: <IconX size={18} />,
                         loading: false,
-                        autoClose: 2000,
+                        autoClose: 4000,
                         withCloseButton: true
                     });
                 setIsError(true);
@@ -98,7 +99,7 @@ export default function FileUploadForm() {
                         message: `${error.message}`,
                         icon: <IconX size={18} />,
                         loading: false,
-                        autoClose: 2000,
+                        autoClose: 4000,
                         withCloseButton: true
                     });
             }
@@ -110,7 +111,7 @@ export default function FileUploadForm() {
                         message: "An unknown error occurred.",
                         icon: <IconX size={18} />,
                         loading: false,
-                        autoClose: 2000,
+                        autoClose: 4000,
                         withCloseButton: true
                     });
             }

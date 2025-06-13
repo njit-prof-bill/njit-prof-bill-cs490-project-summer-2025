@@ -3,8 +3,14 @@ import React from 'react';
 import {
   Icon2fa,
   IconBellRinging,
+  IconClipboard,
+  IconClipboardCheckFilled,
+  IconClipboardData,
+  IconClipboardList,
   IconDatabaseImport,
+  IconFile,
   IconFingerprint,
+  IconHome,
   IconKey,
   IconLogout,
   IconReceipt2,
@@ -13,16 +19,15 @@ import {
 } from '@tabler/icons-react';
 import { Code, Group } from '@mantine/core';
 import { MantineLogo } from '@mantinex/mantine-logo';
-import classes from '../styles/sidePanel.module.css';
+import Link from 'next/link';
+import classes from '@/styles/sidePanel.module.css';
 
 const data = [
-  { link: '', label: 'Notifications', icon: IconBellRinging },
-  { link: '', label: 'Billing', icon: IconReceipt2 },
-  { link: '', label: 'Security', icon: IconFingerprint },
-  { link: '', label: 'SSH Keys', icon: IconKey },
-  { link: '', label: 'Databases', icon: IconDatabaseImport },
-  { link: '', label: 'Authentication', icon: Icon2fa },
-  { link: '', label: 'Other Settings', icon: IconSettings },
+  { link: '/home/', label: 'Main', icon: IconHome },
+  { link: '/home/resume_builder', label: 'Upload File', icon: IconFile },
+  { link: '', label: 'Continue Editing', icon: IconClipboardList },
+  { link: '', label: 'Completed Resumes', icon: IconClipboardCheckFilled },
+  { link: '/home/settings', label: 'Other Settings', icon: IconSettings },
 ];
 
 interface SidePanelProps {
@@ -33,19 +38,16 @@ export default function SidePanel({ hidden }: SidePanelProps) {
   const [active, setActive] = useState('Billing');
 
   const links = data.map((item) => (
-    <a
+    <Link
+      href={item.link || '#'}
       className={classes.link}
       data-active={item.label === active || undefined}
-      href={item.link}
       key={item.label}
-      onClick={(event) => {
-        event.preventDefault();
-        setActive(item.label);
-      }}
+      onClick={() => setActive(item.label)}
     >
       <item.icon className={classes.linkIcon} stroke={1.5} />
       <span>{item.label}</span>
-    </a>
+    </Link>
   ));
 
   return (
