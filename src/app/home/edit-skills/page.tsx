@@ -8,9 +8,10 @@ import { doc, getDoc, updateDoc } from "firebase/firestore";
 
 type SkillsFormProps = {
     skillsList: string[];
+    setSkillsList: React.Dispatch<React.SetStateAction<string[]>>;
 };
 
-function SkillsForm({skillsList}: SkillsFormProps) {
+function SkillsForm({skillsList, setSkillsList}: SkillsFormProps) {
     function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
         // Prevent browser from reloading page
         event.preventDefault();
@@ -29,6 +30,12 @@ function SkillsForm({skillsList}: SkillsFormProps) {
         // For debugging purposes
         console.log(skillsArr);
     }
+    function addNewSkill(event: React.MouseEvent<HTMLButtonElement>) {
+        // Prevent browser from reloading page
+        event.preventDefault();
+        // Add a new, empty string to the array
+        setSkillsList((oldArr) => [...oldArr, ""]);
+    }
     return (
         <div>
             <form method="post" onSubmit={handleSubmit}>
@@ -43,6 +50,7 @@ function SkillsForm({skillsList}: SkillsFormProps) {
                         ></input>
                     </div>
                 ))}
+                <button onClick={addNewSkill}>Add New Skill</button><br></br>
                 <button type="submit">Save</button>
             </form>
         </div>
@@ -95,7 +103,7 @@ export default function EditSkillsPage() {
     return (
         <div>
             <h1>Skills</h1>
-            <SkillsForm skillsList={skills} />
+            <SkillsForm skillsList={skills} setSkillsList={setSkills} />
         </div>
     );
 }
