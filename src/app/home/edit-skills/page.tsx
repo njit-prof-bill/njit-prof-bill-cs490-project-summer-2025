@@ -6,6 +6,49 @@ import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 
+type SkillsFormProps = {
+    skillsList: string[];
+};
+
+function SkillsForm({skillsList}: SkillsFormProps) {
+    function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+        // Prevent browser from reloading page
+        event.preventDefault();
+
+        // Read form data and convert to object
+        const form = event.target as HTMLFormElement;
+        const formData = new FormData(form);
+        const formObj = Object.fromEntries(formData.entries());
+
+        // For debugging purposes
+        console.log(formObj);
+
+        // Convert the object back into an array of strings
+        const skillsArr = Object.values(formObj).map(String);
+
+        // For debugging purposes
+        console.log(skillsArr);
+    }
+    return (
+        <div>
+            <form method="post" onSubmit={handleSubmit}>
+                {skillsList.map((field, index) => (
+                    <div key={index}>
+                        <input
+                            type="text"
+                            id={index.toString()}
+                            name={`skill-${index}`}
+                            placeholder="Enter a skill here"
+                            defaultValue={field}
+                        ></input>
+                    </div>
+                ))}
+                <button type="submit">Save</button>
+            </form>
+        </div>
+    );
+}
+
 export default function EditSkillsPage() {
     // For checking whether the user is logged in and redirecting them accordingly
     const { user, loading } = useAuth();
@@ -49,14 +92,10 @@ export default function EditSkillsPage() {
         return skillList;
     }
 
-    // function testGetSkills() {
-    //     console.log(skills);
-    // }
-
     return (
         <div>
             <h1>Skills</h1>
-            {/* <button onClick={testGetSkills}>Click me</button> */}
+            <SkillsForm skillsList={skills} />
         </div>
     );
 }
