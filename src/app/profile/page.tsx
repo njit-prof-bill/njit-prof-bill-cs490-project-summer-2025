@@ -14,6 +14,17 @@ import Spinner, { spinnerStyles } from '../../components/ui/Spinner';
 
 import GroqProcessor from "../../components/GroqProcessor";
 
+
+
+
+
+import ProfileCard from "../../components/ProfileCard";
+
+
+
+
+
+
 export default function HomePage() {
 
     const { user, loading } = useAuth();
@@ -34,11 +45,6 @@ export default function HomePage() {
     if (loading) {
         return <p>Loading...</p>; // Show a loading state while checking auth
     }
-
-    
-    
-
-
 
 
     
@@ -66,8 +72,16 @@ export default function HomePage() {
 
             <GroqProcessor />
 
+// In your component where you have the authenticated user:
+
+
+              <ProfileCard />
+
+
 
             </Card> 
+
+
 
         </div>
     );
