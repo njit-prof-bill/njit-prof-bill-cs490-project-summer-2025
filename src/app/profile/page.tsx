@@ -12,7 +12,7 @@ import { UserNameAddUpdate } from '@/components/userNameAddUpdate';
 
 import Spinner, { spinnerStyles } from '../../components/ui/Spinner';
 
-
+import GroqProcessor from "../../components/GroqProcessor";
 
 export default function HomePage() {
 
@@ -37,6 +37,11 @@ export default function HomePage() {
 
     
     
+
+
+
+
+    
  
     return (
         <div className="flex flex-col items-center">
@@ -46,13 +51,23 @@ export default function HomePage() {
 
             <br />
             
-            <Card className="w-full max-w-md shadow-lg">
+            <Card className="w-full max-w shadow-lg">
                 <CardHeader>
-                    <CardTitle>Basic User Profile:</CardTitle>
-
-                    <UserNameAddUpdate />
                 </CardHeader>
-            </Card>
+
+
+            {/* <div>
+                <h1>My App</h1>
+                <GroqProcessor />
+                </div>
+
+
+*/}
+
+            <GroqProcessor />
+
+
+            </Card> 
 
         </div>
     );

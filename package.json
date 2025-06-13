@@ -22,6 +22,7 @@
     "clsx": "^2.1.1",
     "firebase": "^11.8.1",
     "firebase-admin": "^13.4.0",
+    "groq-sdk": "^0.25.0",
     "identity-obj-proxy": "^3.0.0",
     "lucide-react": "^0.488.0",
     "mammoth": "^1.9.1",
