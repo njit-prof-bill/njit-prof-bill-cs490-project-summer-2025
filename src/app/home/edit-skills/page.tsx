@@ -34,7 +34,18 @@ function SkillsForm({skillsList, setSkillsList}: SkillsFormProps) {
         // Prevent browser from reloading page
         event.preventDefault();
         // Add a new, empty string to the array
-        setSkillsList((oldArr) => [...oldArr, ""]);
+        setSkillsList((oldSkills) => [...oldSkills, ""]);
+    }
+    function removeSkill(event: React.MouseEvent<HTMLButtonElement>, index: number) {
+        // Prevent browser from reloading page
+        event.preventDefault();
+        // Remove the element from the array
+        setSkillsList((oldSkills) => oldSkills.filter((currSkill, i) => i !== index));
+    }
+    function handleChange(index: number, value: string) {
+        setSkillsList((oldSkills) => 
+            oldSkills.map((skill, i) => (i === index ? value : skill))
+        );
     }
     return (
         <div>
@@ -46,8 +57,10 @@ function SkillsForm({skillsList, setSkillsList}: SkillsFormProps) {
                             id={index.toString()}
                             name={`skill-${index}`}
                             placeholder="Enter a skill here"
-                            defaultValue={field}
+                            value={field}
+                            onChange={(event) => handleChange(index, event.target.value)}
                         ></input>
+                        <button onClick={(event) => removeSkill(event, index)}>Remove</button>
                     </div>
                 ))}
                 <button onClick={addNewSkill}>Add New Skill</button><br></br>
