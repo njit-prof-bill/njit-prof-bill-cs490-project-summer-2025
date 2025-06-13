@@ -9,9 +9,17 @@ import { doc, getDoc, updateDoc } from "firebase/firestore";
 type SkillsFormProps = {
     skillsList: string[];
     setSkillsList: React.Dispatch<React.SetStateAction<string[]>>;
+    user: any;
 };
 
-function SkillsForm({skillsList, setSkillsList}: SkillsFormProps) {
+function SkillsForm({skillsList, setSkillsList, user}: SkillsFormProps) {
+    async function submitSkills(skills: string[]) {
+        // User profiles are identified in the database by the user's UID
+        if (user) {
+            const newSkillsRef = doc(db, "users", user.uid);
+            await updateDoc(newSkillsRef, { "resumeFields.skills": skills });
+        }
+    }
     function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
         // Prevent browser from reloading page
         event.preventDefault();
@@ -22,13 +30,16 @@ function SkillsForm({skillsList, setSkillsList}: SkillsFormProps) {
         const formObj = Object.fromEntries(formData.entries());
 
         // For debugging purposes
-        console.log(formObj);
+        //console.log(formObj);
 
         // Convert the object back into an array of strings
         const skillsArr = Object.values(formObj).map(String);
 
         // For debugging purposes
-        console.log(skillsArr);
+        //console.log(skillsArr);
+
+        // Submit the array to the user's document in the database
+        submitSkills(skillsArr);
     }
     function addNewSkill(event: React.MouseEvent<HTMLButtonElement>) {
         // Prevent browser from reloading page
@@ -116,7 +127,7 @@ export default function EditSkillsPage() {
     return (
         <div>
             <h1>Skills</h1>
-            <SkillsForm skillsList={skills} setSkillsList={setSkills} />
+            <SkillsForm skillsList={skills} setSkillsList={setSkills} user={user} />
         </div>
     );
 }
