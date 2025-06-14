@@ -1,4 +1,5 @@
 // Import the functions you need from the Firebase SDKs
+console.log("🔥 FIREBASE API KEY:", process.env.NEXT_PUBLIC_FIREBASE_API_KEY);
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 
