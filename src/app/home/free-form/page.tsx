@@ -71,6 +71,24 @@ export default function FreeFormPage() {
                 } catch (error) {
                     ;
                 }
+                // Extract list of skills and save to userProfile
+                try {
+                    await updateDoc(documentRef, { "resumeFields.skills": responseObj.skills });
+                } catch (error) {
+                    ;
+                }
+                // Extract list of work experiences and save to userProfile
+                try {
+                    await updateDoc(documentRef, { "resumeFields.workExperience": responseObj.workExperience });
+                } catch (error) {
+                    ;
+                }
+                // Extract list of education credentials and save to userProfile
+                try {
+                    await updateDoc(documentRef, { "resumeFields.education": responseObj.education });
+                } catch (error) {
+                    ;
+                }
             } catch (error) {
                 console.error("Error: could not retrieve document;", error);
             }
