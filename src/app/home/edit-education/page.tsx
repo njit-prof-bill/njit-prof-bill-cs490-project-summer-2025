@@ -25,6 +25,19 @@ function EducationForm({ educationList, setEducationList, user }: EducationFormP
         // Prevent browser from reloading page
         event.preventDefault();
     }
+    function addNewEdu(event: React.MouseEvent<HTMLButtonElement>) {
+        // Prevent browser from reloading page
+        event.preventDefault();
+        // Add a new, empty education entry to the array
+        let newEduEntry: EducationEntry = {
+            degree: "",
+            institution: "",
+            startDate: "",
+            endDate: "",
+            gpa: ""
+        };
+        setEducationList((oldEdu) => [...oldEdu, newEduEntry]);
+    }
     return (
         <div>
             <form method="post" onSubmit={handleSubmit}>
@@ -36,7 +49,7 @@ function EducationForm({ educationList, setEducationList, user }: EducationFormP
                             id={`degree-${index}`}
                             name={`degree-${index}`}
                             placeholder="Enter degree name here"
-                            value={entry.degree}
+                            defaultValue={entry.degree}
                             size={40}
                         ></input><br></br>
                         <h3>Institution:</h3>
@@ -45,7 +58,7 @@ function EducationForm({ educationList, setEducationList, user }: EducationFormP
                             id={`institution-${index}`}
                             name={`institution-${index}`}
                             placeholder="Enter institution name here"
-                            value={entry.institution}
+                            defaultValue={entry.institution}
                             size={40}
                         ></input>
                         <h3>Start Date:</h3>
@@ -54,7 +67,7 @@ function EducationForm({ educationList, setEducationList, user }: EducationFormP
                             id={`startdate-${index}`}
                             name={`startdate-${index}`}
                             placeholder="Enter start date here"
-                            value={entry.startDate}
+                            defaultValue={entry.startDate}
                             size={40}
                         ></input>
                         <h3>End Date:</h3>
@@ -63,12 +76,13 @@ function EducationForm({ educationList, setEducationList, user }: EducationFormP
                             id={`enddate-${index}`}
                             name={`enddate-${index}`}
                             placeholder="Enter end date here"
-                            value={entry.endDate}
+                            defaultValue={entry.endDate}
                             size={40}
-                        ></input>
+                        ></input><br></br>
+                        <button>Remove</button>
                     </div>
                 ))}
-                <button>Add New Education</button><br></br>
+                <button onClick={addNewEdu}>Add New Education</button><br></br>
                 <button type="submit">Save</button>
             </form>
         </div>
