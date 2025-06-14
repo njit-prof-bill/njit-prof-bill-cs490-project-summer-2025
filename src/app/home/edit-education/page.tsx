@@ -20,8 +20,59 @@ type EducationFormProps = {
     user: any;
 }
 
-function educationForm({ educationList, setEducationList, user }: EducationFormProps) {
-    ;
+function EducationForm({ educationList, setEducationList, user }: EducationFormProps) {
+    function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+        // Prevent browser from reloading page
+        event.preventDefault();
+    }
+    return (
+        <div>
+            <form method="post" onSubmit={handleSubmit}>
+                {educationList.map((entry, index) => (
+                    <div key={index}>
+                        <h3>Degree Name:</h3>
+                        <input
+                            type="text"
+                            id={`degree-${index}`}
+                            name={`degree-${index}`}
+                            placeholder="Enter degree name here"
+                            value={entry.degree}
+                            size={40}
+                        ></input><br></br>
+                        <h3>Institution:</h3>
+                        <input
+                            type="text"
+                            id={`institution-${index}`}
+                            name={`institution-${index}`}
+                            placeholder="Enter institution name here"
+                            value={entry.institution}
+                            size={40}
+                        ></input>
+                        <h3>Start Date:</h3>
+                        <input
+                            type="text"
+                            id={`startdate-${index}`}
+                            name={`startdate-${index}`}
+                            placeholder="Enter start date here"
+                            value={entry.startDate}
+                            size={40}
+                        ></input>
+                        <h3>End Date:</h3>
+                        <input
+                            type="text"
+                            id={`enddate-${index}`}
+                            name={`enddate-${index}`}
+                            placeholder="Enter end date here"
+                            value={entry.endDate}
+                            size={40}
+                        ></input>
+                    </div>
+                ))}
+                <button>Add New Education</button><br></br>
+                <button type="submit">Save</button>
+            </form>
+        </div>
+    );
 }
 
 export default function EditEducationPage() {
@@ -72,6 +123,7 @@ export default function EditEducationPage() {
     return (
         <div>
             <h1>Edit Education</h1>
+            <EducationForm educationList={education} setEducationList={setEducation} user={user} />
         </div>
     );
 }
