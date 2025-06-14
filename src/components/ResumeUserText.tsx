@@ -14,7 +14,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter }
 
 
 
-const UserText: React.FC = () => {
+const ResumeUserText: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [jsonObject, setJsonObject] = useState<any | null>(null);
   const [rawText, setRawText] = useState<string | null>(null);
@@ -44,7 +44,10 @@ const UserText: React.FC = () => {
 
           if (docSnap.exists()) {
             const data = docSnap.data();
-            const textStr = data.aiResponse; // assuming this is your JSON string
+            const textStr = data.groqResponse; // assuming this is your JSON string
+
+           
+
 
             //  console.log('Fetched text string:', textStr);
             setRawText(textStr);
@@ -98,83 +101,17 @@ const UserText: React.FC = () => {
       
 
 
-        <h2>Name: {jsonObject.fullName}</h2>
-        <h2>Contact:</h2>
-        <h2>Email: {jsonObject.contact.email}</h2>
-        <h2>Phone: {jsonObject.contact.phone}</h2>
-        <h2>Location: {jsonObject.contact.location}</h2>
-
-         <div>
-      {Object.keys(jsonObject).map((key) => {
-        const value = (jsonObject as any)[key];
-
-        if (typeof value === 'string') {
-          return (
-            <div key={key}>
-              <strong>{key}:</strong> {value}
-            </div>
-          );
-        } else if (Array.isArray(value)) {
-          if (key === 'skills') {
-            return (
-              <div key={key}>
-                <strong>{key}:</strong>
-                <ul>
-                  {value.map((item, index) => (
-                    <li key={index}>{item}</li>
-                  ))}
-                </ul>
-              </div>
-            );
-          } else if (key === 'experience' || key === 'education') {
-            return (
-              <div key={key}>
-                <h3>{key}:</h3>
-                {value.map((item: any, index: number) => (
-                  <div key={index} style={{ marginLeft: '1em', marginBottom: '1em' }}>
-                    {Object.entries(item).map(([subKey, subValue]: [string, any]) => (
-                    <div key={subKey}>
-                        <strong>{subKey}:</strong> {Array.isArray(subValue) ? (subValue as string[]).join(', ') : subValue}
-                    </div>
-                    ))}
-                  </div>
-                ))}
-              </div>
-            );
-          } else {
-            // For other array types
-            return (
-              <div key={key}>
-                <strong>{key}:</strong>
-                <ul>
-                  {value.map((item: any, index: number) => (
-                    <li key={index}>{item}</li>
-                  ))}
-                </ul>
-              </div>
-            );
-          }
-        } else if (typeof value === 'object' && value !== null) {
-          // Handle nested objects like contact
-          return (
-            <div key={key}>
-              <h3>{key}:</h3>
-              {Object.entries(value).map(([subKey, subValue]: [string, any]) => (
-                <div key={subKey}>
-                    <strong>{subKey}:</strong> {Array.isArray(subValue) ? (subValue as string[]).join(', ') : subValue}
-                </div>
-                ))}
-            </div>
-          );
-        } else {
-          return null;
-        }
-      })}
-    </div>
-
+      <h2>Name: {jsonObject?.fullName || 'N/A'}</h2>
+      <h2>Contact:</h2>
+      <h3>Email: {jsonObject?.contact?.email || 'N/A'}</h3>
+      <h3>Phone: {jsonObject?.contact?.phone || 'N/A'}</h3>
+      <h3>Location: {jsonObject?.contact?.location || 'N/A'}</h3>
+      <h2>Summary: {jsonObject?.summary || 'N/A'}</h2>
+      <h2>Work Experience: {jsonObject?.workExperience?.[0]?.jobTitle || 'N/A'}</h2>
+      <h2>Company: {jsonObject?.workExperience?.[0]?.company || 'N/A'}</h2>
 
     </div>
   );
 };
 
-export default UserText;
+export default ResumeUserText;
