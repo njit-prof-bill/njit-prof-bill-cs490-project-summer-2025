@@ -55,6 +55,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as mammoth from 'mammoth';
 import * as unzipper from 'unzipper';
+import pdfParse from 'pdf-parse';
+
 
 export const config = {
   api: {
@@ -99,7 +101,7 @@ export async function POST(req: NextRequest) {
     let rawText = '';
 
     if (ext === 'pdf') {
-      const pdfParse = (await import('pdf-parse')).default;
+      // const pdfParse = (await import('pdf-parse')).default;
       const result = await pdfParse(buffer);
       rawText = result.text;
     } else if (ext === 'docx') {
