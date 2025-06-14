@@ -76,7 +76,7 @@ export default function FreeFormPage() {
         return corpus;
     }
 
-    function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
         // Prevent the browser from reloading the page
         event.preventDefault();
 
@@ -92,8 +92,13 @@ export default function FreeFormPage() {
         //console.log(formJson);
 
         // Send AI prompt with text corpus and retrieve its response
-        const AIResponse = getAIResponse(AIPrompt, formJson.text as string);
-        console.log(AIResponse);
+        try {
+            const AIResponse = await getAIResponse(AIPrompt, formJson.text as string);
+            console.log(AIResponse);
+        } catch (error) {
+            console.error("Error fetching AI response: ", error);
+        }
+        
     }
     return (
         <div className="flex items-center justify-center min-h-screen text-gray-900 dark:text-gray-100">

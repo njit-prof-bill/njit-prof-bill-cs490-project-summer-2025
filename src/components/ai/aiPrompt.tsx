@@ -58,7 +58,7 @@ Here is the user's text corpus:
 export async function getAIResponse(prompt: string, corpus: string) {
     const fullPrompt = prompt + corpus;
     console.log(fullPrompt);
-    const result = await model.generateContent(prompt);
+    const result = await model.generateContent(fullPrompt);
     const response = result.response;
     const text = response.text();
     return text;
