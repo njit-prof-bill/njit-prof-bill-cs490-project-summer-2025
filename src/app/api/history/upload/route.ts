@@ -5,6 +5,8 @@ import { getAuth } from "firebase-admin/auth";
 import { initializeApp, cert, getApps } from "firebase-admin/app";
 import { readFileSync } from "fs";
 import { join } from "path";
+import pdfParse from "pdf-parse/lib/pdf-parse.js";
+
 
 const allowedTypes = [
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
@@ -58,7 +60,6 @@ export async function POST(req: NextRequest) {
       extractedText = result.value;
     }
     else if (file.type === "application/pdf") {
-      const pdfParse = (await import("pdf-parse")).default;
       const result = await pdfParse(buffer);
       extractedText = result.text;
     }
