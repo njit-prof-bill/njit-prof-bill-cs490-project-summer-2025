@@ -38,6 +38,12 @@ function EducationForm({ educationList, setEducationList, user }: EducationFormP
         };
         setEducationList((oldEdu) => [...oldEdu, newEduEntry]);
     }
+    function removeEdu(event: React.MouseEvent<HTMLButtonElement>, index: number) {
+        // Prevent browser from reloading page
+        event.preventDefault();
+        // Remove the education entry from the array
+        setEducationList((oldEdu) => oldEdu.filter((currEdu, i) => i !== index));
+    }
     return (
         <div>
             <form method="post" onSubmit={handleSubmit}>
@@ -49,7 +55,13 @@ function EducationForm({ educationList, setEducationList, user }: EducationFormP
                             id={`degree-${index}`}
                             name={`degree-${index}`}
                             placeholder="Enter degree name here"
-                            defaultValue={entry.degree}
+                            value={entry.degree}
+                            onChange={(event) => {
+                                const updatedEntry = {...entry, degree: event.target.value};
+                                const updatedList = [...educationList];
+                                updatedList[index] = updatedEntry;
+                                setEducationList(updatedList);
+                            }}
                             size={40}
                         ></input><br></br>
                         <h3>Institution:</h3>
@@ -58,7 +70,13 @@ function EducationForm({ educationList, setEducationList, user }: EducationFormP
                             id={`institution-${index}`}
                             name={`institution-${index}`}
                             placeholder="Enter institution name here"
-                            defaultValue={entry.institution}
+                            value={entry.institution}
+                            onChange={(event) => {
+                                const updatedEntry = {...entry, institution: event.target.value};
+                                const updatedList = [...educationList];
+                                updatedList[index] = updatedEntry;
+                                setEducationList(updatedList);
+                            }}
                             size={40}
                         ></input>
                         <h3>Start Date:</h3>
@@ -67,7 +85,13 @@ function EducationForm({ educationList, setEducationList, user }: EducationFormP
                             id={`startdate-${index}`}
                             name={`startdate-${index}`}
                             placeholder="Enter start date here"
-                            defaultValue={entry.startDate}
+                            value={entry.startDate}
+                            onChange={(event) => {
+                                const updatedEntry = {...entry, startDate: event.target.value};
+                                const updatedList = [...educationList];
+                                updatedList[index] = updatedEntry;
+                                setEducationList(updatedList);
+                            }}
                             size={40}
                         ></input>
                         <h3>End Date:</h3>
@@ -76,10 +100,31 @@ function EducationForm({ educationList, setEducationList, user }: EducationFormP
                             id={`enddate-${index}`}
                             name={`enddate-${index}`}
                             placeholder="Enter end date here"
-                            defaultValue={entry.endDate}
+                            value={entry.endDate}
+                            onChange={(event) => {
+                                const updatedEntry = {...entry, endDate: event.target.value};
+                                const updatedList = [...educationList];
+                                updatedList[index] = updatedEntry;
+                                setEducationList(updatedList);
+                            }}
                             size={40}
                         ></input><br></br>
-                        <button>Remove</button>
+                        <h3>GPA:</h3>
+                        <input
+                            type="text"
+                            id={`gpa-${index}`}
+                            name={`gpa-${index}`}
+                            placeholder="Enter GPA here"
+                            value={entry.gpa}
+                            onChange={(event) => {
+                                const updatedEntry = {...entry, gpa: event.target.value};
+                                const updatedList = [...educationList];
+                                updatedList[index] = updatedEntry;
+                                setEducationList(updatedList);
+                            }}
+                            size={40}
+                        ></input><br></br>
+                        <button onClick={(event) => removeEdu(event, index)}>Remove</button>
                     </div>
                 ))}
                 <button onClick={addNewEdu}>Add New Education</button><br></br>
