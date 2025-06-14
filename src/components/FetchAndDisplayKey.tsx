@@ -1,6 +1,76 @@
 import { useEffect, useState } from 'react';
 import { getFirestore, doc, getDoc, updateDoc, deleteField } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
+import WorkExperienceEditor from '../components/WorkExperienceEditor';
+import EducationEditor, { EducationItem } from '../components/EducationEditor';
+
+interface Job {
+  company: string;
+  role: string;
+  startDate: string;
+  endDate?: string;
+  description?: string;
+}
+
+export interface EducationItem {
+  institution: string;
+  degree: string;
+  startDate: string;
+  endDate: string;
+  gpa: string;
+}
+
+
+// Map Firestore structure → editor structure
+const normalizeWorkExperience = (data: any[]): Job[] =>
+  data.map((job) => ({
+    company: job.company || '',
+    role: job.jobTitle || '',
+    startDate: job.startDate || '',
+    endDate: job.endDate || '',
+    description: Array.isArray(job.responsibilities)
+      ? job.responsibilities.join('\n')
+      : '',
+  }));
+
+// Map editor structure → Firestore structure
+const denormalizeWorkExperience = (data: Job[]): any[] =>
+  data.map((job) => ({
+    company: job.company,
+    jobTitle: job.role,
+    startDate: job.startDate,
+    endDate: job.endDate,
+    responsibilities: job.description
+      ? job.description
+          .split('\n')
+          .map((r) => r.trim())
+          .filter(Boolean)
+      : [],
+  }));
+
+  const normalizeEducation = (data: any[]): EducationItem[] =>
+  data
+    .filter((edu) => edu && typeof edu === 'object')
+    .map((edu) => ({
+      institution: edu.institution || '',
+      degree: edu.degree || '',
+      startDate: edu.startDate || '',
+      endDate: edu.endDate || '',
+      gpa: edu.gpa || '',
+    }));
+
+
+
+    const denormalizeEducation = (data: EducationItem[]): any[] =>
+    data.map((edu) => ({
+      institution: edu.institution,
+      degree: edu.degree,
+      startDate: edu.startDate,
+      endDate: edu.endDate,
+      gpa: edu.gpa || '',
+    }));
+  
+
 
 interface Props {
   keyPath: string;
@@ -371,83 +441,146 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
       </div>
       
       {editMode ? (
-        // Editing mode
-        <div style={{ width: '100%' }}>
-          {typeof editValue === 'string' ? (
-            <textarea
-              rows={4}
-              style={{ 
-                width: '100%', 
-                marginBottom: '0.5rem',
-                boxSizing: 'border-box',
-                resize: 'vertical',
-                fontFamily: 'monospace'
-              }}
-              value={editValue}
-              onChange={(e) => handleEditValueChange(e.target.value)}
-            />
-          ) : (
-            <textarea
-              rows={10}
-              style={{ 
-                width: '100%', 
-                marginBottom: '0.5rem',
-                boxSizing: 'border-box',
-                resize: 'vertical',
-                fontFamily: 'monospace',
-                fontSize: '0.875rem'
-              }}
-              value={JSON.stringify(editValue, null, 2)}
-              onChange={(e) => {
-                try {
-                  const parsed = JSON.parse(e.target.value);
-                  handleEditValueChange(parsed);
-                } catch {
-                  // ignore parse errors but still update the raw text
-                  // for real-time editing experience
-                }
-              }}
-            />
-          )}
-          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-            <button 
-              onClick={saveData} 
-              disabled={saving || !hasUnsavedChanges}
-              style={{ 
-                backgroundColor: hasUnsavedChanges ? '#007bff' : '#skyblue',
-                color: 'white',
-                opacity: saving || !hasUnsavedChanges ? 0.6 : 1,
-                cursor: saving || !hasUnsavedChanges ? 'not-allowed' : 'pointer',
-                padding: '0.5rem 1rem',
-                border: 'none',
-                borderRadius: '4px'
-              }}
-            >
-              {saving ? 'Saving...' : 'Save'}
-            </button>
-            <button 
-              onClick={cancelEditing}
-              style={{
-                padding: '0.5rem 1rem',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-                backgroundColor: 'red',
-                cursor: 'pointer'
-              }}
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      ) : (
+  <div style={{ width: '100%' }}>
+    {keyPath === 'workExperience' ? (
+      <WorkExperienceEditor
+        workExperience={Array.isArray(editValue) ? normalizeWorkExperience(editValue) : []}
+        onChange={(updated) => handleEditValueChange(denormalizeWorkExperience(updated))}
+      />
+    ) : keyPath === 'education' ? (
+      
+        <EducationEditor
+          education={
+            Array.isArray(editValue)
+              ? normalizeEducation(editValue)
+              : [normalizeEducation([editValue])[0]]
+          }
+          onChange={(updated) => {
+            const denorm = denormalizeEducation(updated);
+            handleEditValueChange(Array.isArray(editValue) ? denorm : denorm[0]);
+          }}
+        />
+      ) : typeof editValue === 'string' ? (
+      <textarea
+        rows={4}
+        style={{ width: '100%', marginBottom: '0.5rem', boxSizing: 'border-box', resize: 'vertical', fontFamily: 'monospace' }}
+        value={editValue}
+        onChange={(e) => handleEditValueChange(e.target.value)}
+      />
+    ) : (
+      <textarea
+        rows={10}
+        style={{ width: '100%', marginBottom: '0.5rem', boxSizing: 'border-box', resize: 'vertical', fontFamily: 'monospace', fontSize: '0.875rem' }}
+        value={JSON.stringify(editValue, null, 2)}
+        onChange={(e) => {
+          try {
+            const parsed = JSON.parse(e.target.value);
+            handleEditValueChange(parsed);
+          } catch {
+            // ignore parse errors
+          }
+        }}
+      />
+    )}
+
+    {/* Your Save / Cancel buttons go here */}
+    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+      <button
+        onClick={saveData}
+        disabled={saving || !hasUnsavedChanges}
+        style={{
+          backgroundColor: hasUnsavedChanges ? '#007bff' : '#skyblue',
+          color: 'white',
+          opacity: saving || !hasUnsavedChanges ? 0.6 : 1,
+          cursor: saving || !hasUnsavedChanges ? 'not-allowed' : 'pointer',
+          padding: '0.5rem 1rem',
+          border: 'none',
+          borderRadius: '4px',
+        }}
+      >
+        {saving ? 'Saving...' : 'Save'}
+      </button>
+      <button
+        onClick={cancelEditing}
+        style={{
+          padding: '0.5rem 1rem',
+          border: '1px solid #ccc',
+          borderRadius: '4px',
+          backgroundColor: 'red',
+          cursor: 'pointer',
+        }}
+      >
+        Cancel
+      </button>
+    </div>
+  </div>
+) : (
         // Display mode
         <div style={{ width: '100%' }}>
           <div style={{ marginBottom: '1rem', maxWidth: '100%', overflow: 'hidden' }}>
-            {value ? (
-              renderNested(value)
-            ) : (
-              <p>No data available.</p>
-            )}
+          {keyPath === 'workExperience' && Array.isArray(value) ? (
+  <div>
+    {value.map((job: any, index: number) => (
+      <div
+        key={index}
+        style={{
+          marginBottom: '1rem',
+          padding: '0.75rem',
+          border: '1px solid #ccc',
+          borderRadius: '4px'
+        }}
+      >
+        <div><strong>{job.jobTitle}</strong> at <strong>{job.company}</strong></div>
+        <div>{job.startDate} — {job.endDate}</div>
+        {Array.isArray(job.responsibilities) && (
+          <ul style={{ marginTop: '0.5rem', paddingLeft: '1.25rem' }}>
+            {job.responsibilities.map((resp: string, i: number) => (
+              <li key={i}>{resp}</li>
+            ))}
+          </ul>
+        )}
+      </div>
+    ))}
+  </div>
+) : keyPath === 'education' ? (
+  editMode ? (
+    <EducationEditor
+      education={
+        Array.isArray(editValue)
+          ? normalizeEducation(editValue)
+          : [normalizeEducation([editValue])[0]]
+      }
+      onChange={(updated) => {
+        const denorm = denormalizeEducation(updated);
+        handleEditValueChange(Array.isArray(editValue) ? denorm : denorm[0]);
+      }}
+    />
+  ) : (
+    Array.isArray(value) && value.length > 0 ? (
+      value.map((edu, i) => (
+        <div
+          key={i}
+          style={{
+            marginBottom: '1rem',
+            padding: '0.75rem',
+            border: '1px solid #ccc',
+            borderRadius: '4px',
+          }}
+        >
+          <div><strong>{edu.institution}</strong></div>
+          <div>{edu.degree}</div>
+          <div>{edu.startDate} — {edu.endDate}</div>
+          {edu.gpa && <div>GPA: {edu.gpa}</div>}
+        </div>
+      ))
+    ) : (
+      <p>No education data available.</p>
+    )
+  )
+) : (
+  value ? renderNested(value) : <p>No data available.</p>
+)}
+
           </div>
           
           <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
