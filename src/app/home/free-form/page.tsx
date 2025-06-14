@@ -96,14 +96,6 @@ export default function FreeFormPage() {
             const AIResponse = await getAIResponse(AIPrompt, formJson.text as string);
             // For debugging purposes
             //console.log(AIResponse);
-            
-            // // AI's response has '```json' as first line
-            // // and '```' as last line, which prevents
-            // // JSON.parse() from processing it correctly.
-            // var lines = AIResponse.split('\n');
-            // lines.splice(0,1);  // Remove 1st line
-            // lines.splice(-1,1); // Remove last line
-            // var finalResponse = lines.join('\n');
 
             // For debugging purposes
             // console.log(finalResponse);
