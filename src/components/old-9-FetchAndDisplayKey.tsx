@@ -273,44 +273,24 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
   const renderNested = (val: any) => {
     if (Array.isArray(val)) {
       return (
-        <div style={{ 
-          border: '1px solid #ccc', 
-          padding: '0.5rem', 
-          marginBottom: '1rem',
-          maxWidth: '100%',
-          overflow: 'auto'
-        }}>
-          <ul style={{ margin: 0, paddingLeft: '1.5rem' }}>
+        <div style={{ border: '1px solid #ccc', padding: '0.5rem', marginBottom: '1rem' }}>
+          <ul>
             {val.map((item, index) => (
-              <li key={index} style={{ marginBottom: '0.25rem' }}>
-                {renderNested(item)}
-              </li>
+              <li key={index}>{renderNested(item)}</li>
             ))}
           </ul>
         </div>
       );
     } else if (typeof val === 'object' && val !== null) {
       return (
-        <pre style={{  
-          padding: '0.5rem',
-          margin: 0,
-          maxWidth: '100%',
-          overflow: 'auto',
-          backgroundColor: '',
-          border: '1px solid #e9ecef',
-          borderRadius: '4px',
-          fontSize: '0.875rem',
-          fontFamily: 'monospace',
-          whiteSpace: 'pre-wrap',
-          wordBreak: 'break-word'
-        }}>
+        <pre style={{  padding: '0.5rem' }}>
           {JSON.stringify(val, null, 2)}
         </pre>
       );
     } else if (typeof val === 'string') {
-      return <span style={{ wordBreak: 'break-word' }}>{val}</span>;
+      return <span>{val}</span>;
     } else {
-      return <span style={{ wordBreak: 'break-word' }}>{String(val)}</span>;
+      return <span>{String(val)}</span>;
     }
   };
 
@@ -319,29 +299,9 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
 
   // Main render
   return (
-    <div style={{ 
-      border: '1px solid #000', 
-      padding: '1rem', 
-      marginBottom: '1rem',
-      maxWidth: '100%',
-      boxSizing: 'border-box'
-    }}>
-      <div style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        marginBottom: '0.5rem',
-        flexWrap: 'wrap',
-        gap: '0.5rem'
-      }}>
-        <h3 style={{ 
-          margin: 0, 
-          fontSize: '1.1rem',
-          wordBreak: 'break-word',
-          minWidth: 0,
-          flex: '1 1 auto'
-        }}>
-          {keyPath}
-        </h3>
+    <div style={{ border: '1px solid #000', padding: '1rem', marginBottom: '1rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
+        <h3 style={{ margin: 0, marginRight: '1rem' }}>{keyPath}</h3>
         {hasUnsavedChanges && (
           <span style={{ 
             backgroundColor: '#fff3cd', 
@@ -349,8 +309,7 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
             padding: '0.25rem 0.5rem', 
             borderRadius: '4px', 
             fontSize: '0.875rem',
-            border: '1px solid #ffeaa7',
-            whiteSpace: 'nowrap'
+            border: '1px solid #ffeaa7'
           }}>
             ● Unsaved changes
           </span>
@@ -362,8 +321,7 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
             padding: '0.25rem 0.5rem', 
             borderRadius: '4px', 
             fontSize: '0.875rem',
-            border: '1px solid #c3e6cb',
-            whiteSpace: 'nowrap'
+            border: '1px solid #c3e6cb'
           }}>
             Saving...
           </span>
@@ -372,148 +330,51 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
       
       {editMode ? (
         // Editing mode
-        <div style={{ width: '100%' }}>
+        <div>
           {typeof editValue === 'string' ? (
             <textarea
               rows={4}
-              style={{ 
-                width: '100%', 
-                marginBottom: '0.5rem',
-                boxSizing: 'border-box',
-                resize: 'vertical',
-                fontFamily: 'monospace'
-              }}
+              style={{ width: '100%', marginBottom: '0.5rem' }}
               value={editValue}
-              onChange={(e) => handleEditValueChange(e.target.value)}
+              onChange={(e) => setEditValue(e.target.value)}
             />
           ) : (
             <textarea
               rows={10}
-              style={{ 
-                width: '100%', 
-                marginBottom: '0.5rem',
-                boxSizing: 'border-box',
-                resize: 'vertical',
-                fontFamily: 'monospace',
-                fontSize: '0.875rem'
-              }}
+              style={{ width: '100%', marginBottom: '0.5rem' }}
               value={JSON.stringify(editValue, null, 2)}
               onChange={(e) => {
                 try {
-                  const parsed = JSON.parse(e.target.value);
-                  handleEditValueChange(parsed);
+                  setEditValue(JSON.parse(e.target.value));
                 } catch {
-                  // ignore parse errors but still update the raw text
-                  // for real-time editing experience
+                  // ignore parse errors
                 }
               }}
             />
           )}
-          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-            <button 
-              onClick={saveData} 
-              disabled={saving || !hasUnsavedChanges}
-              style={{ 
-                backgroundColor: hasUnsavedChanges ? '#007bff' : '#skyblue',
-                color: 'white',
-                opacity: saving || !hasUnsavedChanges ? 0.6 : 1,
-                cursor: saving || !hasUnsavedChanges ? 'not-allowed' : 'pointer',
-                padding: '0.5rem 1rem',
-                border: 'none',
-                borderRadius: '4px'
-              }}
-            >
-              {saving ? 'Saving...' : 'Save'}
-            </button>
-            <button 
-              onClick={cancelEditing}
-              style={{
-                padding: '0.5rem 1rem',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-                backgroundColor: 'red',
-                cursor: 'pointer'
-              }}
-            >
-              Cancel
-            </button>
-          </div>
+          <button onClick={saveData} style={{ marginRight: '0.5rem' }}>Save</button>
+          <button onClick={() => setEditMode(false)}>Cancel</button>
         </div>
       ) : (
         // Display mode
-        <div style={{ width: '100%' }}>
-          <div style={{ marginBottom: '1rem', maxWidth: '100%', overflow: 'hidden' }}>
-            {value ? (
-              renderNested(value)
-            ) : (
-              <p>No data available.</p>
-            )}
-          </div>
-          
-          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
-            <button 
-              onClick={startEditing}
-              style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: '#007bff',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
-            >
-              Edit
-            </button>
-            <button 
-              onClick={deleteSection}
-              style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: '#dc3545',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
-            >
-              Delete
-            </button>
-            <button 
-              onClick={() => setAdding(true)}
-              style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: '#28a745',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
-            >
-              Add Item
-            </button>
-          </div>
+        <div>
+          {value ? (
+            renderNested(value)
+          ) : (
+            <p>No data available.</p>
+          )}
+          <button onClick={startEditing} style={{ marginRight: '0.5rem' }}>Edit</button>
+          <button onClick={deleteSection} style={{ marginRight: '0.5rem' }}>Delete</button>
           
           {/* Add New Item */}
-          {adding && (
-            <div style={{ 
-              marginTop: '1rem',
-              padding: '1rem',
-              // backgroundColor: '#f8f9fa',
-              border: '1px solid #dee2e6',
-              borderRadius: '4px'
-            }}>
+          {adding ? (
+            <div style={{ marginTop: '1rem' }}>
               {typeof value === 'string' ? (
                 <input
                   type="text"
                   value={newItem}
                   onChange={(e) => setNewItem(e.target.value)}
-                  style={{ 
-                    width: '100%', 
-                    marginBottom: '0.5rem',
-                    padding: '0.5rem',
-                    border: '1px solid #ccc',
-                    borderRadius: '4px',
-                    boxSizing: 'border-box'
-                  }}
+                  style={{ width: '80%', marginRight: '0.5rem' }}
                 />
               ) : (
                 <input
@@ -521,45 +382,14 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
                   placeholder="Enter new item"
                   value={newItem}
                   onChange={(e) => setNewItem(e.target.value)}
-                  style={{ 
-                    width: '100%', 
-                    marginBottom: '0.5rem',
-                    padding: '0.5rem',
-                    border: '1px solid #ccc',
-                    borderRadius: '4px',
-                    boxSizing: 'border-box'
-                  }}
+                  style={{ width: '80%', marginRight: '0.5rem' }}
                 />
               )}
-              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                <button 
-                  onClick={addItem}
-                  style={{
-                    padding: '0.5rem 1rem',
-                    backgroundColor: '#28a745',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Add
-                </button>
-                <button 
-                  onClick={() => { setAdding(false); setNewItem(''); }}
-                  style={{
-                    padding: '0.5rem 1rem',
-                    backgroundColor: '#6c757d',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Cancel
-                </button>
-              </div>
+              <button onClick={addItem} style={{ marginRight: '0.5rem' }}>Add</button>
+              <button onClick={() => { setAdding(false); setNewItem(''); }}>Cancel</button>
             </div>
+          ) : (
+            <button onClick={() => setAdding(true)} style={{ marginTop: '1rem' }}>Add Item</button>
           )}
         </div>
       )}
