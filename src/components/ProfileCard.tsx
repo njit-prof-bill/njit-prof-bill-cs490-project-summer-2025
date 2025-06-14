@@ -36,22 +36,6 @@ export default function UserProfile() {
      
 
 
-
-
-  
-{/* 
-    <FetchAndDisplayKey keyPath="contact.email" /> */}
-{/* 
-    <FetchAndDisplayKey keyPath="contact.location" />
-
-    
-    <FetchAndDisplayKey keyPath="contact.phone" /> 
-     <FetchAndDisplayKey keyPath="summary" />
-
-    <FetchAndDisplayKey keyPath="workExperience" />
-    <FetchAndDisplayKey keyPath="workExperience.0.jobTitle" /> */}
-
-
     <FetchAndDisplayKey keyPath="fullName" /> 
 
     <FetchAndDisplayKey keyPath="contact.email" />
