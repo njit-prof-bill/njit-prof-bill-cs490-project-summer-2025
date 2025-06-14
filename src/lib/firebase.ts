@@ -2,6 +2,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore"
+import { getAI, getGenerativeModel, GoogleAIBackend } from "firebase/ai"
 
 // Firebase configuration using environment variables
 const firebaseConfig = {
@@ -21,3 +22,9 @@ export const auth = getAuth(app);
 
 // Initialize Firestore
 export const db = getFirestore(app);
+
+// Initialize the Gemini Developer API backend service
+export const ai = getAI(app, { backend: new GoogleAIBackend() });
+
+// Create a `GenerativeModel` instance
+export const model = getGenerativeModel(ai, { model: "gemini-2.0-flash-001" });

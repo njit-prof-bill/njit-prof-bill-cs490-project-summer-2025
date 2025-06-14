@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
 import { collection, doc, setDoc, addDoc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
+import { getAIResponse, AIPrompt } from "@/components/ai/aiPrompt";
 
 export default function FreeFormPage() {
     // For checking whether the user is logged in and redirecting them accordingly
@@ -89,6 +90,10 @@ export default function FreeFormPage() {
 
         // For debugging purposes
         //console.log(formJson);
+
+        // Send AI prompt with text corpus and retrieve its response
+        const AIResponse = getAIResponse(AIPrompt, formJson.text as string);
+        console.log(AIResponse);
     }
     return (
         <div className="flex items-center justify-center min-h-screen text-gray-900 dark:text-gray-100">
