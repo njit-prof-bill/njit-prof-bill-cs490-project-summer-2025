@@ -14,38 +14,12 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
   const [editValue, setEditValue] = useState<any>(null);
   const [adding, setAdding] = useState(false);
   const [newItem, setNewItem] = useState<string>(''); // input for new item
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [saving, setSaving] = useState(false);
 
   const auth = getAuth();
   const firestore = getFirestore();
 
   const getNestedValue = (obj: any, path: string): any =>
     path.split('.').reduce((acc, key) => (acc ? acc[key] : undefined), obj);
-
-  // Helper function to set nested value
-  const setNestedValue = (obj: any, path: string, value: any): any => {
-    const keys = path.split('.');
-    const result = JSON.parse(JSON.stringify(obj)); // Deep clone
-    
-    let current = result;
-    for (let i = 0; i < keys.length - 1; i++) {
-      const key = keys[i];
-      if (!(key in current) || typeof current[key] !== 'object') {
-        current[key] = {};
-      }
-      current = current[key];
-    }
-    
-    const lastKey = keys[keys.length - 1];
-    if (value === null || value === undefined) {
-      delete current[lastKey];
-    } else {
-      current[lastKey] = value;
-    }
-    
-    return result;
-  };
 
   // Fetch data on mount
   useEffect(() => {
@@ -100,48 +74,18 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
   // Save updated data
   const saveData = async () => {
     try {
-      setSaving(true);
       const uid = auth.currentUser?.uid;
-      if (!uid || editValue === null) return;
+      if (!uid || !editValue) return;
 
       const docRef = doc(firestore, `/users/${uid}/userDocuments/categoryData`);
-      
-      // First, get the current document to access the full JSON
-      const docSnap = await getDoc(docRef);
-      if (!docSnap.exists()) {
-        setError('Document does not exist');
-        return;
-      }
-
-      const data = docSnap.data();
-      const jsonString: string = data.groqResponse;
-      let jsonObject;
-      
-      try {
-        jsonObject = JSON.parse(jsonString);
-      } catch (err) {
-        setError('Invalid JSON string in document');
-        return;
-      }
-
-      // Update the nested value in the JSON object
-      const updatedJsonObject = setNestedValue(jsonObject, keyPath, editValue);
-      
-      // Convert back to string and update the document
-      const updatedJsonString = JSON.stringify(updatedJsonObject);
-      
       await updateDoc(docRef, {
-        groqResponse: updatedJsonString,
+        [keyPath]: editValue,
       });
-      
       setValue(editValue);
       setEditMode(false);
-      setHasUnsavedChanges(false);
     } catch (err) {
       console.error('Save failed', err);
       setError('Failed to save data');
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -152,35 +96,9 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
       if (!uid) return;
 
       const docRef = doc(firestore, `/users/${uid}/userDocuments/categoryData`);
-      
-      // Get current document
-      const docSnap = await getDoc(docRef);
-      if (!docSnap.exists()) {
-        setError('Document does not exist');
-        return;
-      }
-
-      const data = docSnap.data();
-      const jsonString: string = data.groqResponse;
-      let jsonObject;
-      
-      try {
-        jsonObject = JSON.parse(jsonString);
-      } catch (err) {
-        setError('Invalid JSON string in document');
-        return;
-      }
-
-      // Remove the nested value from the JSON object
-      const updatedJsonObject = setNestedValue(jsonObject, keyPath, undefined);
-      
-      // Convert back to string and update the document
-      const updatedJsonString = JSON.stringify(updatedJsonObject);
-      
       await updateDoc(docRef, {
-        groqResponse: updatedJsonString,
+        [keyPath]: deleteField(),
       });
-      
       setValue(null);
     } catch (err) {
       console.error('Delete failed', err);
@@ -192,20 +110,6 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
   const startEditing = () => {
     setEditMode(true);
     setEditValue(value);
-    setHasUnsavedChanges(false);
-  };
-
-  // Handle edit value changes
-  const handleEditValueChange = (newValue: any) => {
-    setEditValue(newValue);
-    setHasUnsavedChanges(JSON.stringify(newValue) !== JSON.stringify(value));
-  };
-
-  // Cancel editing
-  const cancelEditing = () => {
-    setEditMode(false);
-    setEditValue(null);
-    setHasUnsavedChanges(false);
   };
 
   // Add new item
@@ -231,35 +135,9 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
       })();
 
       const docRef = doc(firestore, `/users/${uid}/userDocuments/categoryData`);
-      
-      // Get current document
-      const docSnap = await getDoc(docRef);
-      if (!docSnap.exists()) {
-        setError('Document does not exist');
-        return;
-      }
-
-      const data = docSnap.data();
-      const jsonString: string = data.groqResponse;
-      let jsonObject;
-      
-      try {
-        jsonObject = JSON.parse(jsonString);
-      } catch (err) {
-        setError('Invalid JSON string in document');
-        return;
-      }
-
-      // Update the nested value in the JSON object
-      const updatedJsonObject = setNestedValue(jsonObject, keyPath, updatedValue);
-      
-      // Convert back to string and update the document
-      const updatedJsonString = JSON.stringify(updatedJsonObject);
-      
       await updateDoc(docRef, {
-        groqResponse: updatedJsonString,
+        [keyPath]: updatedValue,
       });
-      
       setValue(updatedValue);
       setAdding(false);
       setNewItem('');
@@ -300,33 +178,7 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
   // Main render
   return (
     <div style={{ border: '1px solid #000', padding: '1rem', marginBottom: '1rem' }}>
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
-        <h3 style={{ margin: 0, marginRight: '1rem' }}>{keyPath}</h3>
-        {hasUnsavedChanges && (
-          <span style={{ 
-            backgroundColor: '#fff3cd', 
-            color: '#856404', 
-            padding: '0.25rem 0.5rem', 
-            borderRadius: '4px', 
-            fontSize: '0.875rem',
-            border: '1px solid #ffeaa7'
-          }}>
-            ● Unsaved changes
-          </span>
-        )}
-        {saving && (
-          <span style={{ 
-            backgroundColor: '#d4edda', 
-            color: '#155724', 
-            padding: '0.25rem 0.5rem', 
-            borderRadius: '4px', 
-            fontSize: '0.875rem',
-            border: '1px solid #c3e6cb'
-          }}>
-            Saving...
-          </span>
-        )}
-      </div>
+      <h3>{keyPath}</h3>
       
       {editMode ? (
         // Editing mode

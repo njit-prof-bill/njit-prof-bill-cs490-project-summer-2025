@@ -14,6 +14,16 @@ import FetchAndDisplayKey from "../components/FetchAndDisplayKey";
 
 
 
+
+
+
+
+
+
+
+
+
+
 export default function UserProfile() {
 
 
@@ -55,12 +65,14 @@ export default function UserProfile() {
 
    
   <FetchAndDisplayKey keyPath="workExperience" />
-    <FetchAndDisplayKey keyPath="experience" />
+    {/* <FetchAndDisplayKey keyPath="experience" /> */}
 
     <FetchAndDisplayKey keyPath="education" />
-
+{/* 
     <FetchAndDisplayKey keyPath="skills.0" />
-    <FetchAndDisplayKey keyPath="skills.1" />
+    <FetchAndDisplayKey keyPath="skills.1" /> */}
+
+    <FetchAndDisplayKey keyPath="skills" />
 
 
     </div>

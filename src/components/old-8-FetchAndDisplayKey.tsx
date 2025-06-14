@@ -14,8 +14,6 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
   const [editValue, setEditValue] = useState<any>(null);
   const [adding, setAdding] = useState(false);
   const [newItem, setNewItem] = useState<string>(''); // input for new item
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [saving, setSaving] = useState(false);
 
   const auth = getAuth();
   const firestore = getFirestore();
@@ -100,7 +98,6 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
   // Save updated data
   const saveData = async () => {
     try {
-      setSaving(true);
       const uid = auth.currentUser?.uid;
       if (!uid || editValue === null) return;
 
@@ -136,12 +133,9 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
       
       setValue(editValue);
       setEditMode(false);
-      setHasUnsavedChanges(false);
     } catch (err) {
       console.error('Save failed', err);
       setError('Failed to save data');
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -192,20 +186,6 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
   const startEditing = () => {
     setEditMode(true);
     setEditValue(value);
-    setHasUnsavedChanges(false);
-  };
-
-  // Handle edit value changes
-  const handleEditValueChange = (newValue: any) => {
-    setEditValue(newValue);
-    setHasUnsavedChanges(JSON.stringify(newValue) !== JSON.stringify(value));
-  };
-
-  // Cancel editing
-  const cancelEditing = () => {
-    setEditMode(false);
-    setEditValue(null);
-    setHasUnsavedChanges(false);
   };
 
   // Add new item
@@ -300,33 +280,7 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
   // Main render
   return (
     <div style={{ border: '1px solid #000', padding: '1rem', marginBottom: '1rem' }}>
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
-        <h3 style={{ margin: 0, marginRight: '1rem' }}>{keyPath}</h3>
-        {hasUnsavedChanges && (
-          <span style={{ 
-            backgroundColor: '#fff3cd', 
-            color: '#856404', 
-            padding: '0.25rem 0.5rem', 
-            borderRadius: '4px', 
-            fontSize: '0.875rem',
-            border: '1px solid #ffeaa7'
-          }}>
-            ● Unsaved changes
-          </span>
-        )}
-        {saving && (
-          <span style={{ 
-            backgroundColor: '#d4edda', 
-            color: '#155724', 
-            padding: '0.25rem 0.5rem', 
-            borderRadius: '4px', 
-            fontSize: '0.875rem',
-            border: '1px solid #c3e6cb'
-          }}>
-            Saving...
-          </span>
-        )}
-      </div>
+      <h3>{keyPath}</h3>
       
       {editMode ? (
         // Editing mode
