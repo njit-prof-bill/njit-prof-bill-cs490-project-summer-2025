@@ -24,6 +24,61 @@ function EducationForm({ educationList, setEducationList, user }: EducationFormP
     function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
         // Prevent browser from reloading page
         event.preventDefault();
+        // Read form data and convert to object
+        const form = event.target as HTMLFormElement;
+        const formData = new FormData(form);
+        const formObj = Object.fromEntries(formData.entries());
+        // For debugging purposes
+        //console.log(formObj);
+
+        // (# of entries) = (# of <input> elements) / 5
+        // start_index = 0
+        // end_index = (# of entries) - 1
+        var num_entries = Object.keys(formObj).length;
+        console.log(num_entries);
+        if (num_entries % 5 !== 0) {
+            return;
+        }
+        num_entries = num_entries / 5;
+        console.log(num_entries);
+        // Create a new array for the education entries
+        var newEduList = new Array<EducationEntry>();
+        var newEduEntry: EducationEntry;
+        var objKey: string;
+        const eduFields = ["degree", "institution", "startDate", "endDate", "gpa"] as const;
+        const lenEduFields = eduFields.length;
+        for (var i = 0; i < num_entries; i++) {
+            //console.log(formObj);
+            //console.log(i);
+            newEduEntry = newEduObj();
+            for (var j = 0; j < lenEduFields; j++) {
+                objKey = eduFields[j] + "_" + i.toString();
+                newEduEntry[eduFields[j]] = formObj[objKey] as string;
+                //console.log(objKey);
+            }
+            //console.log(newEduEntry);
+            newEduList.push(newEduEntry);
+        }
+        console.log(newEduList);
+        // Write new list of educational credentials to user's profile
+        submitEduList(newEduList);
+    }
+    function newEduObj() {
+        let newEduObj: EducationEntry = {
+            degree: "",
+            institution: "",
+            startDate: "",
+            endDate: "",
+            gpa: ""
+        };
+        return newEduObj;
+    }
+    async function submitEduList(newEduList: EducationEntry[]) {
+        // User profiles are identified in the database by the user's UID
+        if (user) {
+            const newEduRef = doc(db, "users", user.uid);
+            await updateDoc(newEduRef, { "resumeFields.education": newEduList });
+        }
     }
     function addNewEdu(event: React.MouseEvent<HTMLButtonElement>) {
         // Prevent browser from reloading page
@@ -52,8 +107,8 @@ function EducationForm({ educationList, setEducationList, user }: EducationFormP
                         <h3>Degree Name:</h3>
                         <input
                             type="text"
-                            id={`degree-${index}`}
-                            name={`degree-${index}`}
+                            id={`degree_${index}`}
+                            name={`degree_${index}`}
                             placeholder="Enter degree name here"
                             value={entry.degree}
                             onChange={(event) => {
@@ -67,8 +122,8 @@ function EducationForm({ educationList, setEducationList, user }: EducationFormP
                         <h3>Institution:</h3>
                         <input
                             type="text"
-                            id={`institution-${index}`}
-                            name={`institution-${index}`}
+                            id={`institution_${index}`}
+                            name={`institution_${index}`}
                             placeholder="Enter institution name here"
                             value={entry.institution}
                             onChange={(event) => {
@@ -82,8 +137,8 @@ function EducationForm({ educationList, setEducationList, user }: EducationFormP
                         <h3>Start Date:</h3>
                         <input
                             type="text"
-                            id={`startdate-${index}`}
-                            name={`startdate-${index}`}
+                            id={`startDate_${index}`}
+                            name={`startDate_${index}`}
                             placeholder="Enter start date here"
                             value={entry.startDate}
                             onChange={(event) => {
@@ -97,8 +152,8 @@ function EducationForm({ educationList, setEducationList, user }: EducationFormP
                         <h3>End Date:</h3>
                         <input
                             type="text"
-                            id={`enddate-${index}`}
-                            name={`enddate-${index}`}
+                            id={`endDate_${index}`}
+                            name={`endDate_${index}`}
                             placeholder="Enter end date here"
                             value={entry.endDate}
                             onChange={(event) => {
@@ -112,8 +167,8 @@ function EducationForm({ educationList, setEducationList, user }: EducationFormP
                         <h3>GPA:</h3>
                         <input
                             type="text"
-                            id={`gpa-${index}`}
-                            name={`gpa-${index}`}
+                            id={`gpa_${index}`}
+                            name={`gpa_${index}`}
                             placeholder="Enter GPA here"
                             value={entry.gpa}
                             onChange={(event) => {
