@@ -55,7 +55,7 @@ export default function UserProfile() {
 
    
   <FetchAndDisplayKey keyPath="workExperience" />
-    <FetchAndDisplayKey keyPath="workExperience" />
+    <FetchAndDisplayKey keyPath="experience" />
 
     <FetchAndDisplayKey keyPath="education" />
 
