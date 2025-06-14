@@ -32,91 +32,17 @@ export default function GroqProcessor({}: GroqProcessorProps) {
   const textField = "text";
   const finalCombinedDocId = "categoryData";
   
-  const prompt = `You are a helpful resume building assistant. You will assist in receiving user resume text, and filling in the json object format below with the user's extracted data. 
+  const prompt = `You are a helpful resume building assistant. You will assist in receiving user resume text, and filling in the json object format below with the user's extracted data. Strictly use the format provided in this prompt. Do not rearrange any of the json object. Do not include any extra comments, strictly return the json file. The fullname of a person is usually found in the first couple of lines. Do not forget to include the full name of a person in the output. Sometimes names may be ambiguous, like 'Laid-Off' or other non-name type words, include them if in the first line. Do not add any extra comments, return only the json object. "summary" should include any work history points or facts in it. Use This Example json object, and populate a similar json with the data from the input: { "fullName": "", "contact": { "email": "", "phone": "", "location": "" }, "summary": "successful, professional, with, etc, any work comments go here", "workExperience": [ { "jobTitle": "", "company": "", "startDate": "", "endDate": "", "responsibilities": [ "", "", "" ] }, { "jobTitle": "", "company": "", "startDate": "", "endDate": "", "responsibilities": [ "", "", "" ] } ], "education": [ { "degree": "", "institution": "", "startDate": "", "endDate": "", "gpa": "" } ], "skills": [ "", "", "", "", "", "" ] } Important: Do not call work items as 'achievements', call it 'responsibilities'. Follow the above example strictly. Experience should be 'workExperience' key. Reformat the json a second time before responding, double check the json. Do not say 'here is the json, or json or anything extra'.`;
 
-CRITICAL INSTRUCTIONS:
-- Return ONLY the JSON object, nothing else
-- No comments, explanations, or additional text
-- No markdown formatting or code blocks
-- Do not start with "Here is the JSON:" or similar phrases
-- Do not end with explanations or notes
-- Strictly use the format provided
-- Do not rearrange any of the json object
-- The fullname of a person is usually found in the first couple of lines
-- Do not forget to include the full name of a person in the output
-- Sometimes names may be ambiguous, like 'Laid-Off' or other non-name type words, include them if in the first line
-- "summary" should include any work history points or facts in it
-- Do not call work items as 'achievements', call it 'responsibilities'
-- Experience should be 'workExperience' key
-- Reformat the json a second time before responding, double check the json
+  const cleanupPrompt = `You are a JSON formatter and validator. Your task is to take the provided text and ensure it's properly formatted, valid JSON. Please:
 
-Use This Example json object, and populate a similar json with the data from the input:
-{
-  "fullName": "",
-  "contact": {
-    "email": "",
-    "phone": "",
-    "location": ""
-  },
-  "summary": "successful, professional, with, etc, any work comments go here",
-  "workExperience": [
-    {
-      "jobTitle": "",
-      "company": "",
-      "startDate": "",
-      "endDate": "",
-      "responsibilities": [
-        "",
-        "",
-        ""
-      ]
-    },
-    {
-      "jobTitle": "",
-      "company": "",
-      "startDate": "",
-      "endDate": "",
-      "responsibilities": [
-        "",
-        "",
-        ""
-      ]
-    }
-  ],
-  "education": [
-    {
-      "degree": "",
-      "institution": "",
-      "startDate": "",
-      "endDate": "",
-      "gpa": ""
-    }
-  ],
-  "skills": [
-    "",
-    "",
-    "",
-    "",
-    "",
-    ""
-  ]
-}
+1. Remove any extra text, comments, or explanations that aren't part of the JSON
+2. Fix any JSON syntax errors (missing commas, brackets, quotes, etc.)
+3. Ensure all strings are properly quoted
+4. Validate that the JSON structure is correct
+5. Return ONLY the cleaned, valid JSON - no additional text or explanations
 
-REMEMBER: Return ONLY the JSON object with no additional text, comments, or formatting.`;
-
-  const cleanupPrompt = `You are a JSON formatter and validator. Your ONLY task is to return clean, valid JSON.
-
-CRITICAL RULES:
-- Return ONLY the JSON object
-- NO explanations, comments, or additional text
-- NO "Here is the cleaned JSON:" or similar phrases  
-- NO markdown code blocks or formatting
-- Remove any extra text that isn't part of the JSON
-- Fix any JSON syntax errors (missing commas, brackets, quotes, etc.)
-- Ensure all strings are properly quoted
-- Validate that the JSON structure is correct
-
-The JSON MUST follow this exact structure:
+The JSON should follow this exact structure:
 {
   "fullName": "",
   "contact": {
@@ -146,16 +72,9 @@ The JSON MUST follow this exact structure:
   "skills": ["", "", "", "", "", ""]
 }
 
-RETURN ONLY THE VALID JSON OBJECT - NOTHING ELSE.`;
+Return only the valid JSON, nothing else.`;
 
-  const combinePrompt = `You are a data consolidation assistant. Your task is to combine multiple JSON objects containing resume data into a single, comprehensive JSON object.
-
-CRITICAL INSTRUCTIONS:
-- Return ONLY the final combined JSON object
-- NO explanations, comments, or additional text
-- NO "Here is the combined JSON:" or similar phrases
-- NO markdown formatting or code blocks
-- NO introductory or concluding remarks
+  const combinePrompt = `You are a data consolidation assistant. You will receive multiple JSON objects containing resume data extracted from different document sources. Your task is to intelligently combine them into a single, comprehensive JSON object while avoiding duplicates and conflicting information.
 
 Rules for combining:
 1. Use the most complete and detailed information when there are conflicts
@@ -164,9 +83,10 @@ Rules for combining:
 4. For fullName, use the most complete version (prefer full names over partial ones)
 5. For summary, combine unique points and create a comprehensive summary
 6. Remove duplicate entries in workExperience, education, and skills arrays
-7. Maintain the exact JSON structure provided below
+7. Maintain the exact JSON structure provided
+8. Return ONLY the combined JSON, no additional text or explanations
 
-Expected output structure (return only this JSON format):
+Expected output structure:
 {
   "fullName": "",
   "contact": {
@@ -195,8 +115,6 @@ Expected output structure (return only this JSON format):
   ],
   "skills": ["", "", "", "", "", ""]
 }
-
-RETURN ONLY THE COMBINED JSON OBJECT - NO OTHER TEXT WHATSOEVER.
 
 Combine the following JSON objects:`;
 
@@ -252,38 +170,6 @@ Combine the following JSON objects:`;
     }
   };
 
-  // Enhanced JSON cleaning function to remove common extra text patterns
-  const cleanJSONResponse = (response: string): string => {
-    if (!response) return response;
-    
-    let cleaned = response.trim();
-    
-    // Remove common prefixes
-    const prefixPatterns = [
-      /^here\s+is\s+the\s+(json|combined\s+json|cleaned\s+json|result)[:\s]*/i,
-      /^(json|result)[:\s]*/i,
-      /^```json\s*/i,
-      /^```\s*/i,
-    ];
-    
-    // Remove common suffixes  
-    const suffixPatterns = [
-      /\s*```\s*$/i,
-      /\s*this\s+combines?\s+all\s+the\s+data.*$/i,
-      /\s*the\s+above\s+json.*$/i,
-    ];
-    
-    prefixPatterns.forEach(pattern => {
-      cleaned = cleaned.replace(pattern, '');
-    });
-    
-    suffixPatterns.forEach(pattern => {
-      cleaned = cleaned.replace(pattern, '');
-    });
-    
-    return cleaned.trim();
-  };
-
   const updateProgress = (docId: string, status: string, completed: boolean = false, error?: string) => {
     setProgress(prev => ({
       ...prev,
@@ -324,24 +210,20 @@ Combine the following JSON objects:`;
         return { success: false, error: 'Groq processing failed' };
       }
 
-      // Clean the first response
-      const cleanedFirstResponse = cleanJSONResponse(firstResponse);
-
       // 3. Validate the first response
-      const firstValidation = validateJSON(cleanedFirstResponse);
-      let finalResponse = cleanedFirstResponse;
+      const firstValidation = validateJSON(firstResponse);
+      let finalResponse = firstResponse;
 
       // 4. Second Groq API call - Clean up JSON if needed
       if (!firstValidation.isValid) {
         updateProgress(mapping.sourceId, 'Cleaning up JSON (Step 2/2)...', false);
         
-        const cleanedResponse = await callGroqAPI(cleanedFirstResponse, cleanupPrompt);
+        const cleanedResponse = await callGroqAPI(firstResponse, cleanupPrompt);
         
         if (cleanedResponse) {
-          const cleanedSecondResponse = cleanJSONResponse(cleanedResponse);
-          const secondValidation = validateJSON(cleanedSecondResponse);
+          const secondValidation = validateJSON(cleanedResponse);
           if (secondValidation.isValid) {
-            finalResponse = cleanedSecondResponse;
+            finalResponse = cleanedResponse;
           }
         }
       }
@@ -472,8 +354,9 @@ Combine the following JSON objects:`;
 
       // Prepare the combine prompt with all groqResponse strings
       const combinedText = groqResponses.join('\n\n---DOCUMENT SEPARATOR---\n\n');
+      const fullCombinePrompt = combinePrompt + '\n\n' + combinedText;
 
-      console.log('Combined text length:', combinedText.length);
+      console.log('Full combine prompt length:', fullCombinePrompt.length);
 
       // Call Groq to combine the data - pass the combined text as the 'text' parameter
       const combinedResponse = await callGroqAPI(combinedText, combinePrompt);
@@ -485,25 +368,21 @@ Combine the following JSON objects:`;
 
       console.log('Combined response received:', combinedResponse.substring(0, 200) + '...');
 
-      // Clean the combined response first
-      const cleanedCombinedResponse = cleanJSONResponse(combinedResponse);
-
       // Validate and clean up combined response if needed
       setCombineStatus('Validating combined result...');
-      let finalCombinedResponse = cleanedCombinedResponse;
-      const combinedValidation = validateJSON(cleanedCombinedResponse);
+      let finalCombinedResponse = combinedResponse;
+      const combinedValidation = validateJSON(combinedResponse);
       
       if (!combinedValidation.isValid) {
         setCombineStatus('Cleaning up combined JSON...');
         console.log('Combined response needs cleanup:', combinedValidation.error);
         
-        const cleanedCombined = await callGroqAPI(cleanedCombinedResponse, cleanupPrompt);
+        const cleanedCombined = await callGroqAPI(combinedResponse, cleanupPrompt);
         
         if (cleanedCombined) {
-          const finalCleaned = cleanJSONResponse(cleanedCombined);
-          const cleanedValidation = validateJSON(finalCleaned);
+          const cleanedValidation = validateJSON(cleanedCombined);
           if (cleanedValidation.isValid) {
-            finalCombinedResponse = finalCleaned;
+            finalCombinedResponse = cleanedCombined;
             console.log('Successfully cleaned combined response');
           } else {
             console.log('Cleanup failed:', cleanedValidation.error);
@@ -517,14 +396,7 @@ Combine the following JSON objects:`;
       setCombineStatus('Saving combined data...');
       const finalDocRef = doc(db, 'users', user.uid, 'userDocuments', finalCombinedDocId);
       await setDoc(finalDocRef, {
-
-        // changed attribute key in doc back to groqResponse, since the other components
-        // might still be using that convention.
-
-        // combinedData: finalCombinedResponse,
-        //groqResponse is current naming convention for now for this attribute.
-        groqResponse: finalCombinedResponse,
-
+        combinedData: finalCombinedResponse,
         sourceDocuments: documentMappings.map(m => m.targetId),
         processedAt: new Date(),
         processedBy: user.uid,
