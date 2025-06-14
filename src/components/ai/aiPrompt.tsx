@@ -60,11 +60,18 @@ Here is the user's text corpus:
 
 export async function getAIResponse(prompt: string, corpus: string) {
     const fullPrompt = prompt + corpus;
-    console.log(fullPrompt);
+    //console.log(fullPrompt);
     const result = await model.generateContent(fullPrompt);
     const response = result.response;
     const text = response.text();
-    return text;
+    // AI's response has '```json' as first line
+    // and '```' as last line, which prevents
+    // JSON.parse() from processing it correctly.
+    var lines = text.split('\n');
+    lines.splice(0,1);  // Remove 1st line
+    lines.splice(-1,1); // Remove last line
+    var finalResponse = lines.join('\n');
+    return finalResponse;
 }
 
 export async function saveAIResponse(responseObj: any, user: any, db: any) {

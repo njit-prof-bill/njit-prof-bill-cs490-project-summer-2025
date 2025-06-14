@@ -53,25 +53,25 @@ if (loading) {
         setExtractedText(result.rawText);
         try {
           const AIResponse = await getAIResponse(AIPrompt, result.rawText as string);
-          // AI's response has '```json' as first line
-          // and '```' as last line, which prevents
-          // JSON.parse() from processing it correctly.
-          var lines = AIResponse.split('\n');
-          lines.splice(0,1);  // Remove 1st line
-          lines.splice(-1,1); // Remove last line
-          var finalResponse = lines.join('\n');
+          // // AI's response has '```json' as first line
+          // // and '```' as last line, which prevents
+          // // JSON.parse() from processing it correctly.
+          // var lines = AIResponse.split('\n');
+          // lines.splice(0,1);  // Remove 1st line
+          // lines.splice(-1,1); // Remove last line
+          // var finalResponse = lines.join('\n');
 
           try {
-              const responseObj = JSON.parse(finalResponse);
+              const responseObj = JSON.parse(AIResponse);
               // For debugging purposes
-              console.log(JSON.parse(finalResponse));
+              console.log(JSON.parse(AIResponse));
               saveAIResponse(responseObj, user, db);
           } catch (error) {
               console.error("Error parsing AI response: ", error);
           }
         } catch (error) {
           console.error("Error fetching AI response: ", error);
-        }    
+        }
       } else {
         setUploadSuccess(false);
         setUploadMessage(`❌ Upload failed: ${result.error || "Something went wrong"}`);
