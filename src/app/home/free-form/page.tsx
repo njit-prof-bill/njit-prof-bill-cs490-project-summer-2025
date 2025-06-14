@@ -33,69 +33,6 @@ export default function FreeFormPage() {
         return <p>Loading...</p>; // Show a loading state while checking auth
     }
 
-    // async function saveAIResponse(responseObj: any) {
-    //     if (user) {
-    //         const documentRef = doc(db, "users", user.uid);
-    //         try {
-    //             const document = await getDoc(documentRef);
-    //             if (!document.exists()) {
-    //                 return;
-    //             }
-    //             // Extract full name and save to userProfile
-    //             try {
-    //                 await updateDoc(documentRef, { "resumeFields.fullName": responseObj.fullName });
-    //             } catch (error) {
-    //                 ;
-    //             }
-    //             // Extract summary and save to userProfile
-    //             try {
-    //                 await updateDoc(documentRef, { "resumeFields.summary": responseObj.summary });
-    //             } catch (error) {
-    //                 ;
-    //             }
-    //             // Extract email and save to userProfile
-    //             try {
-    //                 await updateDoc(documentRef, { "resumeFields.contact.email": responseObj.contact.email });
-    //             } catch (error) {
-    //                 ;
-    //             }
-    //             // Extract location and save to userProfile
-    //             try {
-    //                 await updateDoc(documentRef, { "resumeFields.contact.location": responseObj.contact.location });
-    //             } catch (error) {
-    //                 ;
-    //             }
-    //             // Extract phone and save to userProfile
-    //             try {
-    //                 await updateDoc(documentRef, { "resumeFields.contact.phone": responseObj.contact.phone });
-    //             } catch (error) {
-    //                 ;
-    //             }
-    //             // Extract list of skills and save to userProfile
-    //             try {
-    //                 await updateDoc(documentRef, { "resumeFields.skills": responseObj.skills });
-    //             } catch (error) {
-    //                 ;
-    //             }
-    //             // Extract list of work experiences and save to userProfile
-    //             try {
-    //                 await updateDoc(documentRef, { "resumeFields.workExperience": responseObj.workExperience });
-    //             } catch (error) {
-    //                 ;
-    //             }
-    //             // Extract list of education credentials and save to userProfile
-    //             try {
-    //                 await updateDoc(documentRef, { "resumeFields.education": responseObj.education });
-    //             } catch (error) {
-    //                 ;
-    //             }
-    //         } catch (error) {
-    //             console.error("Error: could not retrieve document;", error);
-    //         }
-            
-    //     }
-    // }
-
     async function setFreeFormCorpus(corpus: string) {
         // Documents are identified in the database by the user's UID
         let uid;
