@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
+import { userProfile } from "@/components/objects/userProfile";
 
 type ThemeType = "system" | "light" | "dark";
 
@@ -50,7 +51,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                         }
                     } else {
                         // First-time user: create document with default theme
-                        await setDoc(userRef, { theme: "system" });
+                        const newProfile: userProfile = new userProfile();
+                        await setDoc(userRef, JSON.parse(JSON.stringify(newProfile)));
                         setTheme("system");
                         localStorage.setItem("theme", "system");
                     }
