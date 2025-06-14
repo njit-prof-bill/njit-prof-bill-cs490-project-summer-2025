@@ -82,7 +82,7 @@ def upload():
     except Exception as e:
         return jsonify({"error": f"LLM parsing failed: {str(e)}"}), 500
 
-    # 3. Optional: Save parse result into document
+    # 3. Save parse result into document
     biography_collection.update_one(
         {"_id": result.inserted_id},
         {"$set": {"parse_result": parse_result}}
@@ -109,28 +109,7 @@ def get_data(id):
     if not parse_result:
         return jsonify({"error": "No parse result found for this document"}), 404
     
-    return jsonify(parse_result), 200
-
-
-@upload_bp.route("/resume/<id>/update_contact", methods=["POST"])
-def update_contact(id):
-    try:
-        doc = biography_collection.find_one({"_id": ObjectId(id)})
-        if not doc:
-            return jsonify({"error": "Document not found"}), 404
-
-        data = request.json
-        email = data.get("email")
-        if email is None:
-            return jsonify({"error": "Email not provided"}), 400
-
-        # Perform the update:
-        biography_collection.update_one(
-            {"_id": ObjectId(id)},
-            {"$set": {"parse_result.contact.email": email}}
-        )
-
-        return jsonify({"message": "Contact email updated."}), 200
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    return jsonify({
+        "id": str(doc["_id"]),
+        "parse_result": parse_result
+    }), 200

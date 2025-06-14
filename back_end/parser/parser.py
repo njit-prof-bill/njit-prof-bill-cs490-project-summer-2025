@@ -17,9 +17,25 @@ class ResumeParser:
             model="gpt-4o-mini",
             response_format={"type": "json_object"},
             messages=[
-                {"role": "system", "content": "Return JSON with keys: name, contact, skills, education, jobs."},
+                {
+                    "role": "system",
+                    "content": (
+                        "Return JSON with the following keys:\n\n"
+                        "- name: string\n"
+                        "- contact: object with:\n"
+                        "- emails: a list of strings. The first email in the list should be the primary email.\n"
+                        "- phones: a list of strings. The first phone number in the list should be the primary phone number\n"
+                        "- location: string (if available)\n"
+                        "- skills: an object where keys are skill categories and values are lists of strings\n"
+                        "- education: object with degree, institution, graduation_date, GPA\n"
+                        "- jobs: list of job objects. Each job has title, company, location (optional), duration (optional), and responsibilities (list of strings)\n\n"
+                        "Output only valid JSON. Do not include any explanations or comments."
+                    )
+                },
                 {"role": "user", "content": text},
             ],
             temperature=0.0,
         )
         return json.loads(resp.choices[0].message.content)
+
+#{"role": "system", "content": "Return JSON with keys: name, contact, skills, education, jobs."},

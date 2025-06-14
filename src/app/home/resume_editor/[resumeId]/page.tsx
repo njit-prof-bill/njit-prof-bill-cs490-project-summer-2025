@@ -21,7 +21,10 @@ export default function Resume_Editor() {
         const data = await res.json();
 
         if(res.ok) {
-          setResumeData(data);
+          setResumeData({
+            _id: data.id,
+            ...data.parse_result
+          });
           setError(null);
         }
         else {
