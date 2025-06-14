@@ -31,6 +31,13 @@ export default function EditEducationPage() {
     const [ education, setEducation ] = useState<EducationEntry[]>([]);
 
     useEffect(() => {
+        if (!loading && user) {
+            getEducation().then((arr: Array<EducationEntry>) => {
+                if (arr) {
+                    setEducation([...arr]);
+                }
+            });
+        }
         if (!loading && !user) {
             router.push("/"); // Redirect to landing page if not authenticated
         }
@@ -38,6 +45,28 @@ export default function EditEducationPage() {
 
     if (loading) {
         return <p>Loading...</p>; // Show a loading state while checking auth
+    }
+
+    async function getEducation() {
+        // Retrieve the user's list of educational credentials from the database
+        let educationList = new Array<EducationEntry>();
+        if (user) {
+            const documentRef = doc(db, "users", user.uid);
+            const document = await getDoc(documentRef);
+            if (!document.exists) {
+                return educationList;
+            }
+            const data = document.data();
+            if (
+                data &&
+                Array.isArray(data.resumeFields.education)
+            ) {
+                // Want a copy of the array, not a reference to it
+                educationList = [...data.resumeFields.education];
+            }
+        }
+        console.log(educationList);
+        return educationList;
     }
 
     return (
