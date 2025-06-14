@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { getAuth } from "firebase/auth";
 import { useRef } from "react";
+import Spinner, { spinnerStyles } from '@/components/ui/Spinner';
 
 import {
   Card,
@@ -73,6 +74,9 @@ export default function HomePage() {
       setSubmissionStatus({ type: "error", message: "Unexpected error." });
     } finally {
       setUploading(false);
+      if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -91,11 +95,17 @@ return (
             <CardTitle>Upload Your Resume</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <CardDescription>Click below to upload a .docx resume file.</CardDescription>
+            <CardDescription>  Upload a resume file (.docx, .pdf, .txt, .md)</CardDescription>
+            <style>{spinnerStyles}</style>
+              {uploading && (
+                <div style={{ display: 'flex', justifyContent: 'center' }}>
+                  <Spinner />
+                </div>
+              )}
             <input
               id="docx-upload"
               type="file"
-              accept=".docx"
+              accept=".docx,.pdf,.txt,.md"
               onChange={handleUploadAfterPick}
               ref={fileInputRef}
               className="hidden"
