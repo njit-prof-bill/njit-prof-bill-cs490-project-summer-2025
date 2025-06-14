@@ -1,3 +1,5 @@
+"use client";
+
 import { model } from "@/lib/firebase";
 
 export const AIPrompt = `Please take this text corpus submitted by a user and parse the following information from it:
