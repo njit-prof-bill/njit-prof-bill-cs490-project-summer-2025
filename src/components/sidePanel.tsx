@@ -50,6 +50,11 @@ export default function SidePanel({ isSidePanelOpen }: SidePanelProps) {
                             Edit Skills
                         </Link>
                     </li>
+                    <li>
+                        <Link href="/home/edit-education" className="hover:underline">
+                            Edit Education
+                        </Link>
+                    </li>
                 </ul>
             </nav>
         </aside>
