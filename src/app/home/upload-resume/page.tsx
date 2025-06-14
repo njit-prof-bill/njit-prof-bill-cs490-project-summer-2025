@@ -1,11 +1,89 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { FileUpload } from "primereact/fileupload";
 import { Button } from "primereact/button";
 import { getAIResponse, AIPrompt } from "@/components/ai/aiPrompt";
+import { db } from "@/lib/firebase";
+import { useAuth } from "@/context/authContext";
+import { useRouter } from "next/navigation";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 
 export default function UploadResumePage() {
+  // For checking whether the user is logged in and redirecting them accordingly
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+        router.push("/"); // Redirect to landing page if not authenticated
+    }
+}, [user, loading, router]);
+
+if (loading) {
+    return <p>Loading...</p>; // Show a loading state while checking auth
+}
+async function saveAIResponse(responseObj: any) {
+  if (user) {
+      const documentRef = doc(db, "users", user.uid);
+      try {
+          const document = await getDoc(documentRef);
+          if (!document.exists()) {
+              return;
+          }
+          // Extract full name and save to userProfile
+          try {
+              await updateDoc(documentRef, { "resumeFields.fullName": responseObj.fullName });
+          } catch (error) {
+              ;
+          }
+          // Extract summary and save to userProfile
+          try {
+              await updateDoc(documentRef, { "resumeFields.summary": responseObj.summary });
+          } catch (error) {
+              ;
+          }
+          // Extract email and save to userProfile
+          try {
+              await updateDoc(documentRef, { "resumeFields.contact.email": responseObj.contact.email });
+          } catch (error) {
+              ;
+          }
+          // Extract location and save to userProfile
+          try {
+              await updateDoc(documentRef, { "resumeFields.contact.location": responseObj.contact.location });
+          } catch (error) {
+              ;
+          }
+          // Extract phone and save to userProfile
+          try {
+              await updateDoc(documentRef, { "resumeFields.contact.phone": responseObj.contact.phone });
+          } catch (error) {
+              ;
+          }
+          // Extract list of skills and save to userProfile
+          try {
+              await updateDoc(documentRef, { "resumeFields.skills": responseObj.skills });
+          } catch (error) {
+              ;
+          }
+          // Extract list of work experiences and save to userProfile
+          try {
+              await updateDoc(documentRef, { "resumeFields.workExperience": responseObj.workExperience });
+          } catch (error) {
+              ;
+          }
+          // Extract list of education credentials and save to userProfile
+          try {
+              await updateDoc(documentRef, { "resumeFields.education": responseObj.education });
+          } catch (error) {
+              ;
+          }
+      } catch (error) {
+          console.error("Error: could not retrieve document;", error);
+      }
+  }
+}
   const fileUploadRef = useRef(null);
 
   const [uploadMessage, setUploadMessage] = useState<string | null>(null);
@@ -33,7 +111,27 @@ export default function UploadResumePage() {
         setUploadSuccess(true);
         setUploadMessage("✅ File uploaded and text extracted successfully!");
         setExtractedText(result.rawText);
-        console.log(getAIResponse(AIPrompt, result.rawText));
+        try {
+          const AIResponse = await getAIResponse(AIPrompt, result.rawText as string);
+          // AI's response has '```json' as first line
+          // and '```' as last line, which prevents
+          // JSON.parse() from processing it correctly.
+          var lines = AIResponse.split('\n');
+          lines.splice(0,1);  // Remove 1st line
+          lines.splice(-1,1); // Remove last line
+          var finalResponse = lines.join('\n');
+
+          try {
+              const responseObj = JSON.parse(finalResponse);
+              // For debugging purposes
+              console.log(JSON.parse(finalResponse));
+              saveAIResponse(responseObj);
+          } catch (error) {
+              console.error("Error parsing AI response: ", error);
+          }
+        } catch (error) {
+          console.error("Error fetching AI response: ", error);
+        }    
       } else {
         setUploadSuccess(false);
         setUploadMessage(`❌ Upload failed: ${result.error || "Something went wrong"}`);
