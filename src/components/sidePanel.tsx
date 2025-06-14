@@ -31,6 +31,14 @@ export default function SidePanel({ isSidePanelOpen }: SidePanelProps) {
                             Resume Generator
                         </Link>
                     </li>
+
+                    <li className="mb-6"></li>
+                    <li>
+                        <Link href="/pdf-upload" className="hover:underline">
+                            Upload PDF
+                        </Link>
+                    </li>
+
                     <li className="mb-6"></li>
                     <li>
                         <Link href="/recentActivity" className="hover:underline">
