@@ -1,59 +1,53 @@
 "use client";
 
-
 import { useAuth } from "@/context/authContext";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
-
-import { UserNameAddUpdate } from '@/components/userNameAddUpdate';
-
-
-
-import Spinner, { spinnerStyles } from '../../components/ui/Spinner';
-
-
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
+import { UserNameAddUpdate } from "@/components/userNameAddUpdate";
+import Spinner from "@/components/ui/Spinner";
 
 export default function HomePage() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
 
-    const { user, loading } = useAuth();
-    const router = useRouter();
-
-
-    // Debugging:
-    const [message, setMessage] = useState('');
-
-
-
-    useEffect(() => {
-        if (!loading && !user) {
-            router.push("/"); // Redirect to landing page if not authenticated
-        }
-    }, [user, loading, router]);
-
-    if (loading) {
-        return <p>Loading...</p>; // Show a loading state while checking auth
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push("/"); // Redirect unauthenticated users to landing page
     }
+  }, [user, loading, router]);
 
-    
-    
- 
+  if (loading) {
     return (
-        <div className="flex flex-col items-center">
-           
-
-
-
-            <br />
-            
-            <Card className="w-full max-w-md shadow-lg">
-                <CardHeader>
-                    <CardTitle>Basic User Profile:</CardTitle>
-
-                    <UserNameAddUpdate />
-                </CardHeader>
-            </Card>
-
-        </div>
+      <div className="flex items-center justify-center h-screen">
+        <Spinner />
+      </div>
     );
+  }
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-gray-100 px-4">
+      <Card className="w-full max-w-lg shadow-md rounded-2xl border border-gray-200">
+        <CardHeader>
+          <CardTitle className="text-center text-2xl font-semibold">
+            Welcome to Your Profile
+          </CardTitle>
+        </CardHeader>
+
+        <CardContent className="mt-4">
+          <UserNameAddUpdate />
+        </CardContent>
+
+        <CardFooter className="text-center text-sm text-muted-foreground">
+          You can update your name above.
+        </CardFooter>
+      </Card>
+    </div>
+  );
 }
