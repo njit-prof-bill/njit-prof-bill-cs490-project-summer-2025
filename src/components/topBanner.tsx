@@ -65,8 +65,8 @@ export default function TopBanner({ toggleSidePanel }: TopBannerProps) {
                 </button>
                 <Link href="/" className="flex items-center">
                     <Image
-                        src="/logo.png"
-                        alt="Marcus Home"
+                        src="/team-logo-1-r.png"
+                        alt="Phoenix Home"
                         width={48}
                         height={48}
                         className="mr-2"
@@ -79,7 +79,7 @@ export default function TopBanner({ toggleSidePanel }: TopBannerProps) {
 
             {/* Center Section: Title */}
             <div className="flex-grow flex justify-center">
-                <h1 className="text-xl font-semibold">Marcus</h1>
+                <h1 className="text-xl font-semibold">Phoenix AI Resume Builder</h1>
             </div>
 
             {/* Right Section: Avatar with Dropdown */}
