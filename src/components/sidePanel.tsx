@@ -27,7 +27,7 @@ const data = [
   { link: '/home/resume_builder', label: 'Upload File', icon: IconFile },
   { link: '', label: 'Continue Editing', icon: IconClipboardList },
   { link: '', label: 'Completed Resumes', icon: IconClipboardCheckFilled },
-  { link: '/home/settings', label: 'Other Settings', icon: IconSettings },
+  { link: '/home/settings', label: 'Settings', icon: IconSettings },
 ];
 
 interface SidePanelProps {

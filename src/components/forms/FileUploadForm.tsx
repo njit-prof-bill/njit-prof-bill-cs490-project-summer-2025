@@ -4,9 +4,10 @@ import React, { useRef, useState } from "react";
 import { Button } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconCheck, IconX } from '@tabler/icons-react';
-
+import { useRouter } from 'next/navigation';
 
 export default function FileUploadForm() {
+    const router = useRouter();
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [biographyText, setBiographyText] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -24,7 +25,6 @@ export default function FileUploadForm() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-
         setIsSubmitting(true);
 
         // If nothing is selected
@@ -65,15 +65,19 @@ export default function FileUploadForm() {
 
             if(response.ok) {
                 notifications.update({
-                        id: feedbackMessageID,
-                        color: 'teal',
-                        title: 'Success',
-                        message: `${data.message}`,
-                        icon: <IconCheck size={18} />,
-                        loading: false,
-                        autoClose: 4000,
-                        withCloseButton: true
-                    });
+                    id: feedbackMessageID,
+                    color: 'teal',
+                    title: 'Success',
+                    message: `${data.message}`,
+                    icon: <IconCheck size={18} />,
+                    loading: false,
+                    autoClose: 1000,
+                    withCloseButton: true,
+                    onClose: () => {
+                        router.push(`/home/resume_editor/${data.id}`)
+                    },
+                });
+
                 setIsError(false);
             }
             else {

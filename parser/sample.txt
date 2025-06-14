@@ -1,6 +1,0 @@
-Name: Jane Doe
-Skills: Python, SQL, Docker
-Education: BS Computer Science
-Jobs:
-- Dev Intern at Acme
-- SRE Co-op at FooBar

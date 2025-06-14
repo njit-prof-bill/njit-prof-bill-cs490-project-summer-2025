@@ -3,20 +3,9 @@
 import { useAuth } from "@/context/authContext";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import {
-  Container,
-  Grid,
-  SimpleGrid,
-  Skeleton,
-  Card,
-  Image,
-  Text,
-  Button,
-  Group,
-  Badge,
-} from "@mantine/core";
+import {Container, Grid, SimpleGrid, Skeleton, Card, Image, Text, Button, Group, Badge,} from "@mantine/core";
 
-const PRIMARY_COL_HEIGHT = "75vh";
+const PRIMARY_COL_HEIGHT = "80vh";
 
 export default function HomePage() {
   const { user, loading } = useAuth();
@@ -32,10 +21,8 @@ export default function HomePage() {
     return <p>Loading...</p>; // Show a loading state while checking auth
   }
 
-  const SECONDARY_COL_HEIGHT = `calc(${PRIMARY_COL_HEIGHT} / 2 - var(--mantine-spacing-md) / 2)`;
-
   return (
-    <Container my="md" fluid>
+    <Container size="xl" my="md">
       <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
         <Card shadow="sm" padding="lg" radius="md" withBorder onClick={() => router.push('/home/resume_builder')} style={{cursor:"pointer"}}>
           <Card.Section component="span">
