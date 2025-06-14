@@ -3,6 +3,7 @@
 import React, { useRef, useState } from "react";
 import { FileUpload } from "primereact/fileupload";
 import { Button } from "primereact/button";
+import { getAIResponse, AIPrompt } from "@/components/ai/aiPrompt";
 
 export default function UploadResumePage() {
   const fileUploadRef = useRef(null);
@@ -32,6 +33,7 @@ export default function UploadResumePage() {
         setUploadSuccess(true);
         setUploadMessage("✅ File uploaded and text extracted successfully!");
         setExtractedText(result.rawText);
+        console.log(getAIResponse(AIPrompt, result.rawText));
       } else {
         setUploadSuccess(false);
         setUploadMessage(`❌ Upload failed: ${result.error || "Something went wrong"}`);
