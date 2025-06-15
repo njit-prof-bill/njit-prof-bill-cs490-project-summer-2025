@@ -13,10 +13,10 @@ import { auth, db } from '@/lib/firebase'; // Adjust path as needed
 import FetchAndDisplayKey from "../components/FetchAndDisplayKey";
 
 
+import SkillsEditor from '../components/SkillsEditor';
 
 
-
-
+import EducationEditor from '../components/EducationEditor';
 
 
 
@@ -52,11 +52,20 @@ export default function UserProfile() {
     {/* <FetchAndDisplayKey keyPath="experience" /> */}
 
     <FetchAndDisplayKey keyPath="education" />
+
+    <EducationEditor />
+
 {/* 
     <FetchAndDisplayKey keyPath="skills.0" />
     <FetchAndDisplayKey keyPath="skills.1" /> */}
 
     <FetchAndDisplayKey keyPath="skills" />
+    <SkillsEditor 
+  onSuccess={() => console.log('Skills saved!')}
+  onError={(error) => console.error(error)}
+/>
+
+
 
 
     </div>
