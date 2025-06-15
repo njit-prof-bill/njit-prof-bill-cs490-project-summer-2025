@@ -95,7 +95,7 @@ const ResumeUserText: React.FC = () => {
 
 
         <CardHeader>
-            <CardTitle>Placeholder: For resume generator:  GENERATE button </CardTitle>
+            <CardTitle>User Details:</CardTitle>
         </CardHeader>
       <br />
       
