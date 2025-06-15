@@ -2,7 +2,10 @@ import { useEffect, useState } from 'react';
 import { getFirestore, doc, getDoc, updateDoc, deleteField } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import WorkExperienceEditor from '../components/WorkExperienceEditor';
-import EducationEditor, { EducationItem } from '../components/EducationEditor';
+import EducationEditor from '../components/EducationEditor';
+import { isValidEmail, isValidPhoneNumber } from '@/utils/validators';
+import { formatPhoneNumber } from '@/utils/formatters';
+
 
 interface Job {
   company: string;
@@ -42,13 +45,13 @@ const denormalizeWorkExperience = (data: Job[]): any[] =>
     endDate: job.endDate,
     responsibilities: job.description
       ? job.description
-          .split('\n')
-          .map((r) => r.trim())
-          .filter(Boolean)
+        .split('\n')
+        .map((r) => r.trim())
+        .filter(Boolean)
       : [],
   }));
 
-  const normalizeEducation = (data: any[]): EducationItem[] =>
+const normalizeEducation = (data: any[]): EducationItem[] =>
   data
     .filter((edu) => edu && typeof edu === 'object')
     .map((edu) => ({
@@ -61,15 +64,15 @@ const denormalizeWorkExperience = (data: Job[]): any[] =>
 
 
 
-    const denormalizeEducation = (data: EducationItem[]): any[] =>
-    data.map((edu) => ({
-      institution: edu.institution,
-      degree: edu.degree,
-      startDate: edu.startDate,
-      endDate: edu.endDate,
-      gpa: edu.gpa || '',
-    }));
-  
+const denormalizeEducation = (data: EducationItem[]): any[] =>
+  data.map((edu) => ({
+    institution: edu.institution,
+    degree: edu.degree,
+    startDate: edu.startDate,
+    endDate: edu.endDate,
+    gpa: edu.gpa || '',
+  }));
+
 
 
 interface Props {
@@ -87,6 +90,8 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [saving, setSaving] = useState(false);
   const [newLabel, setNewLabel] = useState('');
+  const [inputError, setInputError] = useState<string | null>(null);
+
 
   const auth = getAuth();
   const firestore = getFirestore();
@@ -98,7 +103,7 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
   const setNestedValue = (obj: any, path: string, value: any): any => {
     const keys = path.split('.');
     const result = JSON.parse(JSON.stringify(obj)); // Deep clone
-    
+
     let current = result;
     for (let i = 0; i < keys.length - 1; i++) {
       const key = keys[i];
@@ -107,14 +112,14 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
       }
       current = current[key];
     }
-    
+
     const lastKey = keys[keys.length - 1];
     if (value === null || value === undefined) {
       delete current[lastKey];
     } else {
       current[lastKey] = value;
     }
-    
+
     return result;
   };
 
@@ -171,12 +176,29 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
   // Save updated data
   const saveData = async () => {
     try {
+      if (keyPath === 'contact.email') {
+        for (const val of Object.values(editValue || {})) {
+          if (typeof val === 'string' && !isValidEmail(val)) {
+            setError('Invalid email in contact.email');
+            return;
+          }
+        }
+      }
+      if (keyPath === 'contact.phone') {
+        for (const val of Object.values(editValue || {})) {
+          if (typeof val === 'string' && !isValidPhoneNumber(val)) {
+            setError('Invalid phone number in contact.phone');
+            return;
+          }
+        }
+      }
+
       setSaving(true);
       const uid = auth.currentUser?.uid;
       if (!uid || editValue === null) return;
 
       const docRef = doc(firestore, `/users/${uid}/userDocuments/categoryData`);
-      
+
       // First, get the current document to access the full JSON
       const docSnap = await getDoc(docRef);
       if (!docSnap.exists()) {
@@ -187,7 +209,7 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
       const data = docSnap.data();
       const jsonString: string = data.groqResponse;
       let jsonObject;
-      
+
       try {
         jsonObject = JSON.parse(jsonString);
       } catch (err) {
@@ -197,14 +219,14 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
 
       // Update the nested value in the JSON object
       const updatedJsonObject = setNestedValue(jsonObject, keyPath, editValue);
-      
+
       // Convert back to string and update the document
       const updatedJsonString = JSON.stringify(updatedJsonObject);
-      
+
       await updateDoc(docRef, {
         groqResponse: updatedJsonString,
       });
-      
+
       setValue(editValue);
       setEditMode(false);
       setHasUnsavedChanges(false);
@@ -223,7 +245,7 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
       if (!uid) return;
 
       const docRef = doc(firestore, `/users/${uid}/userDocuments/categoryData`);
-      
+
       // Get current document
       const docSnap = await getDoc(docRef);
       if (!docSnap.exists()) {
@@ -234,7 +256,7 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
       const data = docSnap.data();
       const jsonString: string = data.groqResponse;
       let jsonObject;
-      
+
       try {
         jsonObject = JSON.parse(jsonString);
       } catch (err) {
@@ -244,14 +266,14 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
 
       // Remove the nested value from the JSON object
       const updatedJsonObject = setNestedValue(jsonObject, keyPath, undefined);
-      
+
       // Convert back to string and update the document
       const updatedJsonString = JSON.stringify(updatedJsonObject);
-      
+
       await updateDoc(docRef, {
         groqResponse: updatedJsonString,
       });
-      
+
       setValue(null);
     } catch (err) {
       console.error('Delete failed', err);
@@ -282,13 +304,25 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
   // Add new item
   const addItem = async () => {
     if (!newItem.trim()) return;
-  
+
+    // Validation for contact.email or contact.phone
+    if (keyPath === 'contact.email' && !isValidEmail(newItem.trim())) {
+      setInputError('Please enter a valid email address');
+      return;
+    }
+    if (keyPath === 'contact.phone' && !isValidPhoneNumber(newItem.trim())) {
+      setInputError('Please enter a valid phone number');
+      return;
+    }
+
+    setInputError(null); // after successful validation
+
     try {
       const uid = auth.currentUser?.uid;
       if (!uid) return;
-  
+
       let updatedValue;
-  
+
       if (Array.isArray(value)) {
         updatedValue = [...value, newItem];
       } else if (typeof value === 'object' && value !== null) {
@@ -305,18 +339,19 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
       } else {
         updatedValue = [newItem];
       }
-  
+
+
       const docRef = doc(firestore, `/users/${uid}/userDocuments/categoryData`);
       const docSnap = await getDoc(docRef);
       if (!docSnap.exists()) throw new Error('Document not found');
-  
+
       const data = docSnap.data();
       const jsonObject = JSON.parse(data.groqResponse);
       const updatedJsonObject = setNestedValue(jsonObject, keyPath, updatedValue);
       const updatedJsonString = JSON.stringify(updatedJsonObject);
-  
+
       await updateDoc(docRef, { groqResponse: updatedJsonString });
-  
+
       setValue(updatedValue);
       setAdding(false);
       setNewItem('');
@@ -330,9 +365,9 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
     try {
       const uid = auth.currentUser?.uid;
       if (!uid) return;
-  
+
       let updatedValue;
-  
+
       if (Array.isArray(value)) {
         updatedValue = value.filter((_, i) => i !== keyOrIndex);
       } else if (typeof value === 'object' && value !== null) {
@@ -341,26 +376,26 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
       } else {
         return;
       }
-  
+
       const docRef = doc(firestore, `/users/${uid}/userDocuments/categoryData`);
       const docSnap = await getDoc(docRef);
       if (!docSnap.exists()) throw new Error('Document not found');
-  
+
       const data = docSnap.data();
       const jsonObject = JSON.parse(data.groqResponse);
       const updatedJsonObject = setNestedValue(jsonObject, keyPath, updatedValue);
       const updatedJsonString = JSON.stringify(updatedJsonObject);
-  
+
       await updateDoc(docRef, { groqResponse: updatedJsonString });
-  
+
       setValue(updatedValue);
     } catch (err) {
       console.error('Remove item failed', err);
       setError('Failed to remove item');
     }
   };
-  
-  
+
+
 
   // Helper to render nested data
   const renderNested = (val: any) => {
@@ -372,13 +407,19 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
           </div>
         );
       }
-    
+
       if (typeof val === 'object' && val !== null) {
         return (
           <div>
             {Object.entries(val).map(([label, addrOrPhone]) => (
               <div key={label} style={{ display: 'flex', alignItems: 'center', marginBottom: '0.25rem' }}>
-                <span style={{ flex: 1 }}>• {label[0].toUpperCase() + label.slice(1)}: {addrOrPhone}</span>
+                <span style={{ flex: 1 }}>
+                  • {label[0].toUpperCase() + label.slice(1)}:{' '}
+                  {keyPath === 'contact.phone' && typeof addrOrPhone === 'string'
+                    ? formatPhoneNumber(addrOrPhone)
+                    : String(addrOrPhone)}
+                </span>
+
                 <button
                   onClick={() => removeItem(label)}
                   style={{
@@ -402,9 +443,9 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
     }
     if (Array.isArray(val)) {
       return (
-        <div style={{ 
-          border: '1px solid #ccc', 
-          padding: '0.5rem', 
+        <div style={{
+          border: '1px solid #ccc',
+          padding: '0.5rem',
           marginBottom: '1rem',
           maxWidth: '100%',
           overflow: 'auto'
@@ -420,7 +461,7 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
       );
     } else if (typeof val === 'object' && val !== null) {
       return (
-        <pre style={{  
+        <pre style={{
           padding: '0.5rem',
           margin: 0,
           maxWidth: '100%',
@@ -448,22 +489,22 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
 
   // Main render
   return (
-    <div style={{ 
-      border: '1px solid #000', 
-      padding: '1rem', 
+    <div style={{
+      border: '1px solid #000',
+      padding: '1rem',
       marginBottom: '1rem',
       maxWidth: '100%',
       boxSizing: 'border-box'
     }}>
-      <div style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
         marginBottom: '0.5rem',
         flexWrap: 'wrap',
         gap: '0.5rem'
       }}>
-        <h3 style={{ 
-          margin: 0, 
+        <h3 style={{
+          margin: 0,
           fontSize: '1.1rem',
           wordBreak: 'break-word',
           minWidth: 0,
@@ -472,11 +513,11 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
           {keyPath}
         </h3>
         {hasUnsavedChanges && (
-          <span style={{ 
-            backgroundColor: '#fff3cd', 
-            color: '#856404', 
-            padding: '0.25rem 0.5rem', 
-            borderRadius: '4px', 
+          <span style={{
+            backgroundColor: '#fff3cd',
+            color: '#856404',
+            padding: '0.25rem 0.5rem',
+            borderRadius: '4px',
             fontSize: '0.875rem',
             border: '1px solid #ffeaa7',
             whiteSpace: 'nowrap'
@@ -485,11 +526,11 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
           </span>
         )}
         {saving && (
-          <span style={{ 
-            backgroundColor: '#d4edda', 
-            color: '#155724', 
-            padding: '0.25rem 0.5rem', 
-            borderRadius: '4px', 
+          <span style={{
+            backgroundColor: '#d4edda',
+            color: '#155724',
+            padding: '0.25rem 0.5rem',
+            borderRadius: '4px',
             fontSize: '0.875rem',
             border: '1px solid #c3e6cb',
             whiteSpace: 'nowrap'
@@ -498,233 +539,233 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
           </span>
         )}
       </div>
-      
+
       {editMode ? (
-  <div style={{ width: '100%' }}>
-    {keyPath === 'workExperience' ? (
-      <WorkExperienceEditor
-        workExperience={Array.isArray(editValue) ? normalizeWorkExperience(editValue) : []}
-        onChange={(updated) => handleEditValueChange(denormalizeWorkExperience(updated))}
-      />
-    ) : keyPath === 'education' ? (
-      
-        <EducationEditor
-          education={
-            Array.isArray(editValue)
-              ? normalizeEducation(editValue)
-              : [normalizeEducation([editValue])[0]]
-          }
-          onChange={(updated) => {
-            const denorm = denormalizeEducation(updated);
-            handleEditValueChange(Array.isArray(editValue) ? denorm : denorm[0]);
-          }}
-        />
-      ) : keyPath === 'contact.email' || keyPath === 'contact.phone' ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
-        {(() => {
-          if (
-            typeof editValue !== 'object' ||
-            editValue === null ||
-            Array.isArray(editValue)
-          ) {
-            return <p>Invalid format: expected an object with string values.</p>;
-          }
-      
-          const entries = Object.entries(editValue).filter(
-            ([_, val]) => typeof val === 'string'
-          ) as [string, string][];
-      
-          return entries.map(([label, val], idx) => (
-            <div key={label} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-              <input
-                type="text"
-                value={label}
-                readOnly
-                style={{ flex: 1, padding: '0.5rem', border: '1px solid #ccc', borderRadius: '4px', background: '#f5f5f5' }}
-              />
-              <input
-                type="text"
-                value={val}
-                onChange={(e) => {
-                  const updated = { ...editValue, [label]: e.target.value };
-                  handleEditValueChange(updated);
-                }}
-                style={{ flex: 3, padding: '0.5rem', border: '1px solid #ccc', borderRadius: '4px' }}
-              />
-              <button
-                onClick={() => {
-                  const updated = { ...editValue };
-                  delete updated[label];
-                  handleEditValueChange(updated);
-                }}
-                style={{ background: '#dc3545', color: '#fff', border: 'none', borderRadius: '4px', padding: '0.25rem 0.5rem' }}
-              >
-                Delete
-              </button>
+        <div style={{ width: '100%' }}>
+          {keyPath === 'workExperience' ? (
+            <WorkExperienceEditor
+              workExperience={Array.isArray(editValue) ? normalizeWorkExperience(editValue) : []}
+              onChange={(updated) => handleEditValueChange(denormalizeWorkExperience(updated))}
+            />
+          ) : keyPath === 'education' ? (
+
+            <EducationEditor
+              education={
+                Array.isArray(editValue)
+                  ? normalizeEducation(editValue)
+                  : [normalizeEducation([editValue])[0]]
+              }
+              onChange={(updated) => {
+                const denorm = denormalizeEducation(updated);
+                handleEditValueChange(Array.isArray(editValue) ? denorm : denorm[0]);
+              }}
+            />
+          ) : keyPath === 'contact.email' || keyPath === 'contact.phone' ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
+              {(() => {
+                if (
+                  typeof editValue !== 'object' ||
+                  editValue === null ||
+                  Array.isArray(editValue)
+                ) {
+                  return <p>Invalid format: expected an object with string values.</p>;
+                }
+
+                const entries = Object.entries(editValue).filter(
+                  ([_, val]) => typeof val === 'string'
+                ) as [string, string][];
+
+                return entries.map(([label, val], idx) => (
+                  <div key={label} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <input
+                      type="text"
+                      value={label}
+                      readOnly
+                      style={{ flex: 1, padding: '0.5rem', border: '1px solid #ccc', borderRadius: '4px', background: '#f5f5f5' }}
+                    />
+                    <input
+                      type="text"
+                      value={val}
+                      onChange={(e) => {
+                        const updated = { ...editValue, [label]: e.target.value };
+                        handleEditValueChange(updated);
+                      }}
+                      style={{ flex: 3, padding: '0.5rem', border: '1px solid #ccc', borderRadius: '4px' }}
+                    />
+                    <button
+                      onClick={() => {
+                        const updated = { ...editValue };
+                        delete updated[label];
+                        handleEditValueChange(updated);
+                      }}
+                      style={{ background: '#dc3545', color: '#fff', border: 'none', borderRadius: '4px', padding: '0.25rem 0.5rem' }}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                ));
+              })()}
+
+              {/* Add new label/value */}
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <input
+                  type="text"
+                  placeholder="Label (e.g. personal)"
+                  value={newLabel}
+                  onChange={(e) => setNewLabel(e.target.value)}
+                  style={{ flex: 1, padding: '0.5rem', border: '1px solid #ccc', borderRadius: '4px' }}
+                />
+                <input
+                  type="text"
+                  placeholder="Value (e.g. someone@email.com)"
+                  value={newItem}
+                  onChange={(e) => setNewItem(e.target.value)}
+                  style={{ flex: 3, padding: '0.5rem', border: '1px solid #ccc', borderRadius: '4px' }}
+                />
+                <button
+                  onClick={() => {
+                    if (!newLabel.trim() || !newItem.trim()) return;
+                    const updated = { ...editValue, [newLabel.trim()]: newItem.trim() };
+                    handleEditValueChange(updated);
+                    setNewLabel('');
+                    setNewItem('');
+                  }}
+                  style={{ background: '#28a745', color: '#fff', border: 'none', borderRadius: '4px', padding: '0.5rem' }}
+                >
+                  Add
+                </button>
+              </div>
             </div>
-          ));
-        })()}
-      
-        {/* Add new label/value */}
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          <input
-            type="text"
-            placeholder="Label (e.g. personal)"
-            value={newLabel}
-            onChange={(e) => setNewLabel(e.target.value)}
-            style={{ flex: 1, padding: '0.5rem', border: '1px solid #ccc', borderRadius: '4px' }}
-          />
-          <input
-            type="text"
-            placeholder="Value (e.g. someone@email.com)"
-            value={newItem}
-            onChange={(e) => setNewItem(e.target.value)}
-            style={{ flex: 3, padding: '0.5rem', border: '1px solid #ccc', borderRadius: '4px' }}
-          />
-          <button
-            onClick={() => {
-              if (!newLabel.trim() || !newItem.trim()) return;
-              const updated = { ...editValue, [newLabel.trim()]: newItem.trim() };
-              handleEditValueChange(updated);
-              setNewLabel('');
-              setNewItem('');
-            }}
-            style={{ background: '#28a745', color: '#fff', border: 'none', borderRadius: '4px', padding: '0.5rem' }}
-          >
-            Add
-          </button>
+
+
+
+          ) : typeof editValue === 'string' ? (
+            <textarea
+              rows={4}
+              style={{ width: '100%', marginBottom: '0.5rem', boxSizing: 'border-box', resize: 'vertical', fontFamily: 'monospace' }}
+              value={editValue}
+              onChange={(e) => handleEditValueChange(e.target.value)}
+            />
+          ) : (
+            <textarea
+              rows={10}
+              style={{ width: '100%', marginBottom: '0.5rem', boxSizing: 'border-box', resize: 'vertical', fontFamily: 'monospace', fontSize: '0.875rem' }}
+              value={JSON.stringify(editValue, null, 2)}
+              onChange={(e) => {
+                try {
+                  const parsed = JSON.parse(e.target.value);
+                  handleEditValueChange(parsed);
+                } catch {
+                  // ignore parse errors
+                }
+              }}
+            />
+          )}
+
+          {/* Your Save / Cancel buttons go here */}
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <button
+              onClick={saveData}
+              disabled={saving || !hasUnsavedChanges}
+              style={{
+                backgroundColor: hasUnsavedChanges ? '#007bff' : '#skyblue',
+                color: 'white',
+                opacity: saving || !hasUnsavedChanges ? 0.6 : 1,
+                cursor: saving || !hasUnsavedChanges ? 'not-allowed' : 'pointer',
+                padding: '0.5rem 1rem',
+                border: 'none',
+                borderRadius: '4px',
+              }}
+            >
+              {saving ? 'Saving...' : 'Save'}
+            </button>
+            <button
+              onClick={cancelEditing}
+              style={{
+                padding: '0.5rem 1rem',
+                border: '1px solid #ccc',
+                borderRadius: '4px',
+                backgroundColor: 'red',
+                cursor: 'pointer',
+              }}
+            >
+              Cancel
+            </button>
+          </div>
         </div>
-      </div>
-      
-
-
-      ) : typeof editValue === 'string' ? (
-      <textarea
-        rows={4}
-        style={{ width: '100%', marginBottom: '0.5rem', boxSizing: 'border-box', resize: 'vertical', fontFamily: 'monospace' }}
-        value={editValue}
-        onChange={(e) => handleEditValueChange(e.target.value)}
-      />
-    )  : (
-      <textarea
-        rows={10}
-        style={{ width: '100%', marginBottom: '0.5rem', boxSizing: 'border-box', resize: 'vertical', fontFamily: 'monospace', fontSize: '0.875rem' }}
-        value={JSON.stringify(editValue, null, 2)}
-        onChange={(e) => {
-          try {
-            const parsed = JSON.parse(e.target.value);
-            handleEditValueChange(parsed);
-          } catch {
-            // ignore parse errors
-          }
-        }}
-      />
-    )}
-
-    {/* Your Save / Cancel buttons go here */}
-    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-      <button
-        onClick={saveData}
-        disabled={saving || !hasUnsavedChanges}
-        style={{
-          backgroundColor: hasUnsavedChanges ? '#007bff' : '#skyblue',
-          color: 'white',
-          opacity: saving || !hasUnsavedChanges ? 0.6 : 1,
-          cursor: saving || !hasUnsavedChanges ? 'not-allowed' : 'pointer',
-          padding: '0.5rem 1rem',
-          border: 'none',
-          borderRadius: '4px',
-        }}
-      >
-        {saving ? 'Saving...' : 'Save'}
-      </button>
-      <button
-        onClick={cancelEditing}
-        style={{
-          padding: '0.5rem 1rem',
-          border: '1px solid #ccc',
-          borderRadius: '4px',
-          backgroundColor: 'red',
-          cursor: 'pointer',
-        }}
-      >
-        Cancel
-      </button>
-    </div>
-  </div>
-) : (
+      ) : (
         // Display mode
         <div style={{ width: '100%' }}>
           <div style={{ marginBottom: '1rem', maxWidth: '100%', overflow: 'hidden' }}>
-          {keyPath === 'workExperience' && Array.isArray(value) ? (
-  <div>
-    {value.map((job: any, index: number) => (
-      <div
-        key={index}
-        style={{
-          marginBottom: '1rem',
-          padding: '0.75rem',
-          border: '1px solid #ccc',
-          borderRadius: '4px'
-        }}
-      >
-        <div><strong>{job.jobTitle}</strong> at <strong>{job.company}</strong></div>
-        <div>{job.startDate} — {job.endDate}</div>
-        {Array.isArray(job.responsibilities) && (
-          <ul style={{ marginTop: '0.5rem', paddingLeft: '1.25rem' }}>
-            {job.responsibilities.map((resp: string, i: number) => (
-              <li key={i}>{resp}</li>
-            ))}
-          </ul>
-        )}
-      </div>
-    ))}
-  </div>
-) : keyPath === 'education' ? (
-  editMode ? (
-    <EducationEditor
-      education={
-        Array.isArray(editValue)
-          ? normalizeEducation(editValue)
-          : [normalizeEducation([editValue])[0]]
-      }
-      onChange={(updated) => {
-        const denorm = denormalizeEducation(updated);
-        handleEditValueChange(Array.isArray(editValue) ? denorm : denorm[0]);
-      }}
-    />
-  ) : (
-    Array.isArray(value) && value.length > 0 ? (
-      value.map((edu, i) => (
-        <div
-          key={i}
-          style={{
-            marginBottom: '1rem',
-            padding: '0.75rem',
-            border: '1px solid #ccc',
-            borderRadius: '4px',
-          }}
-        >
-          <div><strong>{edu.institution}</strong></div>
-          <div>{edu.degree}</div>
-          <div>{edu.startDate} — {edu.endDate}</div>
-          {edu.gpa && <div>GPA: {edu.gpa}</div>}
-        </div>
-      ))
-    ) : (
-      <p>No education data available.</p>
-    )
-  )
-  ) : keyPath === 'contact.email' || keyPath === 'contact.phone' ? (
-  value ? renderNested(value) : <p>No data available.</p>
-) : (
-  value ? renderNested(value) : <p>No data available.</p>
-)}
+            {keyPath === 'workExperience' && Array.isArray(value) ? (
+              <div>
+                {value.map((job: any, index: number) => (
+                  <div
+                    key={index}
+                    style={{
+                      marginBottom: '1rem',
+                      padding: '0.75rem',
+                      border: '1px solid #ccc',
+                      borderRadius: '4px'
+                    }}
+                  >
+                    <div><strong>{job.jobTitle}</strong> at <strong>{job.company}</strong></div>
+                    <div>{job.startDate} — {job.endDate}</div>
+                    {Array.isArray(job.responsibilities) && (
+                      <ul style={{ marginTop: '0.5rem', paddingLeft: '1.25rem' }}>
+                        {job.responsibilities.map((resp: string, i: number) => (
+                          <li key={i}>{resp}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : keyPath === 'education' ? (
+              editMode ? (
+                <EducationEditor
+                  education={
+                    Array.isArray(editValue)
+                      ? normalizeEducation(editValue)
+                      : [normalizeEducation([editValue])[0]]
+                  }
+                  onChange={(updated) => {
+                    const denorm = denormalizeEducation(updated);
+                    handleEditValueChange(Array.isArray(editValue) ? denorm : denorm[0]);
+                  }}
+                />
+              ) : (
+                Array.isArray(value) && value.length > 0 ? (
+                  value.map((edu, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        marginBottom: '1rem',
+                        padding: '0.75rem',
+                        border: '1px solid #ccc',
+                        borderRadius: '4px',
+                      }}
+                    >
+                      <div><strong>{edu.institution}</strong></div>
+                      <div>{edu.degree}</div>
+                      <div>{edu.startDate} — {edu.endDate}</div>
+                      {edu.gpa && <div>GPA: {edu.gpa}</div>}
+                    </div>
+                  ))
+                ) : (
+                  <p>No education data available.</p>
+                )
+              )
+            ) : keyPath === 'contact.email' || keyPath === 'contact.phone' ? (
+              value ? renderNested(value) : <p>No data available.</p>
+            ) : (
+              value ? renderNested(value) : <p>No data available.</p>
+            )}
 
           </div>
-          
+
           <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
-            <button 
+            <button
               onClick={startEditing}
               style={{
                 padding: '0.5rem 1rem',
@@ -737,7 +778,7 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
             >
               Edit
             </button>
-            <button 
+            <button
               onClick={deleteSection}
               style={{
                 padding: '0.5rem 1rem',
@@ -750,7 +791,7 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
             >
               Delete
             </button>
-            <button 
+            <button
               onClick={() => setAdding(true)}
               style={{
                 padding: '0.5rem 1rem',
@@ -764,10 +805,10 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
               Add Item
             </button>
           </div>
-          
+
           {/* Add New Item */}
           {adding && (
-            <div style={{ 
+            <div style={{
               marginTop: '1rem',
               padding: '1rem',
               // backgroundColor: '#f8f9fa',
@@ -779,8 +820,8 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
                   type="text"
                   value={newItem}
                   onChange={(e) => setNewItem(e.target.value)}
-                  style={{ 
-                    width: '100%', 
+                  style={{
+                    width: '100%',
                     marginBottom: '0.5rem',
                     padding: '0.5rem',
                     border: '1px solid #ccc',
@@ -794,8 +835,8 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
                   placeholder="Enter new item"
                   value={newItem}
                   onChange={(e) => setNewItem(e.target.value)}
-                  style={{ 
-                    width: '100%', 
+                  style={{
+                    width: '100%',
                     marginBottom: '0.5rem',
                     padding: '0.5rem',
                     border: '1px solid #ccc',
@@ -804,8 +845,13 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
                   }}
                 />
               )}
+              {inputError && (
+                <div style={{ color: 'red', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
+                  {inputError}
+                </div>
+              )}
               <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                <button 
+                <button
                   onClick={addItem}
                   style={{
                     padding: '0.5rem 1rem',
@@ -818,7 +864,7 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
                 >
                   Add
                 </button>
-                <button 
+                <button
                   onClick={() => { setAdding(false); setNewItem(''); }}
                   style={{
                     padding: '0.5rem 1rem',
