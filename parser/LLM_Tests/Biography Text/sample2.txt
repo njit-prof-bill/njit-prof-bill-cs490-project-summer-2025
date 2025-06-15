@@ -1,0 +1,3 @@
+I'm Sarah Lee, a junior at Rutgers University majoring in Computer Science. 
+I've recently completed a summer internship at a fintech company where I worked with React and Node.js. 
+I'm passionate about cybersecurity and I'm currently studying for my Security+ certification.

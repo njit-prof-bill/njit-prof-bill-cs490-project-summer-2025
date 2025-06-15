@@ -1,0 +1,4 @@
+Hi, my name is Alex. I’m a full-stack developer with 3 years of experience.  
+I’ve worked at a startup where I used React and Node.js to build web applications.  
+I also have experience with MongoDB, Docker, and deploying on AWS.  
+I graduated from NYU in 2020 with a CS degree.

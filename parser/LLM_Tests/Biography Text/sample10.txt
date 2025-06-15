@@ -1,0 +1,7 @@
+Johnathan Michaels is a seasoned technical project manager with over 10 years of experience in the software development lifecycle, 
+specializing in Agile methodologies and cross-functional team leadership. He began his career as a software engineer at a fintech startup in Boston, 
+where he led the development of a high-availability microservices-based platform used by thousands of customers. After earning his MBA from NYU Stern, 
+he transitioned into project management and has since overseen multi-million-dollar initiatives at companies like Salesforce and Adobe. 
+His core competencies include stakeholder communication, risk mitigation, team coaching, and DevOps alignment. 
+He is certified in PMP, ScrumMaster, and SAFe 5.0. In addition to his professional work, 
+Johnathan volunteers as a coding mentor for underrepresented youth and frequently speaks at Agile conferences.
