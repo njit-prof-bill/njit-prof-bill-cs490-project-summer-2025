@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase'; // Adjust path to your Firebase config
 import { User } from 'firebase/auth';
@@ -21,120 +21,6 @@ interface GroqResponseData {
   education: Education[];
   [key: string]: any;
 }
-
-interface EducationFormProps {
-  educationData: Education;
-  onChange: (field: keyof Education, value: string) => void;
-  onSave: () => void;
-  onCancel: () => void;
-  title: string;
-  saveText: string;
-}
-
-// Move EducationForm outside the main component to prevent re-creation
-const EducationForm: React.FC<EducationFormProps> = React.memo(({ 
-  educationData, 
-  onChange, 
-  onSave, 
-  onCancel, 
-  title, 
-  saveText 
-}) => {
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    // Prevent form submission on Enter key
-    if (e.key === 'Enter') {
-      e.preventDefault();
-    }
-  };
-
-  return (
-    <div className="p-4 bg-gray-700 rounded-md space-y-3">
-      <h3 className="text-lg font-medium text-white mb-3">{title}</h3>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div>
-          <label className="block text-sm font-medium mb-1 text-gray-200">Degree *</label>
-          <input
-            type="text"
-            value={educationData.degree}
-            onChange={(e) => onChange('degree', e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="e.g., B.S., M.A., Ph.D."
-            className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-        </div>
-        
-        <div>
-          <label className="block text-sm font-medium mb-1 text-gray-200">Institution *</label>
-          <input
-            type="text"
-            value={educationData.institution}
-            onChange={(e) => onChange('institution', e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="e.g., University of Pittsburgh"
-            className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-        </div>
-        
-        <div>
-          <label className="block text-sm font-medium mb-1 text-gray-200">Start Date</label>
-          <input
-            type="text"
-            value={educationData.startDate}
-            onChange={(e) => onChange('startDate', e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="e.g., September 2008"
-            className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-        </div>
-        
-        <div>
-          <label className="block text-sm font-medium mb-1 text-gray-200">End Date</label>
-          <input
-            type="text"
-            value={educationData.endDate}
-            onChange={(e) => onChange('endDate', e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="e.g., April 2012"
-            className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-        </div>
-        
-        <div className="md:col-span-2">
-          <label className="block text-sm font-medium mb-1 text-gray-200">GPA</label>
-          <input
-            type="text"
-            value={educationData.gpa}
-            onChange={(e) => onChange('gpa', e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="e.g., 3.8"
-            className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-        </div>
-      </div>
-      
-      <div className="flex gap-2 pt-2">
-        <button
-          type="button"
-          onClick={onSave}
-          disabled={!educationData.degree.trim() || !educationData.institution.trim()}
-          className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors"
-        >
-          {saveText}
-        </button>
-        <button
-          type="button"
-          onClick={onCancel}
-          className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
-        >
-          Cancel
-        </button>
-      </div>
-    </div>
-  );
-});
-
-EducationForm.displayName = 'EducationForm';
 
 const EducationEditor: React.FC<EducationEditorProps> = ({ onSuccess, onError }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -172,7 +58,7 @@ const EducationEditor: React.FC<EducationEditorProps> = ({ onSuccess, onError })
 
   const docRef = currentUser ? doc(db, 'users', currentUser.uid, 'userDocuments', 'categoryData') : null;
 
-  const loadEducation = useCallback(async () => {
+  const loadEducation = async () => {
     if (!docRef) return;
     
     setLoading(true);
@@ -220,9 +106,9 @@ const EducationEditor: React.FC<EducationEditorProps> = ({ onSuccess, onError })
     } finally {
       setLoading(false);
     }
-  }, [docRef, onError]);
+  };
 
-  const saveEducation = useCallback(async () => {
+  const saveEducation = async () => {
     if (!docRef) return;
     
     setSaving(true);
@@ -272,9 +158,9 @@ const EducationEditor: React.FC<EducationEditorProps> = ({ onSuccess, onError })
     } finally {
       setSaving(false);
     }
-  }, [docRef, education, onError, onSuccess]);
+  };
 
-  const handleOpen = useCallback(() => {
+  const handleOpen = () => {
     setIsOpen(true);
     // Reset any editing state
     setEditingIndex(null);
@@ -295,17 +181,17 @@ const EducationEditor: React.FC<EducationEditorProps> = ({ onSuccess, onError })
     setShowAddForm(false);
     // Load the current education from Firestore
     loadEducation();
-  }, [loadEducation]);
+  };
 
-  const handleClose = useCallback(() => {
+  const handleClose = () => {
     setIsOpen(false);
     setEditingIndex(null);
     setShowAddForm(false);
-  }, []);
+  };
 
-  const addEducation = useCallback(() => {
+  const addEducation = () => {
     if (newEducation.degree.trim() && newEducation.institution.trim()) {
-      setEducation(prev => [...prev, { ...newEducation }]);
+      setEducation([...education, { ...newEducation }]);
       setNewEducation({
         degree: '',
         institution: '',
@@ -315,24 +201,22 @@ const EducationEditor: React.FC<EducationEditorProps> = ({ onSuccess, onError })
       });
       setShowAddForm(false);
     }
-  }, [newEducation]);
+  };
 
-  const deleteEducation = useCallback((index: number) => {
-    setEducation(prev => prev.filter((_, i) => i !== index));
-  }, []);
+  const deleteEducation = (index: number) => {
+    setEducation(education.filter((_, i) => i !== index));
+  };
 
-  const startEditing = useCallback((index: number) => {
+  const startEditing = (index: number) => {
     setEditingIndex(index);
     setEditingEducation({ ...education[index] });
-  }, [education]);
+  };
 
-  const saveEdit = useCallback(() => {
+  const saveEdit = () => {
     if (editingIndex !== null && editingEducation.degree.trim() && editingEducation.institution.trim()) {
-      setEducation(prev => {
-        const updatedEducation = [...prev];
-        updatedEducation[editingIndex] = { ...editingEducation };
-        return updatedEducation;
-      });
+      const updatedEducation = [...education];
+      updatedEducation[editingIndex] = { ...editingEducation };
+      setEducation(updatedEducation);
       setEditingIndex(null);
       setEditingEducation({
         degree: '',
@@ -342,9 +226,9 @@ const EducationEditor: React.FC<EducationEditorProps> = ({ onSuccess, onError })
         gpa: ''
       });
     }
-  }, [editingIndex, editingEducation]);
+  };
 
-  const cancelEdit = useCallback(() => {
+  const cancelEdit = () => {
     setEditingIndex(null);
     setEditingEducation({
       degree: '',
@@ -353,15 +237,15 @@ const EducationEditor: React.FC<EducationEditorProps> = ({ onSuccess, onError })
       endDate: '',
       gpa: ''
     });
-  }, []);
+  };
 
-  const handleNewEducationChange = useCallback((field: keyof Education, value: string) => {
+  const handleNewEducationChange = (field: keyof Education, value: string) => {
     setNewEducation(prev => ({ ...prev, [field]: value }));
-  }, []);
+  };
 
-  const handleEditingEducationChange = useCallback((field: keyof Education, value: string) => {
+  const handleEditingEducationChange = (field: keyof Education, value: string) => {
     setEditingEducation(prev => ({ ...prev, [field]: value }));
-  }, []);
+  };
 
   // Show loading or auth required state
   if (authLoading) {
@@ -391,6 +275,99 @@ const EducationEditor: React.FC<EducationEditorProps> = ({ onSuccess, onError })
     );
   }
 
+  const EducationForm = ({ 
+    educationData, 
+    onChange, 
+    onSave, 
+    onCancel, 
+    title, 
+    saveText 
+  }: {
+    educationData: Education;
+    onChange: (field: keyof Education, value: string) => void;
+    onSave: () => void;
+    onCancel: () => void;
+    title: string;
+    saveText: string;
+  }) => (
+    <div className="p-4 bg-gray-700 rounded-md space-y-3">
+      <h3 className="text-lg font-medium text-white mb-3">{title}</h3>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <label className="block text-sm font-medium mb-1 text-gray-200">Degree *</label>
+          <input
+            type="text"
+            value={educationData.degree}
+            onChange={(e) => onChange('degree', e.target.value)}
+            placeholder="e.g., B.S., M.A., Ph.D."
+            className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium mb-1 text-gray-200">Institution *</label>
+          <input
+            type="text"
+            value={educationData.institution}
+            onChange={(e) => onChange('institution', e.target.value)}
+            placeholder="e.g., University of Pittsburgh"
+            className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium mb-1 text-gray-200">Start Date</label>
+          <input
+            type="text"
+            value={educationData.startDate}
+            onChange={(e) => onChange('startDate', e.target.value)}
+            placeholder="e.g., September 2008"
+            className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium mb-1 text-gray-200">End Date</label>
+          <input
+            type="text"
+            value={educationData.endDate}
+            onChange={(e) => onChange('endDate', e.target.value)}
+            placeholder="e.g., April 2012"
+            className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
+        
+        <div className="md:col-span-2">
+          <label className="block text-sm font-medium mb-1 text-gray-200">GPA</label>
+          <input
+            type="text"
+            value={educationData.gpa}
+            onChange={(e) => onChange('gpa', e.target.value)}
+            placeholder="e.g., 3.8"
+            className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
+      </div>
+      
+      <div className="flex gap-2 pt-2">
+        <button
+          onClick={onSave}
+          disabled={!educationData.degree.trim() || !educationData.institution.trim()}
+          className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors"
+        >
+          {saveText}
+        </button>
+        <button
+          onClick={onCancel}
+          className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-gray-800 rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden">
@@ -406,12 +383,11 @@ const EducationEditor: React.FC<EducationEditorProps> = ({ onSuccess, onError })
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400"></div>
             </div>
           ) : (
-            <form onSubmit={(e) => e.preventDefault()}>
+            <>
               {/* Add new education button */}
               {!showAddForm && (
                 <div className="mb-6">
                   <button
-                    type="button"
                     onClick={() => setShowAddForm(true)}
                     className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
                   >
@@ -479,14 +455,12 @@ const EducationEditor: React.FC<EducationEditorProps> = ({ onSuccess, onError })
                               </div>
                               <div className="flex gap-2">
                                 <button
-                                  type="button"
                                   onClick={() => startEditing(index)}
                                   className="p-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
                                 >
                                   <Edit2 className="h-4 w-4" />
                                 </button>
                                 <button
-                                  type="button"
                                   onClick={() => deleteEducation(index)}
                                   className="p-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
                                 >
@@ -501,14 +475,13 @@ const EducationEditor: React.FC<EducationEditorProps> = ({ onSuccess, onError })
                   </div>
                 )}
               </div>
-            </form>
+            </>
           )}
         </div>
 
         {/* Footer */}
         <div className="p-6 border-t border-gray-600 flex justify-end gap-3">
           <button
-            type="button"
             onClick={handleClose}
             disabled={saving}
             className="px-4 py-2 border border-gray-500 text-gray-200 rounded-lg hover:bg-gray-700 disabled:opacity-50 transition-colors"
@@ -516,7 +489,6 @@ const EducationEditor: React.FC<EducationEditorProps> = ({ onSuccess, onError })
             Cancel
           </button>
           <button
-            type="button"
             onClick={saveEducation}
             disabled={saving || loading}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2 transition-colors"

@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { getFirestore, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, updateDoc, deleteField } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import WorkExperienceEditor from '../components/WorkExperienceEditor';
 import EducationEditor from '../components/EducationEditor';
 import { isValidEmail, isValidPhoneNumber } from '@/utils/validators';
 import { formatPhoneNumber } from '@/utils/formatters';
+
 
 interface Job {
   company: string;
@@ -21,6 +22,7 @@ export interface EducationItem {
   endDate: string;
   gpa: string;
 }
+
 
 // Map Firestore structure → editor structure
 const normalizeWorkExperience = (data: any[]): Job[] =>
@@ -60,6 +62,8 @@ const normalizeEducation = (data: any[]): EducationItem[] =>
       gpa: edu.gpa || '',
     }));
 
+
+
 const denormalizeEducation = (data: EducationItem[]): any[] =>
   data.map((edu) => ({
     institution: edu.institution,
@@ -68,6 +72,8 @@ const denormalizeEducation = (data: EducationItem[]): any[] =>
     endDate: edu.endDate,
     gpa: edu.gpa || '',
   }));
+
+
 
 interface Props {
   keyPath: string;
@@ -80,11 +86,12 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
   const [editMode, setEditMode] = useState(false);
   const [editValue, setEditValue] = useState<any>(null);
   const [adding, setAdding] = useState(false);
-  const [newItem, setNewItem] = useState<string>('');
+  const [newItem, setNewItem] = useState<string>(''); // input for new item
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [saving, setSaving] = useState(false);
   const [newLabel, setNewLabel] = useState('');
   const [inputError, setInputError] = useState<string | null>(null);
+
 
   const auth = getAuth();
   const firestore = getFirestore();
@@ -92,9 +99,11 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
   const getNestedValue = (obj: any, path: string): any =>
     path.split('.').reduce((acc, key) => (acc ? acc[key] : undefined), obj);
 
+  // Helper function to set nested value
   const setNestedValue = (obj: any, path: string, value: any): any => {
     const keys = path.split('.');
-    const result = JSON.parse(JSON.stringify(obj));
+    const result = JSON.parse(JSON.stringify(obj)); // Deep clone
+
     let current = result;
     for (let i = 0; i < keys.length - 1; i++) {
       const key = keys[i];
@@ -103,15 +112,18 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
       }
       current = current[key];
     }
+
     const lastKey = keys[keys.length - 1];
     if (value === null || value === undefined) {
       delete current[lastKey];
     } else {
       current[lastKey] = value;
     }
+
     return result;
   };
 
+  // Fetch data on mount
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -132,6 +144,8 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
         }
 
         const data = docSnap.data();
+
+        // Parse JSON string
         const jsonString: string = data.groqResponse;
         let jsonObject;
         try {
@@ -159,6 +173,7 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
     fetchData();
   }, [keyPath, auth, firestore]);
 
+  // Save updated data
   const saveData = async () => {
     try {
       if (keyPath === 'contact.email') {
@@ -183,11 +198,14 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
       if (!uid || editValue === null) return;
 
       const docRef = doc(firestore, `/users/${uid}/userDocuments/categoryData`);
+
+      // First, get the current document to access the full JSON
       const docSnap = await getDoc(docRef);
       if (!docSnap.exists()) {
         setError('Document does not exist');
         return;
       }
+
       const data = docSnap.data();
       const jsonString: string = data.groqResponse;
       let jsonObject;
@@ -199,9 +217,16 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
         return;
       }
 
+      // Update the nested value in the JSON object
       const updatedJsonObject = setNestedValue(jsonObject, keyPath, editValue);
+
+      // Convert back to string and update the document
       const updatedJsonString = JSON.stringify(updatedJsonObject);
-      await updateDoc(docRef, { groqResponse: updatedJsonString });
+
+      await updateDoc(docRef, {
+        groqResponse: updatedJsonString,
+      });
+
       setValue(editValue);
       setEditMode(false);
       setHasUnsavedChanges(false);
@@ -213,28 +238,42 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
     }
   };
 
+  // Delete section
   const deleteSection = async () => {
     try {
       const uid = auth.currentUser?.uid;
       if (!uid) return;
+
       const docRef = doc(firestore, `/users/${uid}/userDocuments/categoryData`);
+
+      // Get current document
       const docSnap = await getDoc(docRef);
       if (!docSnap.exists()) {
         setError('Document does not exist');
         return;
       }
+
       const data = docSnap.data();
       const jsonString: string = data.groqResponse;
       let jsonObject;
+
       try {
         jsonObject = JSON.parse(jsonString);
       } catch (err) {
         setError('Invalid JSON string in document');
         return;
       }
+
+      // Remove the nested value from the JSON object
       const updatedJsonObject = setNestedValue(jsonObject, keyPath, undefined);
+
+      // Convert back to string and update the document
       const updatedJsonString = JSON.stringify(updatedJsonObject);
-      await updateDoc(docRef, { groqResponse: updatedJsonString });
+
+      await updateDoc(docRef, {
+        groqResponse: updatedJsonString,
+      });
+
       setValue(null);
     } catch (err) {
       console.error('Delete failed', err);
@@ -242,26 +281,31 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
     }
   };
 
+  // Start editing
   const startEditing = () => {
     setEditMode(true);
     setEditValue(value);
     setHasUnsavedChanges(false);
   };
 
+  // Handle edit value changes
   const handleEditValueChange = (newValue: any) => {
     setEditValue(newValue);
     setHasUnsavedChanges(JSON.stringify(newValue) !== JSON.stringify(value));
   };
 
+  // Cancel editing
   const cancelEditing = () => {
     setEditMode(false);
     setEditValue(null);
     setHasUnsavedChanges(false);
   };
 
+  // Add new item
   const addItem = async () => {
     if (!newItem.trim()) return;
 
+    // Validation for contact.email or contact.phone
     if (keyPath === 'contact.email' && !isValidEmail(newItem.trim())) {
       setInputError('Please enter a valid email address');
       return;
@@ -271,7 +315,7 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
       return;
     }
 
-    setInputError(null);
+    setInputError(null); // after successful validation
 
     try {
       const uid = auth.currentUser?.uid;
@@ -288,10 +332,14 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
       } else if (typeof value === 'string') {
         const key = prompt('Enter a label (e.g. work, personal, backup):');
         if (!key || key.trim() === '') return;
-        updatedValue = { primary: value, [key.trim()]: newItem };
+        updatedValue = {
+          primary: value,
+          [key.trim()]: newItem
+        };
       } else {
         updatedValue = [newItem];
       }
+
 
       const docRef = doc(firestore, `/users/${uid}/userDocuments/categoryData`);
       const docSnap = await getDoc(docRef);
@@ -347,6 +395,9 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
     }
   };
 
+
+
+  // Helper to render nested data
   const renderNested = (val: any) => {
     if (keyPath === 'contact.email' || keyPath === 'contact.phone') {
       if (typeof val === 'string') {
@@ -491,13 +542,13 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
 
       {editMode ? (
         <div style={{ width: '100%' }}>
-          {/* For 'workExperience' and 'education', editing features are removed */}
           {keyPath === 'workExperience' ? (
             <WorkExperienceEditor
               workExperience={Array.isArray(editValue) ? normalizeWorkExperience(editValue) : []}
               onChange={(updated) => handleEditValueChange(denormalizeWorkExperience(updated))}
             />
           ) : keyPath === 'education' ? (
+
             <EducationEditor
               education={
                 Array.isArray(editValue)
@@ -509,33 +560,109 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
                 handleEditValueChange(Array.isArray(editValue) ? denorm : denorm[0]);
               }}
             />
+          ) : keyPath === 'contact.email' || keyPath === 'contact.phone' ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
+              {(() => {
+                if (
+                  typeof editValue !== 'object' ||
+                  editValue === null ||
+                  Array.isArray(editValue)
+                ) {
+                  return <p>Invalid format: expected an object with string values.</p>;
+                }
+
+                const entries = Object.entries(editValue).filter(
+                  ([_, val]) => typeof val === 'string'
+                ) as [string, string][];
+
+                return entries.map(([label, val], idx) => (
+                  <div key={label} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <input
+                      type="text"
+                      value={label}
+                      readOnly
+                      style={{ flex: 1, padding: '0.5rem', border: '1px solid #ccc', borderRadius: '4px', background: '#f5f5f5' }}
+                    />
+                    <input
+                      type="text"
+                      value={val}
+                      onChange={(e) => {
+                        const updated = { ...editValue, [label]: e.target.value };
+                        handleEditValueChange(updated);
+                      }}
+                      style={{ flex: 3, padding: '0.5rem', border: '1px solid #ccc', borderRadius: '4px' }}
+                    />
+                    <button
+                      onClick={() => {
+                        const updated = { ...editValue };
+                        delete updated[label];
+                        handleEditValueChange(updated);
+                      }}
+                      style={{ background: '#dc3545', color: '#fff', border: 'none', borderRadius: '4px', padding: '0.25rem 0.5rem' }}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                ));
+              })()}
+
+              {/* Add new label/value */}
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <input
+                  type="text"
+                  placeholder="Label (e.g. personal)"
+                  value={newLabel}
+                  onChange={(e) => setNewLabel(e.target.value)}
+                  style={{ flex: 1, padding: '0.5rem', border: '1px solid #ccc', borderRadius: '4px' }}
+                />
+                <input
+                  type="text"
+                  placeholder="Value (e.g. someone@email.com)"
+                  value={newItem}
+                  onChange={(e) => setNewItem(e.target.value)}
+                  style={{ flex: 3, padding: '0.5rem', border: '1px solid #ccc', borderRadius: '4px' }}
+                />
+                <button
+                  onClick={() => {
+                    if (!newLabel.trim() || !newItem.trim()) return;
+                    const updated = { ...editValue, [newLabel.trim()]: newItem.trim() };
+                    handleEditValueChange(updated);
+                    setNewLabel('');
+                    setNewItem('');
+                  }}
+                  style={{ background: '#28a745', color: '#fff', border: 'none', borderRadius: '4px', padding: '0.5rem' }}
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+
+
+
+          ) : typeof editValue === 'string' ? (
+            <textarea
+              rows={4}
+              style={{ width: '100%', marginBottom: '0.5rem', boxSizing: 'border-box', resize: 'vertical', fontFamily: 'monospace' }}
+              value={editValue}
+              onChange={(e) => handleEditValueChange(e.target.value)}
+            />
           ) : (
-            // For other keys, show textarea for JSON or string
-            typeof editValue === 'string' ? (
-              <textarea
-                rows={4}
-                style={{ width: '100%', marginBottom: '0.5rem', boxSizing: 'border-box', resize: 'vertical', fontFamily: 'monospace' }}
-                value={editValue}
-                onChange={(e) => handleEditValueChange(e.target.value)}
-              />
-            ) : (
-              <textarea
-                rows={10}
-                style={{ width: '100%', marginBottom: '0.5rem', boxSizing: 'border-box', resize: 'vertical', fontFamily: 'monospace', fontSize: '0.875rem' }}
-                value={JSON.stringify(editValue, null, 2)}
-                onChange={(e) => {
-                  try {
-                    const parsed = JSON.parse(e.target.value);
-                    handleEditValueChange(parsed);
-                  } catch {
-                    // ignore parse errors
-                  }
-                }}
-              />
-            )
+            <textarea
+              rows={10}
+              style={{ width: '100%', marginBottom: '0.5rem', boxSizing: 'border-box', resize: 'vertical', fontFamily: 'monospace', fontSize: '0.875rem' }}
+              value={JSON.stringify(editValue, null, 2)}
+              onChange={(e) => {
+                try {
+                  const parsed = JSON.parse(e.target.value);
+                  handleEditValueChange(parsed);
+                } catch {
+                  // ignore parse errors
+                }
+              }}
+            />
           )}
 
-          {/* Save / Cancel buttons */}
+          {/* Your Save / Cancel buttons go here */}
           <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
             <button
               onClick={saveData}
@@ -595,84 +722,96 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
                 ))}
               </div>
             ) : keyPath === 'education' ? (
-              // For 'education', editing features are disabled, so just display data
-              Array.isArray(value) && value.length > 0 ? (
-                value.map((edu, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      marginBottom: '1rem',
-                      padding: '0.75rem',
-                      border: '1px solid #ccc',
-                      borderRadius: '4px',
-                    }}
-                  >
-                    <div><strong>{edu.institution}</strong></div>
-                    <div>{edu.degree}</div>
-                    <div>{edu.startDate} — {edu.endDate}</div>
-                    {edu.gpa && <div>GPA: {edu.gpa}</div>}
-                  </div>
-                ))
+              editMode ? (
+                <EducationEditor
+                  education={
+                    Array.isArray(editValue)
+                      ? normalizeEducation(editValue)
+                      : [normalizeEducation([editValue])[0]]
+                  }
+                  onChange={(updated) => {
+                    const denorm = denormalizeEducation(updated);
+                    handleEditValueChange(Array.isArray(editValue) ? denorm : denorm[0]);
+                  }}
+                />
               ) : (
-                <p>No education data available.</p>
+                Array.isArray(value) && value.length > 0 ? (
+                  value.map((edu, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        marginBottom: '1rem',
+                        padding: '0.75rem',
+                        border: '1px solid #ccc',
+                        borderRadius: '4px',
+                      }}
+                    >
+                      <div><strong>{edu.institution}</strong></div>
+                      <div>{edu.degree}</div>
+                      <div>{edu.startDate} — {edu.endDate}</div>
+                      {edu.gpa && <div>GPA: {edu.gpa}</div>}
+                    </div>
+                  ))
+                ) : (
+                  <p>No education data available.</p>
+                )
               )
             ) : keyPath === 'contact.email' || keyPath === 'contact.phone' ? (
               value ? renderNested(value) : <p>No data available.</p>
             ) : (
               value ? renderNested(value) : <p>No data available.</p>
             )}
+
           </div>
 
-        {/* Buttons for edit, delete, add item */}
-{!(keyPath === 'education' || keyPath === 'skills') && (
-  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
-    <button
-      onClick={startEditing}
-      style={{
-        padding: '0.5rem 1rem',
-        backgroundColor: '#007bff',
-        color: 'white',
-        border: 'none',
-        borderRadius: '4px',
-        cursor: 'pointer'
-      }}
-    >
-      Edit
-    </button>
-    <button
-      onClick={deleteSection}
-      style={{
-        padding: '0.5rem 1rem',
-        backgroundColor: '#dc3545',
-        color: 'white',
-        border: 'none',
-        borderRadius: '4px',
-        cursor: 'pointer'
-      }}
-    >
-      Delete
-    </button>
-    <button
-      onClick={() => setAdding(true)}
-      style={{
-        padding: '0.5rem 1rem',
-        backgroundColor: '#28a745',
-        color: 'white',
-        border: 'none',
-        borderRadius: '4px',
-        cursor: 'pointer'
-      }}
-    >
-      Add Item
-    </button>
-  </div>
-)}
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+            <button
+              onClick={startEditing}
+              style={{
+                padding: '0.5rem 1rem',
+                backgroundColor: '#007bff',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              Edit
+            </button>
+            <button
+              onClick={deleteSection}
+              style={{
+                padding: '0.5rem 1rem',
+                backgroundColor: '#dc3545',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              Delete
+            </button>
+            <button
+              onClick={() => setAdding(true)}
+              style={{
+                padding: '0.5rem 1rem',
+                backgroundColor: '#28a745',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              Add Item
+            </button>
+          </div>
 
           {/* Add New Item */}
           {adding && (
             <div style={{
               marginTop: '1rem',
               padding: '1rem',
+              // backgroundColor: '#f8f9fa',
               border: '1px solid #dee2e6',
               borderRadius: '4px'
             }}>
