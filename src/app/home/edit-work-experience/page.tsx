@@ -6,6 +6,10 @@ import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 
+// type ResponsibilityList = {
+//     responsibilities: string[];
+// };
+
 type JobEntry = {
     jobTitle: string;
     company: string;
@@ -115,6 +119,7 @@ function WorkExpForm({ jobList, setJobList, user }: WorkExpFormProps) {
                             }}
                             size={40}
                         ></input><br></br>
+                        <ResponsibilitiesForm resList={jobEntry.responsibilities} jobIdx={jobIdx} />
                         <button onClick={(event) => removeJob(event, jobIdx)}>Remove Job</button>
                     </div>
                 ))}
@@ -122,6 +127,56 @@ function WorkExpForm({ jobList, setJobList, user }: WorkExpFormProps) {
                 <button type="submit">Save</button>
             </form>
         </div>
+    );
+}
+
+type ResponsibilitiesFormProps = {
+    resList: string[],
+    jobIdx: number
+};
+
+function ResponsibilitiesForm({resList, jobIdx}: ResponsibilitiesFormProps) {
+    const [ list, setList ] = useState(resList);
+
+    function handleChange(index: number, value: string) {
+        setList((oldRes) => 
+            oldRes.map((res, i) => (i === index ? value : res))
+        );
+    }
+
+    function addRes(event: React.MouseEvent<HTMLButtonElement>) {
+        // Prevent browser from reloading page
+        event.preventDefault();
+        // Add a new, empty string to the array
+        setList((oldRes) => [...oldRes, ""]);
+    }
+
+    function removeRes(event: React.MouseEvent<HTMLButtonElement>, index: number) {
+        // Prevent browser from reloading page
+        event.preventDefault();
+        // Remove the responsibility string from the array
+        setList((oldRes) => oldRes.filter((currRes, i) => i !== index));
+    }
+    return (
+        <>
+            <h3>Responsibilities:</h3>
+            {list.map((resEntry, resIdx) => (
+                <>
+                    <input
+                        type="text"
+                        id={`responsibilities_${resIdx}_job_${jobIdx}`}
+                        name={`responsibilities_${resIdx}_job_${jobIdx}`}
+                        placeholder="Enter a responsibility here"
+                        value={resEntry}
+                        onChange={(event) => handleChange(resIdx, event.target.value)}
+                        size={40}
+                    ></input>
+                    <button onClick={(event) => removeRes(event, resIdx)}>Remove</button><br></br>
+                </>
+            ))}
+            <button onClick={addRes}>Add New Responsibility</button>
+            <br></br>
+        </>
     );
 }
 
