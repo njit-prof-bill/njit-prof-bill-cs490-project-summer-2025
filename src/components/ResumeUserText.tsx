@@ -114,7 +114,7 @@ const ResumeUserText: React.FC = () => {
           ? jsonObject.contact.phone 
           : jsonObject?.contact?.phone?.primary || 'N/A'
       }</h3>
-      
+
       <h3>Location: {jsonObject?.contact?.location || 'N/A'}</h3>
       <h2>Summary: {jsonObject?.summary || 'N/A'}</h2>
       <h2>Work Experience: {jsonObject?.workExperience?.[0]?.jobTitle || 'N/A'}</h2>
