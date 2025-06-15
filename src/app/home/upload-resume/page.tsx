@@ -1,10 +1,29 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { FileUpload } from "primereact/fileupload";
 import { Button } from "primereact/button";
+import { getAIResponse, saveAIResponse, AIPrompt } from "@/components/ai/aiPrompt";
+import { db } from "@/lib/firebase";
+import { useAuth } from "@/context/authContext";
+import { useRouter } from "next/navigation";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 
 export default function UploadResumePage() {
+  // For checking whether the user is logged in and redirecting them accordingly
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+        router.push("/"); // Redirect to landing page if not authenticated
+    }
+}, [user, loading, router]);
+
+if (loading) {
+    return <p>Loading...</p>; // Show a loading state while checking auth
+}
+
   const fileUploadRef = useRef(null);
 
   const [uploadMessage, setUploadMessage] = useState<string | null>(null);
@@ -32,6 +51,20 @@ export default function UploadResumePage() {
         setUploadSuccess(true);
         setUploadMessage("✅ File uploaded and text extracted successfully!");
         setExtractedText(result.rawText);
+        try {
+          const AIResponse = await getAIResponse(AIPrompt, result.rawText as string);
+
+          try {
+              const responseObj = JSON.parse(AIResponse);
+              // For debugging purposes
+              console.log(JSON.parse(AIResponse));
+              saveAIResponse(responseObj, user, db);
+          } catch (error) {
+              console.error("Error parsing AI response: ", error);
+          }
+        } catch (error) {
+          console.error("Error fetching AI response: ", error);
+        }
       } else {
         setUploadSuccess(false);
         setUploadMessage(`❌ Upload failed: ${result.error || "Something went wrong"}`);

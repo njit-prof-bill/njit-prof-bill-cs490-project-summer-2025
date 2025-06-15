@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
 import { collection, doc, setDoc, addDoc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
+import { getAIResponse, saveAIResponse, AIPrompt } from "@/components/ai/aiPrompt";
 
 export default function FreeFormPage() {
     // For checking whether the user is logged in and redirecting them accordingly
@@ -75,7 +76,7 @@ export default function FreeFormPage() {
         return corpus;
     }
 
-    function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
         // Prevent the browser from reloading the page
         event.preventDefault();
 
@@ -89,6 +90,28 @@ export default function FreeFormPage() {
 
         // For debugging purposes
         //console.log(formJson);
+
+        // Send AI prompt with text corpus and retrieve its response
+        try {
+            const AIResponse = await getAIResponse(AIPrompt, formJson.text as string);
+            // For debugging purposes
+            //console.log(AIResponse);
+
+            // For debugging purposes
+            // console.log(finalResponse);
+
+            try {
+                const responseObj = JSON.parse(AIResponse);
+                // For debugging purposes
+                console.log(JSON.parse(AIResponse));
+                saveAIResponse(responseObj, user, db);
+            } catch (error) {
+                console.error("Error parsing AI response: ", error);
+            }
+        } catch (error) {
+            console.error("Error fetching AI response: ", error);
+        }
+        
     }
     return (
         <div className="flex items-center justify-center min-h-screen text-gray-900 dark:text-gray-100">
