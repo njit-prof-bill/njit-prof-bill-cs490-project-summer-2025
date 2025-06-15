@@ -86,6 +86,7 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
   const [newItem, setNewItem] = useState<string>(''); // input for new item
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [newLabel, setNewLabel] = useState('');
 
   const auth = getAuth();
   const firestore = getFirestore();
@@ -281,55 +282,41 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
   // Add new item
   const addItem = async () => {
     if (!newItem.trim()) return;
+  
     try {
       const uid = auth.currentUser?.uid;
-      if (!uid || value === null) return;
-
-      const updatedValue = (() => {
-        if (Array.isArray(value)) {
-          return [...value, newItem];
-        } else if (typeof value === 'object' && value !== null) {
-          // For objects, add a new key-value pair
-          const key = prompt('Enter new key name');
-          if (!key || key.trim() === '') return value;
-          return { ...value, [key.trim()]: newItem };
-        } else if (typeof value === 'string') {
-          // Append to string
-          return value + ' ' + newItem;
-        }
-        return value;
-      })();
-
+      if (!uid) return;
+  
+      let updatedValue;
+  
+      if (Array.isArray(value)) {
+        updatedValue = [...value, newItem];
+      } else if (typeof value === 'object' && value !== null) {
+        const key = prompt('Enter a label (e.g. work, personal, backup):');
+        if (!key || key.trim() === '') return;
+        updatedValue = { ...value, [key.trim()]: newItem };
+      } else if (typeof value === 'string') {
+        const key = prompt('Enter a label (e.g. work, personal, backup):');
+        if (!key || key.trim() === '') return;
+        updatedValue = {
+          primary: value,
+          [key.trim()]: newItem
+        };
+      } else {
+        updatedValue = [newItem];
+      }
+  
       const docRef = doc(firestore, `/users/${uid}/userDocuments/categoryData`);
-      
-      // Get current document
       const docSnap = await getDoc(docRef);
-      if (!docSnap.exists()) {
-        setError('Document does not exist');
-        return;
-      }
-
+      if (!docSnap.exists()) throw new Error('Document not found');
+  
       const data = docSnap.data();
-      const jsonString: string = data.groqResponse;
-      let jsonObject;
-      
-      try {
-        jsonObject = JSON.parse(jsonString);
-      } catch (err) {
-        setError('Invalid JSON string in document');
-        return;
-      }
-
-      // Update the nested value in the JSON object
+      const jsonObject = JSON.parse(data.groqResponse);
       const updatedJsonObject = setNestedValue(jsonObject, keyPath, updatedValue);
-      
-      // Convert back to string and update the document
       const updatedJsonString = JSON.stringify(updatedJsonObject);
-      
-      await updateDoc(docRef, {
-        groqResponse: updatedJsonString,
-      });
-      
+  
+      await updateDoc(docRef, { groqResponse: updatedJsonString });
+  
       setValue(updatedValue);
       setAdding(false);
       setNewItem('');
@@ -339,8 +326,80 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
     }
   };
 
+  const removeItem = async (keyOrIndex: string | number) => {
+    try {
+      const uid = auth.currentUser?.uid;
+      if (!uid) return;
+  
+      let updatedValue;
+  
+      if (Array.isArray(value)) {
+        updatedValue = value.filter((_, i) => i !== keyOrIndex);
+      } else if (typeof value === 'object' && value !== null) {
+        updatedValue = { ...value };
+        delete updatedValue[keyOrIndex];
+      } else {
+        return;
+      }
+  
+      const docRef = doc(firestore, `/users/${uid}/userDocuments/categoryData`);
+      const docSnap = await getDoc(docRef);
+      if (!docSnap.exists()) throw new Error('Document not found');
+  
+      const data = docSnap.data();
+      const jsonObject = JSON.parse(data.groqResponse);
+      const updatedJsonObject = setNestedValue(jsonObject, keyPath, updatedValue);
+      const updatedJsonString = JSON.stringify(updatedJsonObject);
+  
+      await updateDoc(docRef, { groqResponse: updatedJsonString });
+  
+      setValue(updatedValue);
+    } catch (err) {
+      console.error('Remove item failed', err);
+      setError('Failed to remove item');
+    }
+  };
+  
+  
+
   // Helper to render nested data
   const renderNested = (val: any) => {
+    if (keyPath === 'contact.email' || keyPath === 'contact.phone') {
+      if (typeof val === 'string') {
+        return (
+          <div>
+            <div>• Primary: {val}</div>
+          </div>
+        );
+      }
+    
+      if (typeof val === 'object' && val !== null) {
+        return (
+          <div>
+            {Object.entries(val).map(([label, addrOrPhone]) => (
+              <div key={label} style={{ display: 'flex', alignItems: 'center', marginBottom: '0.25rem' }}>
+                <span style={{ flex: 1 }}>• {label[0].toUpperCase() + label.slice(1)}: {addrOrPhone}</span>
+                <button
+                  onClick={() => removeItem(label)}
+                  style={{
+                    marginLeft: '0.5rem',
+                    backgroundColor: '#dc3545',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    padding: '0.25rem 0.5rem',
+                    fontSize: '0.75rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+          </div>
+        );
+      }
+    }
     if (Array.isArray(val)) {
       return (
         <div style={{ 
@@ -460,6 +519,85 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
             handleEditValueChange(Array.isArray(editValue) ? denorm : denorm[0]);
           }}
         />
+      ) : keyPath === 'contact.email' || keyPath === 'contact.phone' ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
+        {(() => {
+          if (
+            typeof editValue !== 'object' ||
+            editValue === null ||
+            Array.isArray(editValue)
+          ) {
+            return <p>Invalid format: expected an object with string values.</p>;
+          }
+      
+          const entries = Object.entries(editValue).filter(
+            ([_, val]) => typeof val === 'string'
+          ) as [string, string][];
+      
+          return entries.map(([label, val], idx) => (
+            <div key={label} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              <input
+                type="text"
+                value={label}
+                readOnly
+                style={{ flex: 1, padding: '0.5rem', border: '1px solid #ccc', borderRadius: '4px', background: '#f5f5f5' }}
+              />
+              <input
+                type="text"
+                value={val}
+                onChange={(e) => {
+                  const updated = { ...editValue, [label]: e.target.value };
+                  handleEditValueChange(updated);
+                }}
+                style={{ flex: 3, padding: '0.5rem', border: '1px solid #ccc', borderRadius: '4px' }}
+              />
+              <button
+                onClick={() => {
+                  const updated = { ...editValue };
+                  delete updated[label];
+                  handleEditValueChange(updated);
+                }}
+                style={{ background: '#dc3545', color: '#fff', border: 'none', borderRadius: '4px', padding: '0.25rem 0.5rem' }}
+              >
+                Delete
+              </button>
+            </div>
+          ));
+        })()}
+      
+        {/* Add new label/value */}
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <input
+            type="text"
+            placeholder="Label (e.g. personal)"
+            value={newLabel}
+            onChange={(e) => setNewLabel(e.target.value)}
+            style={{ flex: 1, padding: '0.5rem', border: '1px solid #ccc', borderRadius: '4px' }}
+          />
+          <input
+            type="text"
+            placeholder="Value (e.g. someone@email.com)"
+            value={newItem}
+            onChange={(e) => setNewItem(e.target.value)}
+            style={{ flex: 3, padding: '0.5rem', border: '1px solid #ccc', borderRadius: '4px' }}
+          />
+          <button
+            onClick={() => {
+              if (!newLabel.trim() || !newItem.trim()) return;
+              const updated = { ...editValue, [newLabel.trim()]: newItem.trim() };
+              handleEditValueChange(updated);
+              setNewLabel('');
+              setNewItem('');
+            }}
+            style={{ background: '#28a745', color: '#fff', border: 'none', borderRadius: '4px', padding: '0.5rem' }}
+          >
+            Add
+          </button>
+        </div>
+      </div>
+      
+
+
       ) : typeof editValue === 'string' ? (
       <textarea
         rows={4}
@@ -467,7 +605,7 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
         value={editValue}
         onChange={(e) => handleEditValueChange(e.target.value)}
       />
-    ) : (
+    )  : (
       <textarea
         rows={10}
         style={{ width: '100%', marginBottom: '0.5rem', boxSizing: 'border-box', resize: 'vertical', fontFamily: 'monospace', fontSize: '0.875rem' }}
@@ -577,6 +715,8 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
       <p>No education data available.</p>
     )
   )
+  ) : keyPath === 'contact.email' || keyPath === 'contact.phone' ? (
+  value ? renderNested(value) : <p>No data available.</p>
 ) : (
   value ? renderNested(value) : <p>No data available.</p>
 )}

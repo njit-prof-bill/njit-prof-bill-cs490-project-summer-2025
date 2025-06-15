@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import { getAuth } from "firebase/auth";
 import { useRef } from "react";
 import Spinner, { spinnerStyles } from '@/components/ui/Spinner';
+import { processDocumentHandler } from '@/lib/processDocument';
 
 import {
   Card,
@@ -33,6 +34,8 @@ export default function HomePage() {
       router.push("/");
     }
   }, [user, loading, router]);
+
+  
 
   const handleUploadAfterPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -69,6 +72,16 @@ export default function HomePage() {
         type: res.ok ? "success" : "error",
         message: data.message || (res.ok ? "Success" : "Upload failed."),
       });
+
+      if (res.ok) {
+        await processDocumentHandler({
+          user: currentUser,
+          onStatus: (msg: string) => console.log('[Processing Status]', msg),
+          // optional: you can pass additionalPrompt if you ever want to
+          // additionalPrompt: 'Please prioritize technical roles.'
+        });
+        window.location.reload()
+      }
     } catch (err) {
       console.error("Upload error:", err);
       setSubmissionStatus({ type: "error", message: "Unexpected error." });

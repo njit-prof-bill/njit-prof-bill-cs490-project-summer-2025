@@ -103,8 +103,8 @@ const ResumeUserText: React.FC = () => {
 
       <h2>Name: {jsonObject?.fullName || 'N/A'}</h2>
       <h2>Contact:</h2>
-      <h3>Email: {jsonObject?.contact?.email || 'N/A'}</h3>
-      <h3>Phone: {jsonObject?.contact?.phone || 'N/A'}</h3>
+      <h3>Email: {jsonObject?.contact?.email?.primary || 'N/A'}</h3>
+      <h3>Phone: {jsonObject?.contact?.phone?.primary || 'N/A'}</h3>
       <h3>Location: {jsonObject?.contact?.location || 'N/A'}</h3>
       <h2>Summary: {jsonObject?.summary || 'N/A'}</h2>
       <h2>Work Experience: {jsonObject?.workExperience?.[0]?.jobTitle || 'N/A'}</h2>
