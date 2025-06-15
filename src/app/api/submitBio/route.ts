@@ -14,7 +14,7 @@ export async function POST(req: Request) {
       .collection("users")
       .doc(uid)
       .collection("userDocuments")
-      .doc("documentText")
+      .doc("documentTextFreeformText")
       .set({ biography: text });
 
     return NextResponse.json({ message: "Biography saved successfully!" });
