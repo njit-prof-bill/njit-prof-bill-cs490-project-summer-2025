@@ -6,10 +6,6 @@ import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 
-// type ResponsibilityList = {
-//     responsibilities: string[];
-// };
-
 type JobEntry = {
     jobTitle: string;
     company: string;
@@ -53,6 +49,13 @@ function WorkExpForm({ jobList, setJobList, user }: WorkExpFormProps) {
         event.preventDefault();
         // Remove the job entry from the array
         setJobList((oldJobs) => oldJobs.filter((currJob, i) => i !== index));
+    }
+    async function submitJobList(newJobList: JobEntry[]) {
+        // User profiles are identified in the database by the user's UID
+        if (user) {
+            const newJobListRef = doc(db, "users", user.uid);
+            await updateDoc(newJobListRef, { "resumeFields.workExperience": newJobList });
+        }
     }
     return (
         <div>
