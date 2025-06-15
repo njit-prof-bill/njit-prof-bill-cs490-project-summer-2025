@@ -30,6 +30,30 @@ function WorkExpForm({ jobList, setJobList, user }: WorkExpFormProps) {
         const formObj = Object.fromEntries(formData.entries());
         // For debugging purposes
         console.log(formObj);
+
+        const numEntries = jobList.length;
+        const newJobList : JobEntry[] = [];
+        for (let i = 0; i < numEntries; i++) {
+            const newJob: JobEntry = {
+                jobTitle: formObj[`jobTitle_${i}`] as string,
+                company: formObj[`company_${i}`] as string,
+                startDate: formObj[`startDate_${i}`] as string,
+                endDate: formObj[`endDate_${i}`] as string,
+                responsibilities: []
+            };
+            // Retrieve key names corresponding to the responsibilities of the i-th job
+            const jobRes = Object.keys(formObj).filter((fieldName) => fieldName.includes(`_job_${i}`))
+            //console.log(jobRes);
+            for (let j = 0; j < jobRes.length; j++) {
+                //console.log(`responsibilities_${j}_job_${i}`);
+                // Insert each of the i-th job's individual responsibilities
+                newJob.responsibilities.push(formObj[`responsibilities_${j}_job_${i}`] as string);
+            }
+            newJobList.push(newJob);
+        }
+        //console.log(newJobList);
+        // Save the new job list to the user's profile
+        submitJobList(newJobList);
     }
     function addNewJob(event: React.MouseEvent<HTMLButtonElement>) {
         // Prevent browser from reloading page
