@@ -31,6 +31,25 @@ function WorkExpForm({ jobList, setJobList, user }: WorkExpFormProps) {
         // For debugging purposes
         console.log(formObj);
     }
+    function addNewJob(event: React.MouseEvent<HTMLButtonElement>) {
+        // Prevent browser from reloading page
+        event.preventDefault();
+        // Add a new, empty job entry to the array
+        let newJobEntry: JobEntry = {
+            jobTitle: "",
+            company: "",
+            startDate: "",
+            endDate: "",
+            responsibilities: []
+        };
+        setJobList((oldJobs) => [...oldJobs, newJobEntry]);
+    }
+    function removeJob(event: React.MouseEvent<HTMLButtonElement>, index: number) {
+        // Prevent browser from reloading page
+        event.preventDefault();
+        // Remove the job entry from the array
+        setJobList((oldJobs) => oldJobs.filter((currJob, i) => i !== index));
+    }
     return (
         <div>
             <form method="post" onSubmit={handleSubmit}>
@@ -96,8 +115,10 @@ function WorkExpForm({ jobList, setJobList, user }: WorkExpFormProps) {
                             }}
                             size={40}
                         ></input><br></br>
+                        <button onClick={(event) => removeJob(event, jobIdx)}>Remove Job</button>
                     </div>
                 ))}
+                <button onClick={addNewJob}>Add New Job</button><br></br>
                 <button type="submit">Save</button>
             </form>
         </div>
