@@ -1,4 +1,3 @@
-
 import { NextRequest, NextResponse } from "next/server";
 import * as mammoth from "mammoth";
 import { getFirestore } from "firebase-admin/firestore";
@@ -14,13 +13,39 @@ import pdfParse from "pdf-parse/lib/pdf-parse.js";
 
 // import pdfParse from 'pdf-parse';
 
-
 const allowedTypes = [
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
   'application/pdf', // .pdf
   'text/plain', // .txt
+  'text/markdown', // .md
   'text/x-markdown', // .md
 ];
+
+// Function to determine the document path based on file type
+function getDocumentPath(fileType: string, fileName: string): string {
+  const isMarkdown = fileType === 'text/markdown' || 
+                    fileType === 'text/x-markdown' || 
+                    fileName.toLowerCase().endsWith('.md');
+
+  switch (fileType) {
+    case 'application/pdf':
+      return 'documentTextPdf';
+    case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+      return 'documentTextDocx';
+    case 'text/plain':
+      // Check if it's actually a markdown file based on extension
+      if (isMarkdown) {
+        return 'documentTextFreeformText';
+      }
+      return 'documentTextTxt';
+    case 'text/markdown':
+    case 'text/x-markdown':
+      return 'documentTextFreeformText';
+    default:
+      // Fallback for any unrecognized types
+      return 'documentTextFreeformText';
+  }
+}
 
 // Initialize Firebase Admin SDK
 if (!getApps().length) {
@@ -47,19 +72,28 @@ export async function POST(req: NextRequest) {
     // Get uploaded file
     const formData = await req.formData();
     const file = formData.get("file") as File;
-    const isMarkdown = file.type === 'text/markdown' || file.type === 'text/x-markdown';
-    // console.log("Received file:", file.name, file.type);
+    const isMarkdown = file.type === 'text/markdown' || 
+                      file.type === 'text/x-markdown' || 
+                      file.name.toLowerCase().endsWith('.md');
 
     if (!file) {
       return NextResponse.json({ status: "error", message: "No file uploaded" }, { status: 400 });
     }
 
-    if (!allowedTypes.includes(file.type)) {
-      return NextResponse.json({ status: "error", message: "Unsupported file type" }, { status: 400 });
+    // Enhanced file type validation
+    const isValidType = allowedTypes.includes(file.type) || 
+                       (file.type === 'text/plain' && isMarkdown);
+
+    if (!isValidType) {
+      return NextResponse.json({ 
+        status: "error", 
+        message: `Unsupported file type: ${file.type}. Supported types: PDF, DOCX, TXT, MD` 
+      }, { status: 400 });
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
     let extractedText = "";
+    let actualFileType = file.type;
 
     // Parse text based on type
     if (file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
@@ -72,24 +106,53 @@ export async function POST(req: NextRequest) {
     }
     else if (file.type === 'text/plain' || isMarkdown) {
       extractedText = buffer.toString('utf-8');
+      // If it's a markdown file but detected as text/plain, update the type
+      if (isMarkdown && file.type === 'text/plain') {
+        actualFileType = 'text/markdown';
+      }
+    }
+    else if (file.type === 'text/markdown' || file.type === 'text/x-markdown') {
+      extractedText = buffer.toString('utf-8');
     }
     else {
-      return NextResponse.json({ status: "error", message: "Unsupported file type" }, { status: 400 });
+      return NextResponse.json({ 
+        status: "error", 
+        message: "Unsupported file type" 
+      }, { status: 400 });
     }
 
-
-    // Store in Firestore
+    // Determine the document path based on file type
+    const documentPath = getDocumentPath(actualFileType, file.name);
+    
+    // Store in Firestore at the appropriate document path
     const db = getFirestore();
-    await db.doc(`users/${uid}/userDocuments/documentText`).set({
+    const docRef = db.doc(`users/${uid}/userDocuments/${documentPath}`);
+    
+    await docRef.set({
       text: extractedText,
       uploadedAt: new Date(),
       fileName: file.name,
-      fileType: file.type,
+      fileType: actualFileType,
+      originalFileType: file.type, // Keep track of the original MIME type
+      documentType: documentPath, // Store which document type this is
+      textLength: extractedText.length,
     });
 
-    return NextResponse.json({ status: "success", fileId: uid });
+    return NextResponse.json({ 
+      status: "success", 
+      fileId: uid,
+      documentPath: documentPath,
+      fileName: file.name,
+      fileType: actualFileType,
+      textLength: extractedText.length,
+      message: `File successfully processed and saved to ${documentPath}`
+    });
+
   } catch (error) {
     console.error("Upload error:", error);
-    return NextResponse.json({ status: "error", message: "Server error" }, { status: 500 });
+    return NextResponse.json({ 
+      status: "error", 
+      message: error instanceof Error ? error.message : "Server error" 
+    }, { status: 500 });
   }
 }
