@@ -641,8 +641,9 @@ export default function ResumeInfo({ data }: ResumeInfoProps) {
     }
 
     const cleanedSkillsState: Record<string, string[]> = {};
-    for (const [category, skills] of Object.entries(skillsState)) {
-      if (skills.length > 0) {
+    for(const category of categoryOrder) {
+      const skills = skillsState[category];
+      if(skills && skills.length > 0) {
         cleanedSkillsState[category] = skills;
       }
     }
