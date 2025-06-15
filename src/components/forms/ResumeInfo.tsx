@@ -179,20 +179,37 @@ function DraggableSkill({
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.6 : 1,
-    cursor: "grab",
-    display: "inline-block",
-    maxWidth: "fit-content",
-    whiteSpace: "nowrap",
-    verticalAlign: "middle",
+    display: "inline-flex", // for layout consistency
+    cursor: "default",
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners} onDragStart={(e) => e.preventDefault()}>
-      <ClosableEditableBadge
-        label={label}
-        onClose={onRemove}
-        color={color}
-      />
+    <div ref={setNodeRef} style={style} {...attributes}>
+      <Group gap={4} align="flex-start">
+        {/* Drag only the label */}
+        <Badge
+          color={color}
+          variant="filled"
+          rightSection={
+            <CloseButton
+              variant="subtle"
+              color="gray"
+              radius="xl"
+              size="xs"
+              onClick={(e) => {
+                e.stopPropagation();
+                onRemove();
+              }}
+              style={{ marginLeft: 6 }}
+              aria-label={`Remove ${label}`}
+            />
+          }
+        >
+          <span {...listeners} style={{ cursor: "grab", userSelect: "none" }}>
+            {label}
+          </span>
+        </Badge>
+      </Group>
     </div>
   );
 }
