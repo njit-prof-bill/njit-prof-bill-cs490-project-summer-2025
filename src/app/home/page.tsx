@@ -1,6 +1,6 @@
 "use client";
 
-
+import BioUpload from "@/components/ui/bioUpload";
 import { useAuth } from "@/context/authContext";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -137,9 +137,11 @@ export default function HomePage() {
 
         </div>
       </div>
-      
-      {/* Card 4 */}
-      <div className="bg-gray-800 p-4 rounded shadow h-64 flex flex-col">
+
+      {/* my component */}
+      {/* Card 4 */} 
+      <div className="bg-gray-800 p-4 rounded shadow flex flex-col">
+
         <h2 className="font-bold mb-2">Freeform Text Input:</h2>
         <div className="flex-1 overflow-hidden">
           
@@ -148,9 +150,7 @@ export default function HomePage() {
                     <CardTitle>Place Respective Component In Here:</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <CardDescription>
-                        Use AI to help build a competitive resume for your career needs.
-                    </CardDescription>
+                    <BioUpload/>
                 </CardContent>
                
             </Card>
