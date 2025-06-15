@@ -8,6 +8,7 @@ import { getAuth } from "firebase/auth";
 import { useRef } from "react";
 import Spinner, { spinnerStyles } from '@/components/ui/Spinner';
 import { processDocumentHandler } from '@/lib/processDocument';
+import { getSourceDocIdFromFile } from '@/utils/getSourceDocId';
 
 import {
   Card,
@@ -74,9 +75,11 @@ export default function HomePage() {
       });
 
       if (res.ok) {
+        const sourceDocId = getSourceDocIdFromFile(file);
         await processDocumentHandler({
           user: currentUser,
-          onStatus: (msg: string) => console.log('[Processing Status]', msg),
+          sourceDocId,
+          onStatus: msg => console.log('[Processing Status]', msg),
           // optional: you can pass additionalPrompt if you ever want to
           // additionalPrompt: 'Please prioritize technical roles.'
         });
