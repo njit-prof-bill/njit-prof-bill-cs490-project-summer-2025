@@ -25,7 +25,7 @@ class ResumeParser:
                         "- contact: object with:\n"
                         "- emails: a list of strings. The first email in the list should be the primary email.\n"
                         "- phones: a list of strings. The first phone number in the list should be the primary phone number\n"
-                        "- location: string (if available)\n"
+                        "- career_objective: string (if present)\n"
                         "- skills: an object where keys are skill categories and values are lists of strings\n"
                         "- education: object with degree, institution, graduation_date, GPA\n"
                         "- jobs: list of job objects. Each job has title, company, location (optional), duration (optional), and responsibilities (list of strings)\n\n"

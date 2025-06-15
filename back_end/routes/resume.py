@@ -73,3 +73,63 @@ def update_phone(resume_id):
         return jsonify({"message": "Phone numbers updated successfully"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+@resume_bp.route("/resume/<resume_id>/update_objective", methods=["POST"])
+def update_career_objective(resume_id):
+    try:
+        if not ObjectId.is_valid(resume_id):
+            return jsonify({"error": "Invalid resume ID"}), 400
+        
+        data = request.get_json()
+        if not data or "career_objective" not in data:
+            return jsonify({"error": "Missing 'career_objective' field in request"}), 400
+        
+        career_objective = data["career_objective"].strip()
+        if not career_objective:
+            return jsonify({"error": "Career objective cannot be empty"}), 400
+        
+        result = biography_collection.update_one(
+            {"_id": ObjectId(resume_id)},
+            {"$set": {"parse_result.career_objective": career_objective}}
+        )
+
+        if result.matched_count == 0:
+            return jsonify({"error": "Resume not found"}), 404
+        
+        return jsonify({"message": "Career objective updated successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@resume_bp.route("/resume/<resume_id>/update_skills", methods=["POST"])
+def update_skills(resume_id):
+    try:
+        if not ObjectId.is_valid(resume_id):
+            return jsonify({"error": "Invalid resume ID"}), 400
+        
+        data = request.get_json()
+        if not data or "skills" not in data:
+            return jsonify({"error": "Missing 'skills' field in request"}), 400
+        
+        skills = data["skills"]
+
+        if not isinstance(skills, dict) or not skills:
+            return jsonify({"error": "Skills must be a non-empty object"}), 400
+        
+        for category, items in skills.items():
+            if not isinstance(category, str) or not isinstance(items, list):
+                return jsonify({"error": f"Invalid entry in skills: {category}"}), 400
+            for skill in items:
+                if not isinstance(skill, str) or not skill.strip():
+                    return jsonify({"error": f"Invalid skill '{skill}' in category '{category}'"}), 400
+        
+        result = biography_collection.update_one(
+            {"_id": ObjectId(resume_id)},
+            {"$set": {"parse_result.skills": skills}}
+        )
+
+        if result.matched_count == 0:
+            return jsonify({"error": "Resume not found"}), 404
+        
+        return jsonify({"message": "Skills updated successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
