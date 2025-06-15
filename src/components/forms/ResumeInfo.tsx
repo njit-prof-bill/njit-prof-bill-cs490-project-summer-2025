@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { Container, Card, Title, Text, Group, Stack, Badge, Button, TextInput, ActionIcon, Autocomplete, Textarea, CloseButton, Tooltip } from "@mantine/core";
+import { useState, useEffect, useRef, useMemo } from "react";
+import { Container, Card, Title, Text, Group, Stack, Badge, Button, TextInput, ActionIcon, Autocomplete, Textarea, CloseButton, Tooltip, Paper } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { IconTrash, IconX, IconPlus } from "@tabler/icons-react";
+import { IconTrash, IconX, IconPlus, IconGripVertical } from "@tabler/icons-react";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
-import { SortableContext, useSortable, arrayMove, rectSortingStrategy } from "@dnd-kit/sortable";
+import { SortableContext, useSortable, arrayMove, rectSortingStrategy, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
 interface ResumeInfoProps {
@@ -214,7 +214,40 @@ function DraggableSkill({
   );
 }
 
+function SortableCategory({
+  id,
+  children,
+}: {
+  id: string;
+  children: React.ReactNode;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+  } = useSortable({ id });
 
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    marginBottom: 12,
+  };
+  
+  return (
+    <Paper ref={setNodeRef} style={style} withBorder shadow="xs" p="sm" radius="md">
+      <Group align="center" {...attributes}>
+        <Tooltip label="Drag Category" withArrow>
+          <ActionIcon variant="light" color="gray" {...listeners}>
+            <IconGripVertical size={18} />
+          </ActionIcon>
+        </Tooltip>
+        <div style={{ flex: 1 }}>{children}</div>
+      </Group>
+    </Paper>
+  );
+}
 
 export default function ResumeInfo({ data }: ResumeInfoProps) {
   const sensors = useSensors(useSensor(PointerSensor));
@@ -239,9 +272,12 @@ export default function ResumeInfo({ data }: ResumeInfoProps) {
   const [newSkillValues, setNewSkillValues] = useState<{ [category: string]: string }>({});
   const [newCategory, setNewCategory] = useState("");
   const [newCategorySkill, setNewCategorySkill] = useState("");
+
   const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
   const [newCategoryError, setNewCategoryError] = useState<string | null>(null);
   const [newCategorySkillError, setNewCategorySkillError] = useState<string | null>(null);
+  const [categoryOrder, setCategoryOrder] = useState(Object.keys(skillsState));
+  const [emptiedCategories, setEmptiedCategories] = useState<Set<string>>(new Set());
   const categoryInputRef = useRef<HTMLInputElement>(null);
   
   const [badgeSkillErrors, setBadgeSkillErrors] = useState<{ [category: string]: string | null }>({});
@@ -480,10 +516,6 @@ export default function ResumeInfo({ data }: ResumeInfoProps) {
     setSkillsState(prev => {
       const updated = { ...prev };
       updated[category] = updated[category].filter(s => s !== skill);
-      // For removing empty categories  
-      if (updated[category].length === 0) {
-        delete updated[category];
-      }
       return updated;
     });
   };
@@ -494,6 +526,7 @@ export default function ResumeInfo({ data }: ResumeInfoProps) {
       delete updated[category];
       return updated;
     });
+    setCategoryOrder((prev) => prev.filter((cat) => cat !== category));
   };
 
   const startAddSkill = (category: string) => {
@@ -565,6 +598,7 @@ export default function ResumeInfo({ data }: ResumeInfoProps) {
     if (hasError) return;
 
     setSkillsState((prev) => ({ ...prev, [trimmedCategory]: [trimmedSkill] }));
+    setCategoryOrder((prev) => [...prev, trimmedCategory]);
 
     setNewCategory("");
     setNewCategorySkill("");
@@ -606,13 +640,29 @@ export default function ResumeInfo({ data }: ResumeInfoProps) {
       return;
     }
 
+    const cleanedSkillsState: Record<string, string[]> = {};
+    for (const [category, skills] of Object.entries(skillsState)) {
+      if (skills.length > 0) {
+        cleanedSkillsState[category] = skills;
+      }
+    }
+
+    if(Object.keys(cleanedSkillsState).length === 0) {
+      notifications.show({
+        title: "Validation Error",
+        message: "At least one skill is required before saving.",
+        color: "red",
+      });
+      return;
+    }
+
     setSaving(prev => ({ ...prev, skills: true }));
 
     try {
       const response = await fetch(`http://localhost:5000/resume/${data._id}/update_skills`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ skills: skillsState }),
+        body: JSON.stringify({ skills: cleanedSkillsState }),
       });
 
       const resData = await response.json();
@@ -643,6 +693,29 @@ export default function ResumeInfo({ data }: ResumeInfoProps) {
       setSaving(prev => ({ ...prev, skills: false }));
     }
   };
+
+  const handleCategoryDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = categoryOrder.indexOf(active.id as string);
+    const newIndex = categoryOrder.indexOf(over.id as string);
+
+    setCategoryOrder((prev) => arrayMove(prev, oldIndex, newIndex));
+  };
+
+  const skillSaveValidationMessage = useMemo(() => {
+    const allSkills = Object.values(skillsState).flat();
+    const hasEmptyCategory = Object.entries(skillsState).some(([_, skills]) => skills.length === 0);
+    if (allSkills.length === 0) {
+      return "At least one skill is required before saving.";
+    }
+    if (hasEmptyCategory) {
+      return "All categories must have at least one skill.";
+    }
+    return null;
+  }, [skillsState]);
+
 
   return (
     <Container size="lg" py="md">
@@ -777,97 +850,133 @@ export default function ResumeInfo({ data }: ResumeInfoProps) {
       )}
 
       {/* Skills */}
-      {skillsState  && (
-        <Card withBorder mb="md" shadow="sm">
-          <Title order={3}>Skills</Title>
-          <Stack mt="sm">
-            {Object.entries(skillsState).map(([category, skillList]) => (
-              <div key={category}>
-                {/* Category Headers, Remove Button */}
-                <Group align="center" mb="xs">
-                  <Title order={4} mt="sm">{category}</Title>
-                  <Tooltip label={`Remove "${category}"`} withArrow>
-                    <ActionIcon
-                      variant="subtle"
-                      color="gray"
-                      radius="xl"
-                      size="xs"
-                      style={{ opacity: 0.7 }}
-                      onClick={() => removeCategory(category)}
+      {skillsState && (
+  <Card withBorder mb="md" shadow="sm">
+    <Title order={3}>Skills</Title>
+    <Stack mt="sm">
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleCategoryDragEnd}
+      >
+        <SortableContext items={categoryOrder} strategy={verticalListSortingStrategy}>
+          {categoryOrder.map((category) => {
+            const skillList = skillsState[category] || [];
+
+            return (
+              <SortableCategory key={category} id={category}>
+                <div style={{ marginBottom: "1rem" }}>
+                  {/* Category Header */}
+                  <Group align="center" mb="xs">
+                    <Title order={4} mt="sm">{category}</Title>
+                    <Tooltip 
+                      label={
+                        emptiedCategories.has(category)
+                          ? `Click again to delete "${category}"`
+                          : `Remove all skills in "${category}"`
+                      } 
+                      withArrow
                     >
-                      <IconX size="0.9rem" stroke={1.5} />  
-                    </ActionIcon>
-                  </Tooltip>
-                </Group>
+                      <ActionIcon
+                        variant="subtle"
+                        color="gray"
+                        radius="xl"
+                        size="xs"
+                        style={{ opacity: 0.7 }}
+                        onClick={() => {
+                          if((skillsState[category]?.length ?? 0) > 0) {
+                            // Clear the skills
+                            setSkillsState(prev => ({ ...prev, [category]: [] }));
+                            setEmptiedCategories(prev => new Set(prev).add(category));
+                          }
+                          else {
+                            // Fully remove category
+                            setSkillsState(prev => {
+                              const updated = { ...prev };
+                              delete updated[category];
+                              return updated;
+                            });
+                            setCategoryOrder(prev => prev.filter(c => c !== category));
+                            setEmptiedCategories(prev => {
+                              const updated = new Set(prev);
+                              updated.delete(category);
+                              return updated;
+                            });
+                          }
+                        }}
+                      >
+                        <IconX size="0.9rem" stroke={1.5} />
+                      </ActionIcon>
+                    </Tooltip>
+                  </Group>
 
-                {/* Badges with close button */}
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragEnd={handleDragEnd}
-                >
-                  <SortableContext
-                    items={skillList}
-                    strategy={rectSortingStrategy}
+                  {/* Skills DnD */}
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
                   >
-                    <Group wrap="wrap" gap={6} align="center">
-                      {skillList.map((skill) => (
-                        <DraggableSkill
-                          key={skill}
-                          id={skill}
-                          category={category}
-                          label={skill}
-                          onRemove={() => removeSkill(category, skill)}
-                          color={getColorFromCategory(category)}
-                        />
-                      ))}
+                    <SortableContext items={skillList} strategy={rectSortingStrategy}>
+                      <Group wrap="wrap" gap={6} align="center">
+                        {skillList.map((skill) => (
+                          <DraggableSkill
+                            key={skill}
+                            id={skill}
+                            category={category}
+                            label={skill}
+                            onRemove={() => removeSkill(category, skill)}
+                            color={getColorFromCategory(category)}
+                          />
+                        ))}
 
-                      {editingBadge[category] ? (
-                        <ClosableEditableBadge
-                          label={newSkillValues[category] || ""}
-                          isEditing
-                          onChange={(val) => {
-                            const lowerVal = val.trim().toLowerCase();
-                            const allSkills = getAllSkills(skillsState).map((s) => s.toLowerCase());
+                        {editingBadge[category] ? (
+                          <ClosableEditableBadge
+                            label={newSkillValues[category] || ""}
+                            isEditing
+                            onChange={(val) => {
+                              const lowerVal = val.trim().toLowerCase();
+                              const allSkills = getAllSkills(skillsState).map((s) => s.toLowerCase());
 
-                            setNewSkillValues((prev) => ({ ...prev, [category]: val }));
+                              setNewSkillValues((prev) => ({ ...prev, [category]: val }));
 
-                            if (!val.trim()) {
-                              setBadgeSkillErrors((prev) => ({ ...prev, [category]: "Skill is required." }));
-                            } 
-                            else if (allSkills.includes(lowerVal)) {
-                              const matched = getAllSkills(skillsState).find(s => s.toLowerCase() === lowerVal);
-                              const matchUpper = matched ? matched.toUpperCase() : val.toUpperCase();
-                              setBadgeSkillErrors((prev) => ({ ...prev, [category]: `"${matchUpper}" already exists.` }));
-                            } 
-                            else {
+                              if (!val.trim()) {
+                                setBadgeSkillErrors((prev) => ({ ...prev, [category]: "Skill is required." }));
+                              } else if (allSkills.includes(lowerVal)) {
+                                const matched = getAllSkills(skillsState).find(s => s.toLowerCase() === lowerVal);
+                                const matchUpper = matched ? matched.toUpperCase() : val.toUpperCase();
+                                setBadgeSkillErrors((prev) => ({ ...prev, [category]: `"${matchUpper}" already exists.` }));
+                              } else {
+                                setBadgeSkillErrors((prev) => ({ ...prev, [category]: null }));
+                              }
+                            }}
+                            onClose={() => saveNewSkill(category)}
+                            onCancel={() => {
+                              setEditingBadge((prev) => ({ ...prev, [category]: false }));
+                              setNewSkillValues((prev) => ({ ...prev, [category]: "" }));
                               setBadgeSkillErrors((prev) => ({ ...prev, [category]: null }));
-                            }                         
-                          }}
-                          onClose={() => saveNewSkill(category)}
-                          onCancel={() => {
-                            setEditingBadge((prev) => ({ ...prev, [category]: false }));
-                            setNewSkillValues((prev) => ({ ...prev, [category]: "" }));
-                            setBadgeSkillErrors((prev) => ({ ...prev, [category]: null }));
-                          }}
-                          color={getColorFromCategory(category)}
-                          error={badgeSkillErrors[category]}
-                        />
-                      ) : (
-                        <ActionIcon
-                          variant="light"
-                          onClick={() => startAddSkill(category)}
-                          color={getColorFromCategory(category)}
-                        >
-                          <IconPlus size="1rem" />
-                        </ActionIcon>
-                      )}
-                    </Group>
-                  </SortableContext>
-                </DndContext>
-              </div>
-            ))}
-          </Stack>
+                            }}
+                            color={getColorFromCategory(category)}
+                            error={badgeSkillErrors[category]}
+                          />
+                        ) : (
+                          <ActionIcon
+                            variant="light"
+                            onClick={() => startAddSkill(category)}
+                            color={getColorFromCategory(category)}
+                          >
+                            <IconPlus size="1rem" />
+                          </ActionIcon>
+                        )}
+                      </Group>
+                    </SortableContext>
+                  </DndContext>
+                </div>
+              </SortableCategory>
+            );
+          })}
+        </SortableContext>
+      </DndContext>
+    </Stack>
 
           {/* Add new Categories */}
           <Group mt="md">
@@ -880,13 +989,17 @@ export default function ResumeInfo({ data }: ResumeInfoProps) {
             <Button
               onClick={saveSkills}
               loading={saving.skills}
-              disabled={
-                Object.values(skillsState).flat().length === 0
-              }
+              disabled={!!skillSaveValidationMessage}
             >
               Save Skills
             </Button>
           </Group>
+
+          {skillSaveValidationMessage  && (
+            <Text size="sm" c="red" mt="xs">
+              {skillSaveValidationMessage}
+            </Text>
+          )}
 
       {showNewCategoryInput && (
       <Card withBorder mt="sm" p="md" radius="md" shadow="xs">
