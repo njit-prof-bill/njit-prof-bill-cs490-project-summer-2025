@@ -4,6 +4,9 @@ import { useAuth } from "@/context/authContext";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import UploadCard from "@/components/uploadCard";
+import FreeformInputCard from "@/components/freeformInputCard";
 export default function HomePage() {
     const { user, loading } = useAuth();
     const router = useRouter();
@@ -19,7 +22,7 @@ export default function HomePage() {
     }
 
     return (
-        <div className="flex items-center justify-center min-h-screen">
+        <div className="flex flex-wrap gap-4 p-4">
             <Card className="w-full max-w-md shadow-lg">
                 <CardHeader>
                     <CardTitle>Marcus App Template</CardTitle>
@@ -33,6 +36,9 @@ export default function HomePage() {
                     <CardDescription>Copyright 2025 Fourier Gauss Labs</CardDescription>
                 </CardFooter>
             </Card>
+            
+            <UploadCard />
+            <FreeformInputCard />
         </div>
     );
 }
