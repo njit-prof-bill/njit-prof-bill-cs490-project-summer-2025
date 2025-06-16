@@ -16,13 +16,13 @@ export default function UploadResumePage() {
 
   useEffect(() => {
     if (!loading && !user) {
-        router.push("/"); // Redirect to landing page if not authenticated
+      router.push("/"); // Redirect to landing page if not authenticated
     }
-}, [user, loading, router]);
+  }, [user, loading, router]);
 
-if (loading) {
+  if (loading) {
     return <p>Loading...</p>; // Show a loading state while checking auth
-}
+  }
 
   const fileUploadRef = useRef(null);
 
@@ -30,6 +30,11 @@ if (loading) {
   const [uploadSuccess, setUploadSuccess] = useState<boolean | null>(null);
   const [extractedText, setExtractedText] = useState<string | null>(null);
 
+  // New states for combined progress bar
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+
+  // Upload handler wired to both default button and custom upload button
   const onUpload = async () => {
     const files = fileUploadRef.current?.getFiles();
     if (!files || files.length === 0) return;
@@ -38,43 +43,66 @@ if (loading) {
     const formData = new FormData();
     formData.append("file", file);
 
+    // Reset states and start progress
+    setIsUploading(true);
+    setUploadProgress(0);
+    setUploadMessage(null);
+    setUploadSuccess(null);
+    setExtractedText(null);
+
     try {
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
+      const xhr = new XMLHttpRequest();
+
+      // 🟦 File upload progress (0% → 80%)
+      xhr.upload.addEventListener("progress", (event) => {
+        if (event.lengthComputable) {
+          const percent = Math.round((event.loaded / event.total) * 80);
+          setUploadProgress(percent);
+        }
       });
 
-      const result = await res.json();
+      xhr.onreadystatechange = async () => {
+        if (xhr.readyState === 4) {
+          const result = JSON.parse(xhr.responseText);
 
-      if (res.ok) {
-        console.log("Extracted raw text:", result.rawText);
-        setUploadSuccess(true);
-        setUploadMessage("✅ File uploaded and text extracted successfully!");
-        setExtractedText(result.rawText);
-        try {
-          const AIResponse = await getAIResponse(AIPrompt, result.rawText as string);
+          if (xhr.status === 200) {
+            setExtractedText(result.rawText);
 
-          try {
-              const responseObj = JSON.parse(AIResponse);
-              // For debugging purposes
-              console.log(JSON.parse(AIResponse));
-              saveAIResponse(responseObj, user, db);
-          } catch (error) {
-              console.error("Error parsing AI response: ", error);
+            // 🟨 Simulate AI analysis (80% → 100%)
+            for (let i = 81; i <= 99; i++) {
+              await new Promise((r) => setTimeout(r, 20)); // small delay
+              setUploadProgress(i);
+            }
+
+            try {
+              const AIResponse = await getAIResponse(AIPrompt, result.rawText);
+              const parsed = JSON.parse(AIResponse);
+              await saveAIResponse(parsed, user, db);
+
+              setUploadProgress(100);
+              setUploadSuccess(true);
+              setUploadMessage("✅ File uploaded and text extracted successfully!");
+            } catch (error) {
+              console.error("Error fetching or saving AI response:", error);
+              setUploadSuccess(false);
+              setUploadMessage("❌ AI processing failed.");
+            }
+          } else {
+            setUploadSuccess(false);
+            setUploadMessage(`❌ Upload failed: ${result.error || "Something went wrong"}`);
           }
-        } catch (error) {
-          console.error("Error fetching AI response: ", error);
+
+          setIsUploading(false);
         }
-      } else {
-        setUploadSuccess(false);
-        setUploadMessage(`❌ Upload failed: ${result.error || "Something went wrong"}`);
-        setExtractedText(null);
-      }
-    } catch (error) {
+      };
+
+      xhr.open("POST", "/api/upload");
+      xhr.send(formData);
+    } catch (error: any) {
       console.error("Upload error:", error);
       setUploadSuccess(false);
-      setUploadMessage("❌ Network or server error.");
-      setExtractedText(null);
+      setUploadMessage("❌ Upload failed. " + error.message);
+      setIsUploading(false);
     }
   };
 
@@ -102,6 +130,8 @@ if (loading) {
     setUploadMessage(null);
     setUploadSuccess(null);
     setExtractedText(null);
+    setIsUploading(false);
+    setUploadProgress(0);
   };
 
   const itemTemplate = (file, props) => (
@@ -112,16 +142,14 @@ if (loading) {
           <span className="font-medium text-gray-800 dark:text-gray-100 truncate max-w-xs">
             {file.name}
           </span>
-          <small className="text-gray-500 dark:text-gray-400">
-            {new Date().toLocaleDateString()}
-          </small>
+          <small className="text-gray-500 dark:text-gray-400">{new Date().toLocaleDateString()}</small>
         </div>
       </div>
       <div className="flex gap-2">
         <Button
           icon="pi pi-upload"
           className="p-button-sm p-button-success p-button-text"
-          onClick={onUpload}
+          onClick={onUpload} // custom upload button
         />
         <Button
           icon="pi pi-times"
@@ -147,13 +175,32 @@ if (loading) {
         url="/api/upload"
         accept=".pdf,.PDF,.docx,.DOCX,.txt,.md,.odt,.TXT,.MD,.ODT"
         customUpload
-        onUpload={onUpload}
+        uploadHandler={onUpload} // <--- This wires default upload button to your handler
         onSelect={onSelect}
         onError={onClear}
         onClear={onClear}
         itemTemplate={itemTemplate}
         emptyTemplate={emptyTemplate}
       />
+
+      {isUploading && (
+        <div className="mt-4 relative w-full bg-gray-300 rounded-md h-6 overflow-hidden">
+          {/* Blue progress fill */}
+          <div
+            className="absolute top-0 left-0 h-full bg-blue-600 transition-all duration-300 ease-in-out"
+            style={{ width: `${uploadProgress}%` }}
+          ></div>
+
+          {/* Centered text inside progress bar */}
+          <div className="absolute inset-0 flex items-center justify-center text-white font-medium text-sm">
+            {uploadProgress < 80
+              ? `Uploading... ${uploadProgress}%`
+              : uploadProgress < 100
+              ? `Processing with AI... ${uploadProgress}%`
+              : `Finalizing...`}
+          </div>
+        </div>
+      )}
 
       {uploadMessage && (
         <div
@@ -174,11 +221,6 @@ if (loading) {
     </div>
   );
 }
-
-
-
-
-
 
 // "use client";
 
