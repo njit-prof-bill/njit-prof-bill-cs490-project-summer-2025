@@ -9,6 +9,7 @@ import { formatPhoneNumber } from '@/utils/formatters';
 interface Job {
   company: string;
   role: string;
+  jobDesc: string;
   startDate: string;
   endDate?: string;
   description?: string;
@@ -27,6 +28,7 @@ const normalizeWorkExperience = (data: any[]): Job[] =>
   data.map((job) => ({
     company: job.company || '',
     role: job.jobTitle || '',
+    jobDesc: job.jobDesc || '',
     startDate: job.startDate || '',
     endDate: job.endDate || '',
     description: Array.isArray(job.responsibilities)
@@ -39,6 +41,7 @@ const denormalizeWorkExperience = (data: Job[]): any[] =>
   data.map((job) => ({
     company: job.company,
     jobTitle: job.role,
+    jobDesc: job.jobDesc,
     startDate: job.startDate,
     endDate: job.endDate,
     responsibilities: job.description
@@ -582,8 +585,10 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
                       borderRadius: '4px'
                     }}
                   >
+                    {/*  */}
                     <div><strong>{job.jobTitle}</strong> at <strong>{job.company}</strong></div>
                     <div>{job.startDate} — {job.endDate}</div>
+                    <div>{job.jobDesc}</div>
                     {Array.isArray(job.responsibilities) && (
                       <ul style={{ marginTop: '0.5rem', paddingLeft: '1.25rem' }}>
                         {job.responsibilities.map((resp: string, i: number) => (
