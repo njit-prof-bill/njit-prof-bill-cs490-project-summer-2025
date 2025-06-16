@@ -68,6 +68,11 @@ import { auth, db } from '@/lib/firebase';
 import FetchAndDisplayKey from "../components/FetchAndDisplayKey";
 import SkillsEditor from '../components/SkillsEditor';
 import EducationEditor from '../components/EducationEditor';
+import WorkExperienceEditor from './WorkExperienceEditor';
+import WorkExperienceDisplay from '@/components/WorkExperienceDisplay';
+import EducationDisplay from '@/components/EducationDisplay';
+
+
 
 // ✅ Add prop type
 interface ProfileCardProps {
@@ -83,9 +88,18 @@ export default function UserProfile({ deduplicateSkills }: ProfileCardProps) {
       <br />
       <FetchAndDisplayKey keyPath="summary" />
       <br />
-      <FetchAndDisplayKey keyPath="workExperience" />
-      <FetchAndDisplayKey keyPath="education" />
 
+
+      {/* <FetchAndDisplayKey keyPath="workExperience" /> */}
+      {/* <WorkExperienceDisplay /> */}
+      <WorkExperienceDisplay className="my-8" />
+      <WorkExperienceEditor 
+      onSuccess={() => console.log('Work experience saved!')}
+      onError={(error) => console.error('Error:', error)}
+      />
+
+      {/* <FetchAndDisplayKey keyPath="education" /> */}
+      <EducationDisplay />
       <EducationEditor />
 
       <FetchAndDisplayKey keyPath="skills" />

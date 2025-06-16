@@ -46,6 +46,7 @@ CRITICAL INSTRUCTIONS:
 - Do not forget to include the full name of a person in the output
 - Sometimes names may be ambiguous, like 'Laid-Off' or other non-name type words, include them if in the first line
 - "summary" should include any work history points or facts in it
+- "jobDesc" should be one or two sentence summary about what the job is
 - Do not call work items as 'achievements', call it 'responsibilities'
 - Experience should be 'workExperience' key
 - Reformat the json a second time before responding, double check the json
@@ -62,6 +63,7 @@ Use This Example json object, and populate a similar json with the data from the
   "workExperience": [
     {
       "jobTitle": "",
+      "jobDesc":"",
       "company": "",
       "startDate": "",
       "endDate": "",
@@ -73,6 +75,7 @@ Use This Example json object, and populate a similar json with the data from the
     },
     {
       "jobTitle": "",
+      "jobDesc":"",
       "company": "",
       "startDate": "",
       "endDate": "",
@@ -128,6 +131,7 @@ The JSON MUST follow this exact structure:
   "workExperience": [
     {
       "jobTitle": "",
+      "jobDesc":"",
       "company": "",
       "startDate": "",
       "endDate": "",
@@ -178,6 +182,7 @@ Expected output structure (return only this JSON format):
   "workExperience": [
     {
       "jobTitle": "",
+      "jobDesc":"",
       "company": "",
       "startDate": "",
       "endDate": "",
