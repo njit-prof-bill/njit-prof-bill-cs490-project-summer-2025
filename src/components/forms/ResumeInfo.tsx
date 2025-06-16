@@ -298,8 +298,11 @@ export default function ResumeInfo({ data }: ResumeInfoProps) {
   const [badgeSkillErrors, setBadgeSkillErrors] = useState<{ [category: string]: string | null }>({});
 
   type JobEntry = ResumeInfoProps["data"]["jobs"][number];
-  const [jobsState, setJobsState] = useState<JobEntry[]>(data.jobs ?? []);
+  const initial = data.jobs.map(canonicalizeJob);
+  const [jobsState,setJobsState]   = useState<JobEntry[]>(initial);
+  const [originalJobs, setOriginalJobs] = useState<JobEntry[]>(initial);
   const [jobDraft, setJobDraft] = useState<JobEntry | null>(null);
+  const [savedJobsCount, setSavedJobsCount] = useState(data.jobs?.length ?? 0);
   const [savingJobOrder, setSavingJobOrder] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
@@ -797,15 +800,20 @@ export default function ResumeInfo({ data }: ResumeInfoProps) {
   const handleJobDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
+    const oldIndex = Number(active.id);
+    const newIndex = Number(over.id);
 
-    setJobsState((prev) => {
-      const oldIndex = Number(active.id);
-      const newIndex = Number(over.id);
-      const moved = arrayMove(prev, oldIndex, newIndex).map(canonicalizeJob);
-      saveJobOrder(moved);
-      return moved;
-    });
-  };
+    // 1) Reorder the live UI list
+    setJobsState((prev) => arrayMove(prev, oldIndex, newIndex));
+
+    // 2) Mirror the same reorder into the “last-saved” snapshot
+    setOriginalJobs((prev) => arrayMove(prev, oldIndex, newIndex));
+
+    // 3) Send the new order to the backend
+    const reorderedJobs = arrayMove(jobsState, oldIndex, newIndex);
+    saveJobOrder(reorderedJobs);
+  }
+    
 
   function toggleEdit(idx: number) {
     if (editingIndex === idx) {
@@ -820,9 +828,18 @@ export default function ResumeInfo({ data }: ResumeInfoProps) {
   }
 
   function cancelEdit() {
-    if (editingIndex !== null && editingIndex >= (data.jobs?.length ?? 0)) {
+    if (editingIndex === null) return;
+
+    if (editingIndex >= originalJobs.length) {
       // New job, remove it
       setJobsState((prev) => prev.filter((_, i) => i !== editingIndex));
+    }
+    else {
+      setJobsState((prev) => {
+        const copy = [...prev];
+        copy[editingIndex] = originalJobs[editingIndex];
+        return copy;
+      });
     }
     setEditingIndex(null);
     setJobDraft(null);
@@ -866,32 +883,43 @@ export default function ResumeInfo({ data }: ResumeInfoProps) {
           color: "teal",
         });
 
-
+        // 1) Update the live UI list
         setJobsState((prev) => {
           const copy = [...prev];
           copy[idx] = jobToSave;
           return copy;
         });
 
+        // 2) Mirror the change into the “last-saved” snapshot
+        setOriginalJobs((prev) => {
+          const copy = [...prev];
+          if (idx < copy.length) {
+            // updating an existing row
+            copy[idx] = jobToSave;
+          } else {
+            // saving a brand-new row
+            copy.push(jobToSave);
+          }
+          return copy;
+        });
+
+        // 3) Exit edit mode
         setEditingIndex(null);
         setJobDraft(null);
-      }
-      else {
+      } else {
         notifications.show({
           title: "Error",
           message: result.error || "Failed to update job.",
           color: "red",
         });
       }
-    }
-    catch(error) {
+    } catch (error) {
       notifications.show({
         title: "Error",
         message: "Network error while saving job.",
         color: "red",
       });
-    }
-    finally {
+    } finally {
       setSaving((prev) => ({ ...prev, jobs: false }));
     }
   }
@@ -942,8 +970,9 @@ export default function ResumeInfo({ data }: ResumeInfoProps) {
   };
 
   const deleteJob = async (index: number) => {
+    const isNew = index >= originalJobs.length;;
     // If it's a new/unsaved job, just remove from jobsState.
-    if (index >= (data.jobs?.length ?? 0)) {
+    if (isNew) {
       setJobsState((prev) => prev.filter((_, i) => i !== index));
       // Also exit edit mode if it was editing
       if (editingIndex === index) cancelEdit();
@@ -965,7 +994,11 @@ export default function ResumeInfo({ data }: ResumeInfoProps) {
       }
       else {
         notifications.show({ title: "Success", message: "Job deleted!", color: "teal", autoClose: 1000 });
+
         setJobsState((prev) => prev.filter((_, i) => i !== index));
+
+        setOriginalJobs((prev) => prev.filter((_, i) => i !== index));
+
         if (editingIndex === index) cancelEdit();
       }
     }
