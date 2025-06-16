@@ -21,7 +21,6 @@ interface SummaryFormProps {
   onCancel: () => void;
   title: string;
   saveText: string;
-  saving?: boolean;
 }
 
 // Move SummaryForm outside the main component to prevent re-creation
@@ -31,8 +30,7 @@ const SummaryForm: React.FC<SummaryFormProps> = React.memo(({
   onSave, 
   onCancel, 
   title, 
-  saveText,
-  saving = false
+  saveText 
 }) => {
   return (
     <div className="p-4 bg-gray-700 rounded-md space-y-3">
@@ -46,7 +44,6 @@ const SummaryForm: React.FC<SummaryFormProps> = React.memo(({
           rows={12}
           placeholder="Enter your professional summary here..."
           className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-          disabled={saving}
         />
       </div>
       
@@ -54,26 +51,14 @@ const SummaryForm: React.FC<SummaryFormProps> = React.memo(({
         <button
           type="button"
           onClick={onSave}
-          disabled={saving}
-          className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+          className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
         >
-          {saving ? (
-            <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-              Saving...
-            </>
-          ) : (
-            <>
-              <Save className="h-4 w-4" />
-              {saveText}
-            </>
-          )}
+          {saveText}
         </button>
         <button
           type="button"
           onClick={onCancel}
-          disabled={saving}
-          className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
         >
           Cancel
         </button>
@@ -156,11 +141,8 @@ const SummaryEditor: React.FC<SummaryEditorProps> = ({ onSuccess, onError }) => 
     }
   }, [docRef, onError]);
 
-  // Modified saveSummary to accept summaryText parameter for immediate save
-  const saveSummary = useCallback(async (summaryText?: string) => {
+  const saveSummary = useCallback(async () => {
     if (!docRef) return;
-    
-    const textToSave = summaryText !== undefined ? summaryText : summary;
     
     setSaving(true);
     try {
@@ -188,7 +170,7 @@ const SummaryEditor: React.FC<SummaryEditorProps> = ({ onSuccess, onError }) => 
       }
 
       // Update only the summary, preserving everything else
-      parsedResponse.summary = textToSave;
+      parsedResponse.summary = summary;
 
       // Save back in the same format it was stored (or as string if new)
       const updatedGroqResponse = typeof currentGroqResponse === 'string' || !currentGroqResponse
@@ -199,9 +181,6 @@ const SummaryEditor: React.FC<SummaryEditorProps> = ({ onSuccess, onError }) => 
         groqResponse: updatedGroqResponse
       });
 
-      // Update local state with saved text
-      setSummary(textToSave);
-      
       onSuccess?.();
       setIsOpen(false);
       setIsEditing(false);
@@ -235,12 +214,11 @@ const SummaryEditor: React.FC<SummaryEditorProps> = ({ onSuccess, onError }) => 
     setEditingSummary(summary);
   }, [summary]);
 
-  // Modified saveEdit to save directly to database
-  const saveEdit = useCallback(async () => {
-    // Save directly to database instead of just local state
-    await saveSummary(editingSummary);
-    // Note: The saveSummary function will handle state updates and closing
-  }, [editingSummary, saveSummary]);
+  const saveEdit = useCallback(() => {
+    setSummary(editingSummary);
+    setIsEditing(false);
+    setEditingSummary('');
+  }, [editingSummary]);
 
   const cancelEdit = useCallback(() => {
     setIsEditing(false);
@@ -301,8 +279,7 @@ const SummaryEditor: React.FC<SummaryEditorProps> = ({ onSuccess, onError }) => 
                   <button
                     type="button"
                     onClick={startEditing}
-                    disabled={saving}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                   >
                     <Edit2 className="h-4 w-4" />
                     Edit Summary
@@ -313,21 +290,14 @@ const SummaryEditor: React.FC<SummaryEditorProps> = ({ onSuccess, onError }) => 
               {/* Edit form */}
               {isEditing && (
                 <div className="mb-6">
-                  <div className="p-4 bg-gray-700 rounded-md space-y-3">
-                    <h3 className="text-lg font-medium text-white mb-3">Edit Summary</h3>
-                    
-                    <div>
-                      <label className="block text-sm font-medium mb-1 text-gray-200">Summary</label>
-                      <textarea
-                        value={editingSummary}
-                        onChange={(e) => handleEditingSummaryChange(e.target.value)}
-                        rows={12}
-                        placeholder="Enter your professional summary here..."
-                        className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                        disabled={saving}
-                      />
-                    </div>
-                  </div>
+                  <SummaryForm
+                    summaryData={editingSummary}
+                    onChange={handleEditingSummaryChange}
+                    onSave={saveEdit}
+                    onCancel={cancelEdit}
+                    title="Edit Summary"
+                    saveText="Save Changes"
+                  />
                 </div>
               )}
 
@@ -364,30 +334,29 @@ const SummaryEditor: React.FC<SummaryEditorProps> = ({ onSuccess, onError }) => 
             type="button"
             onClick={handleClose}
             disabled={saving}
-            className="px-4 py-2 border border-gray-500 text-gray-200 rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="px-4 py-2 border border-gray-500 text-gray-200 rounded-lg hover:bg-gray-700 disabled:opacity-50 transition-colors"
           >
-            Close
+            Cancel
           </button>
-          {isEditing && (
-            <button
-              type="button"
-              onClick={saveEdit}
-              disabled={saving}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
-            >
-              {saving ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4" />
-                  Save
-                </>
-              )}
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={saveSummary}
+            disabled={saving || loading}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2 transition-colors"
+          >
+            {saving ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                <Save className="h-4 w-4" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Check className="h-4 w-4" />
+                Save Changes
+              </>
+            )}
+          </button>
         </div>
       </div>
     </div>

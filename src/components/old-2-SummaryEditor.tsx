@@ -313,21 +313,15 @@ const SummaryEditor: React.FC<SummaryEditorProps> = ({ onSuccess, onError }) => 
               {/* Edit form */}
               {isEditing && (
                 <div className="mb-6">
-                  <div className="p-4 bg-gray-700 rounded-md space-y-3">
-                    <h3 className="text-lg font-medium text-white mb-3">Edit Summary</h3>
-                    
-                    <div>
-                      <label className="block text-sm font-medium mb-1 text-gray-200">Summary</label>
-                      <textarea
-                        value={editingSummary}
-                        onChange={(e) => handleEditingSummaryChange(e.target.value)}
-                        rows={12}
-                        placeholder="Enter your professional summary here..."
-                        className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                        disabled={saving}
-                      />
-                    </div>
-                  </div>
+                  <SummaryForm
+                    summaryData={editingSummary}
+                    onChange={handleEditingSummaryChange}
+                    onSave={saveEdit}
+                    onCancel={cancelEdit}
+                    title="Edit Summary"
+                    saveText="Save to Database"
+                    saving={saving}
+                  />
                 </div>
               )}
 
@@ -358,36 +352,16 @@ const SummaryEditor: React.FC<SummaryEditorProps> = ({ onSuccess, onError }) => 
           )}
         </div>
 
-        {/* Footer */}
+        {/* Footer - Only show close button since main save is now in the form */}
         <div className="p-6 border-t border-gray-600 flex justify-end gap-3">
           <button
             type="button"
             onClick={handleClose}
             disabled={saving}
-            className="px-4 py-2 border border-gray-500 text-gray-200 rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="px-4 py-2 border border-gray-500 text-gray-200 rounded-lg hover:bg-gray-700 disabled:opacity-50 transition-colors"
           >
-            Close
+            {saving ? 'Saving...' : 'Close'}
           </button>
-          {isEditing && (
-            <button
-              type="button"
-              onClick={saveEdit}
-              disabled={saving}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
-            >
-              {saving ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4" />
-                  Save
-                </>
-              )}
-            </button>
-          )}
         </div>
       </div>
     </div>
