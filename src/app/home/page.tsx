@@ -36,7 +36,6 @@ export default function HomePage() {
         {!uploaded ? (
           <>
             <h1 className="text-4xl font-extrabold text-center text-gray-800 mb-8">Welcome to Marcus</h1>
-
             <div className="w-full max-w-md mx-auto space-y-8">
               <div className="bg-gray-900/40 backdrop-blur-sm p-6 rounded-lg shadow-lg">
                 <h2 className="text-xl font-semibold text-white mb-4 text-center">Upload Your Resume</h2>
@@ -54,6 +53,27 @@ export default function HomePage() {
                 Simulate Submit & View Resume
               </button>
             </div>
+                        <div className="flex justify-center mb-4">
+<button
+  onClick={async () => {
+    try {
+      const res = await fetch("/api/history/merge", { method: "POST" });
+      if (res.ok) {
+        alert("Re-parse successful!");
+      } else {
+        alert("Re-parse failed (server error)");
+      }
+    } catch (err) {
+      alert("Re-parse failed (network error)");
+      console.error(err);
+    }
+  }}
+  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded"
+>
+  Re-parse History
+</button>
+
+		</div>
           </>
         ) : (
           <>
