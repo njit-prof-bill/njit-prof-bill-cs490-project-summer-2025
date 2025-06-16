@@ -268,3 +268,105 @@ def delete_job_entry(resume_id, index):
         return jsonify({"success": True}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+
+
+@resume_bp.route("/resume/<resume_id>/add_education", methods=["POST"])
+def add_education(resume_id):
+    if not ObjectId.is_valid(resume_id):
+        return jsonify({"error": "Invalid resume ID"}), 400
+    data = request.get_json() or {}
+    newEdu = data.get("newEdu")
+    if not isinstance(newEdu, dict):
+        return jsonify({"error": "Missing newEdu payload"}), 400
+
+    doc = biography_collection.find_one({"_id": ObjectId(resume_id)})
+    if not doc:
+        return jsonify({"error": "Resume not found"}), 404
+
+    educations = doc.get("parse_result", {}).get("educations", [])
+    educations.append(newEdu)
+
+    biography_collection.update_one(
+        {"_id": ObjectId(resume_id)},
+        {"$set": {"parse_result.educations": educations}}
+    )
+    return jsonify({"success": True}), 200
+
+
+
+@resume_bp.route("/resume/<resume_id>/update_education/<int:index>", methods=["POST"])
+def update_education(resume_id, index):
+    if not ObjectId.is_valid(resume_id):
+        return jsonify({"error": "Invalid resume ID"}), 400
+    data = request.get_json() or {}
+    updatedEdu = data.get("updatedEdu")
+    if not isinstance(updatedEdu, dict):
+        return jsonify({"error": "Missing updatedEdu payload"}), 400
+
+    doc = biography_collection.find_one({"_id": ObjectId(resume_id)})
+    if not doc:
+        return jsonify({"error": "Resume not found"}), 404
+
+    educations = doc.get("parse_result", {}).get("educations", [])
+    if index < 0 or index >= len(educations):
+        return jsonify({"error": "Invalid education index"}), 400
+
+    educations[index] = updatedEdu
+
+    biography_collection.update_one(
+        {"_id": ObjectId(resume_id)},
+        {"$set": {"parse_result.educations": educations}}
+    )
+    return jsonify({"success": True}), 200
+
+
+
+@resume_bp.route("/resume/<resume_id>/delete_education/<int:index>", methods=["DELETE"])
+def delete_education(resume_id, index):
+    if not ObjectId.is_valid(resume_id):
+        return jsonify({"error": "Invalid resume ID"}), 400
+
+    doc = biography_collection.find_one({"_id": ObjectId(resume_id)})
+    if not doc:
+        return jsonify({"error": "Resume not found"}), 404
+
+    educations = doc.get("parse_result", {}).get("educations", [])
+    if index < 0 or index >= len(educations):
+        return jsonify({"error": "Invalid education index"}), 400
+
+    educations.pop(index)
+
+    biography_collection.update_one(
+        {"_id": ObjectId(resume_id)},
+        {"$set": {"parse_result.educations": educations}}
+    )
+    return jsonify({"success": True}), 200
+
+
+
+@resume_bp.route("/resume/<resume_id>/set_educations", methods=["POST"])
+def set_educations(resume_id):
+    if not ObjectId.is_valid(resume_id):
+        return jsonify({"error": "Invalid resume ID"}), 400
+    data = request.get_json() or {}
+    newList = data.get("educations")
+    if not isinstance(newList, list):
+        return jsonify({"error": "Missing or invalid educations payload"}), 400
+
+    biography_collection.update_one(
+        {"_id": ObjectId(resume_id)},
+        {"$set": {"parse_result.educations": newList}}
+    )
+    return jsonify({"success": True}), 200
+
+@resume_bp.route("/resume/<resume_id>", methods=["GET"])
+def get_resume(resume_id):
+    # …
+    doc = biography_collection.find_one({"_id": ObjectId(resume_id)})
+    # …
+    result = {
+        # other fields…
+        "education": doc.get("parse_result", {}).get("educations", []),
+    }
+    return jsonify(result), 200
