@@ -11,12 +11,11 @@ interface WorkExperienceEditorProps {
 
 interface WorkExperience {
   jobTitle: string;
-  jobDesc: string;
   company: string;
   location: string;
   startDate: string;
   endDate: string;
-  responsibilities: string[];
+  description: string;
 }
 
 interface GroqResponseData {
@@ -26,7 +25,7 @@ interface GroqResponseData {
 
 interface WorkExperienceFormProps {
   workExperienceData: WorkExperience;
-  onChange: (field: keyof WorkExperience, value: string | string[]) => void;
+  onChange: (field: keyof WorkExperience, value: string) => void;
   onSave: () => void;
   onCancel: () => void;
   title: string;
@@ -117,29 +116,14 @@ const WorkExperienceForm: React.FC<WorkExperienceFormProps> = React.memo(({
         </div>
         
         <div className="md:col-span-2">
-          <label className="block text-sm font-medium mb-1 text-gray-200">Job Description</label>
+          <label className="block text-sm font-medium mb-1 text-gray-200">Description</label>
           <textarea
-            value={workExperienceData.jobDesc}
-            onChange={(e) => onChange('jobDesc', e.target.value)}
-            placeholder="Brief description of the role and main focus..."
-            rows={3}
-            className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-vertical"
-          />
-        </div>
-        
-        <div className="md:col-span-2">
-          <label className="block text-sm font-medium mb-1 text-gray-200">Responsibilities</label>
-          <textarea
-            value={Array.isArray(workExperienceData.responsibilities) ? workExperienceData.responsibilities.join('\n') : ''}
-            onChange={(e) => {
-              const responsibilities = e.target.value.split('\n').filter(r => r.trim() !== '');
-              onChange('responsibilities', responsibilities);
-            }}
-            placeholder="Enter each responsibility on a new line..."
+            value={workExperienceData.description}
+            onChange={(e) => onChange('description', e.target.value)}
+            placeholder="Describe your responsibilities and achievements..."
             rows={4}
             className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-vertical"
           />
-          <p className="text-xs text-gray-400 mt-1">Enter each responsibility on a separate line</p>
         </div>
       </div>
       
@@ -173,21 +157,19 @@ const WorkExperienceEditor: React.FC<WorkExperienceEditorProps> = ({ onSuccess, 
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editingWorkExperience, setEditingWorkExperience] = useState<WorkExperience>({
     jobTitle: '',
-    jobDesc: '',
     company: '',
     location: '',
     startDate: '',
     endDate: '',
-    responsibilities: []
+    description: ''
   });
   const [newWorkExperience, setNewWorkExperience] = useState<WorkExperience>({
     jobTitle: '',
-    jobDesc: '',
     company: '',
     location: '',
     startDate: '',
     endDate: '',
-    responsibilities: []
+    description: ''
   });
   const [saving, setSaving] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -314,21 +296,19 @@ const WorkExperienceEditor: React.FC<WorkExperienceEditorProps> = ({ onSuccess, 
     setEditingIndex(null);
     setEditingWorkExperience({
       jobTitle: '',
-      jobDesc: '',
       company: '',
       location: '',
       startDate: '',
       endDate: '',
-      responsibilities: []
+      description: ''
     });
     setNewWorkExperience({
       jobTitle: '',
-      jobDesc: '',
       company: '',
       location: '',
       startDate: '',
       endDate: '',
-      responsibilities: []
+      description: ''
     });
     setShowAddForm(false);
     // Load the current work experience from Firestore
@@ -346,12 +326,11 @@ const WorkExperienceEditor: React.FC<WorkExperienceEditorProps> = ({ onSuccess, 
       setWorkExperience(prev => [...prev, { ...newWorkExperience }]);
       setNewWorkExperience({
         jobTitle: '',
-        jobDesc: '',
         company: '',
         location: '',
         startDate: '',
         endDate: '',
-        responsibilities: []
+        description: ''
       });
       setShowAddForm(false);
     }
@@ -376,12 +355,11 @@ const WorkExperienceEditor: React.FC<WorkExperienceEditorProps> = ({ onSuccess, 
       setEditingIndex(null);
       setEditingWorkExperience({
         jobTitle: '',
-        jobDesc: '',
         company: '',
         location: '',
         startDate: '',
         endDate: '',
-        responsibilities: []
+        description: ''
       });
     }
   }, [editingIndex, editingWorkExperience]);
@@ -390,20 +368,19 @@ const WorkExperienceEditor: React.FC<WorkExperienceEditorProps> = ({ onSuccess, 
     setEditingIndex(null);
     setEditingWorkExperience({
       jobTitle: '',
-      jobDesc: '',
       company: '',
       location: '',
       startDate: '',
       endDate: '',
-      responsibilities: []
+      description: ''
     });
   }, []);
 
-  const handleNewWorkExperienceChange = useCallback((field: keyof WorkExperience, value: string | string[]) => {
+  const handleNewWorkExperienceChange = useCallback((field: keyof WorkExperience, value: string) => {
     setNewWorkExperience(prev => ({ ...prev, [field]: value }));
   }, []);
 
-  const handleEditingWorkExperienceChange = useCallback((field: keyof WorkExperience, value: string | string[]) => {
+  const handleEditingWorkExperienceChange = useCallback((field: keyof WorkExperience, value: string) => {
     setEditingWorkExperience(prev => ({ ...prev, [field]: value }));
   }, []);
 
@@ -520,20 +497,10 @@ const WorkExperienceEditor: React.FC<WorkExperienceEditorProps> = ({ onSuccess, 
                                 <p className="text-gray-300">
                                   {exp.startDate} - {exp.endDate}
                                 </p>
-                                {exp.jobDesc && (
-                                  <p className="text-gray-300 mt-2 text-sm">
-                                    <strong>Description:</strong> {exp.jobDesc}
+                                {exp.description && (
+                                  <p className="text-gray-300 mt-2 text-sm whitespace-pre-wrap">
+                                    {exp.description}
                                   </p>
-                                )}
-                                {exp.responsibilities && exp.responsibilities.length > 0 && (
-                                  <div className="text-gray-300 mt-2 text-sm">
-                                    <strong>Responsibilities:</strong>
-                                    <ul className="list-disc list-inside mt-1 space-y-1">
-                                      {exp.responsibilities.map((resp, respIndex) => (
-                                        <li key={respIndex}>{resp}</li>
-                                      ))}
-                                    </ul>
-                                  </div>
                                 )}
                               </div>
                               <div className="flex gap-2 ml-4">
