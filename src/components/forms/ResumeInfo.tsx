@@ -1073,20 +1073,6 @@ export default function ResumeInfo({ data }: ResumeInfoProps) {
         </Card>
       )}
 
-      {/* Education */}
-      {education && (
-        <Card withBorder mb="md" shadow="sm">
-          <Title order={3}>Education</Title>
-          <Card withBorder mb="sm" p="sm">
-            <Title order={4}>{education.institution}</Title>
-            <Text size="sm" mt="xs">
-              {education.degree} ({education.graduation_date})
-            </Text>
-            <Text mt="xs">GPA: {education.GPA}</Text>
-          </Card>
-        </Card>
-      )}
-
       {/* Job History */}
       {Array.isArray(jobs) && jobs.length > 0 && (
         <Card withBorder mb="md" shadow="sm">
@@ -1120,6 +1106,20 @@ export default function ResumeInfo({ data }: ResumeInfoProps) {
               </Card>
             ))}
           </Stack>
+        </Card>
+      )}
+
+      {/* Education */}
+      {education && (
+        <Card withBorder mb="md" shadow="sm">
+          <Title order={3}>Education</Title>
+          <Card withBorder mb="sm" p="sm">
+            <Title order={4}>{education.institution}</Title>
+            <Text size="sm" mt="xs">
+              {education.degree} ({education.graduation_date})
+            </Text>
+            <Text mt="xs">GPA: {education.GPA}</Text>
+          </Card>
         </Card>
       )}
     </Container>
