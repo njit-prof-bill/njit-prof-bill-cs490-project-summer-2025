@@ -1365,8 +1365,6 @@ export default function ResumeInfo({ data }: ResumeInfoProps) {
         </Card>
       )}
 
-      {/* Job History */}
-      {jobsState.length > 0 && (
         <div style={{ position: "relative" }}>
           {/* Spinner Overlay: show while saving job order */}
           {savingJobOrder && (
@@ -1790,7 +1788,6 @@ export default function ResumeInfo({ data }: ResumeInfoProps) {
             </Group>
           </Card>
         </div>
-      )}
 
 
       {/* Education */}
