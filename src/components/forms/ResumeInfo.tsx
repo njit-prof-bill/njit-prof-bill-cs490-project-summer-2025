@@ -1495,15 +1495,30 @@ export default function ResumeInfo({ data }: ResumeInfoProps) {
                               value={jobDraft?.location ?? ""}
                               error={locationError}
                               withAsterisk
-                              onChange={e => {
+                              required
+                              onChange={(e) => {
                                 const v = e.currentTarget.value;
-                                // update draft
-                                setJobDraft(d => (d ? { ...d, location: v } : d));
-                                // validate
+                                setJobDraft((d) => (d ? { ...d, location: v } : d));
+
+                                const trimmed = v.trim();
+                                const validLocation = /^[A-Za-z .'-]+,\s?[A-Za-z .'-]+$/.test(trimmed);
                                 setLocationError(
-                                  v.trim().length > 0 && !/,/.test(v)
-                                    ? "Please use format “City, State”"
-                                    : null
+                                  !trimmed
+                                    ? "Location is required"
+                                    : !validLocation
+                                      ? "Please use format: City, State"
+                                      : null
+                                );
+                              }}
+                              onBlur={() => {
+                                const trimmed = jobDraft?.location?.trim() || "";
+                                const validLocation = /^[A-Za-z .'-]+,\s?[A-Za-z .'-]+$/.test(trimmed);
+                                setLocationError(
+                                  !trimmed
+                                    ? "Location is required"
+                                    : !validLocation
+                                      ? "Please use format: City, State"
+                                      : null
                                 );
                               }}
                             />
@@ -1719,6 +1734,16 @@ export default function ResumeInfo({ data }: ResumeInfoProps) {
                     const newIndex = jobsState.length;
                     setEditingIndex(newIndex);
                     setJobDraft(empty);
+
+                    const trimmed = empty.location?.trim() || "";
+                    const validLocation = /^[A-Za-z .'-]+,\s?[A-Za-z .'-]+$/.test(trimmed);
+                    setLocationError(
+                      !trimmed
+                      ? "Location is required"
+                      : !validLocation
+                        ? "Please use format: City, State"
+                        : null
+                    );
                   }
                 }}
                 disabled={dragDisabled}
