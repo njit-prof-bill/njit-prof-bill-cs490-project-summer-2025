@@ -934,6 +934,34 @@ export default function ResumeInfo({ data }: ResumeInfoProps) {
     }
   };
 
+  const deleteJob = async (index: number) => {
+    if (!data._id) return;
+
+    setSaving((prev) => ({ ...prev, jobs: true }));
+
+    try {
+      const res = await fetch(`http://localhost:5000/resume/${data._id}/delete_job/${index}`, {
+        method: "DELETE",
+      });
+
+      const resData = await res.json();
+      if (!res.ok) {
+        notifications.show({ title: "Error", message: resData.error || "Failed to delete job", color: "red" });
+      }
+      else {
+        notifications.show({ title: "Success", message: "Job deleted!", color: "teal", autoClose: 1000 });
+        setJobsState((prev) => prev.filter((_, i) => i !== index));
+        if (editingIndex === index) cancelEdit();
+      }
+    }
+    catch(e) {
+      notifications.show({ title: "Error", message: "Failed to delete job", color: "red" });
+    }
+    finally {
+      setSaving((prev) => ({ ...prev, jobs: false }));
+    }
+  };
+
   return (
     <Container size="lg" py="md">
       <Title order={2} mb="lg">Data Overview</Title>
@@ -1360,11 +1388,11 @@ export default function ResumeInfo({ data }: ResumeInfoProps) {
                           color="gray"
                           size="xs"
                           radius="xl"
-                          onClick={(e) => {
+                          onClick={async (e) => {
                             e.stopPropagation();
-                            setJobsState((prev) => prev.filter((_, i) => i !== index));
-                            if (editingIndex === index) cancelEdit();
+                            await deleteJob(index);                       
                           }}
+                          loading={saving.jobs}
                         >
                           <IconX size="1rem" />
                         </ActionIcon>

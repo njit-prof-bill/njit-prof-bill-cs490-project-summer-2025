@@ -245,3 +245,26 @@ def set_all_jobs(resume_id):
         return jsonify({"message": "Job order updated successfully"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@resume_bp.route("/resume/<resume_id>/delete_job/<int:index>", methods=["DELETE"])
+def delete_job_entry(resume_id, index):
+    try:
+        if not ObjectId.is_valid(resume_id):
+            return jsonify({"error": "Invalid resume ID"}), 400
+        
+        doc = biography_collection.find_one({"_id": ObjectId(resume_id)})
+        if not doc:
+            return jsonify({"error": "Resume not found"}), 404
+        
+        jobs = doc.get("parse_result", {}).get("jobs", [])
+        if index < 0 or index >= len(jobs):
+            return jsonify({"error": "Invalid job index"}), 400
+        
+        jobs.pop(index)
+        biography_collection.update_one(
+            {"_id": ObjectId(resume_id)},
+            {"$set": {"parse_result.jobs": jobs}}
+        )
+        return jsonify({"success": True}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
