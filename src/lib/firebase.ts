@@ -2,7 +2,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore"
-import { getAI, getGenerativeModel, GoogleAIBackend } from "firebase/ai"
+import { HarmBlockThreshold, HarmCategory, getAI, getGenerativeModel, GoogleAIBackend } from "firebase/ai"
 
 // Firebase configuration using environment variables
 const firebaseConfig = {
@@ -26,5 +26,17 @@ export const db = getFirestore(app);
 // Initialize the Gemini Developer API backend service
 export const ai = getAI(app, { backend: new GoogleAIBackend() });
 
+// Put safety settings on ai input
+export const safetySettings = [
+    {
+        category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+        threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH,
+    },
+    {
+        category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+        threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+    },
+];
+
 // Create a `GenerativeModel` instance
-export const model = getGenerativeModel(ai, { model: "gemini-2.0-flash-001" });
+export const model = getGenerativeModel(ai, { model: "gemini-2.0-flash-001", safetySettings });
