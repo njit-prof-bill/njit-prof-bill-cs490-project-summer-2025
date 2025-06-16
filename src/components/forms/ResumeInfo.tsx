@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useMemo } from "react";
-import { Container, Card, Title, Text, Group, Stack, Badge, Button, TextInput, ActionIcon, Autocomplete, Textarea, CloseButton, Tooltip, Paper } from "@mantine/core";
+import { Container, Card, Title, Text, Group, Stack, Badge, Button, TextInput, ActionIcon, Autocomplete, Textarea, CloseButton, Tooltip, Paper, Collapse, UnstyledButton } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { IconTrash, IconX, IconPlus, IconGripVertical } from "@tabler/icons-react";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
@@ -738,7 +738,37 @@ export default function ResumeInfo({ data }: ResumeInfoProps) {
     });
   };
 
-  
+  function toggleEdit(idx: number) {
+    if (editingIndex === idx) {
+      setEditingIndex(null);
+      setJobDraft(null);
+    } 
+    else {
+      setEditingIndex(idx);
+      // make a fresh copy of that job into draft
+      setJobDraft({ ...jobsState[idx] });
+    }
+  }
+
+  function saveJob(idx: number) {
+    if (!jobDraft) return;
+
+    if (!jobDraft.title || !jobDraft.company) {
+      notifications.show({ title: "Validation Error", message: "Title & Company are required", color: "red" });
+      return;
+    }
+    setJobsState((prev) => {
+      const copy = [...prev];
+      copy[idx] = jobDraft;
+      return copy;
+    });
+    setEditingIndex(null);
+    setJobDraft(null);
+  }
+  function cancelEdit() {
+    setEditingIndex(null);
+    setJobDraft(null);
+  }
 
   return (
     <Container size="lg" py="md">
@@ -1095,47 +1125,267 @@ export default function ResumeInfo({ data }: ResumeInfoProps) {
         </Card>
       )}
 
-      {/* Job History */}
-      {jobsState.length > 0 && (
-        <Card withBorder mb="md" shadow="sm">
-          <Title order={3}>Job History</Title>
+     {/* Job History */}
+    {jobsState.length > 0 && (
+      <Card withBorder mb="md" shadow="sm">
+        <Title order={3}>Job History</Title>
 
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleJobDragEnd}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleJobDragEnd}
+        >
+          <SortableContext
+            items={jobsState.map((_, i) => i.toString())}
+            strategy={verticalListSortingStrategy}
           >
-            <SortableContext
-              items={jobsState.map((_, i) => i.toString())}
-              strategy={verticalListSortingStrategy}
-            >
-              <Stack mt="sm">
-                {jobsState.map((job, index) => (
-                  <SortableJobCard
-                    key={index}
-                    id={index.toString()}
-                    job={job}
+            <Stack mt="sm">
+              {jobsState.map((job, index) => (
+                <SortableJobCard key={index} id={index.toString()} job={job}>
+                  {/* Header — entire bar clickable, +/- at top right */}
+                  <UnstyledButton
+                    onClick={() => toggleEdit(index)}
+                    style={{ display: "block", width: "100%" }}
                   >
-                    {/* inline editor goes here, e.g.:
-                    <Group position="apart" mb="xs">
+                    <Group
+                      align="center"
+                      style={{ 
+                        cursor: "pointer", 
+                        padding: "8px 16px",
+                        justifyContent: "space-between",
+                      }}
+                    >
                       <Text>
-                        {job.title ?? '—'} @ {job.company ?? '—'}
+                        {job.title ?? "—"} @ {job.company ?? "—"}
                       </Text>
-                      <ActionIcon onClick={() => toggleEdit(index)}>
-                        {editing === index ? <IconX /> : <IconPencil />}
-                      </ActionIcon>
+                      <Tooltip
+                        label={editingIndex === index ? "Collapse" : "Expand"}
+                        withArrow
+                      >
+                        <Text size="sm" c="gray">
+                          {editingIndex === index ? "–" : "+"}
+                        </Text>
+                      </Tooltip>
                     </Group>
-                    <Collapse in={editing === index}>
-                      …your TextInputs, Textareas, etc…
-                    </Collapse>
-                    */}
-                  </SortableJobCard>
-                ))}
-              </Stack>
-            </SortableContext>
-          </DndContext>
-        </Card>
-      )}
+                  </UnstyledButton>
+
+                  {/* Delete Job Button */}
+                  <Tooltip label="Remove job" withArrow>
+                      <ActionIcon
+                        variant="subtle"
+                        color="gray"
+                        size="xs"
+                        radius="xl"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // remove this job from state
+                          setJobsState((prev) =>
+                            prev.filter((_, i) => i !== index)
+                          );
+                          // if we were editing this one, close the form
+                          if (editingIndex === index) cancelEdit();
+                        }}
+                      >
+                        <IconX size="1rem" />
+                      </ActionIcon>
+                    </Tooltip>
+
+                  {/* Inline edit form */}
+                  <Collapse in={editingIndex === index}>
+                    <Stack px="md" pb="md">
+                      <TextInput
+                        label="Title"
+                        value={jobDraft?.title ?? ""}
+                        onChange={(e) =>
+                          setJobDraft((d) =>
+                            d && { ...d, title: e.currentTarget.value }
+                          )
+                        }
+                        required
+                      />
+                      <TextInput
+                        label="Company"
+                        value={jobDraft?.company ?? ""}
+                        onChange={(e) =>
+                          setJobDraft((d) =>
+                            d && { ...d, company: e.currentTarget.value }
+                          )
+                        }
+                        required
+                      />
+                      <TextInput
+                        label="Location"
+                        value={jobDraft?.location ?? ""}
+                        onChange={(e) =>
+                          setJobDraft((d) =>
+                            d && { ...d, location: e.currentTarget.value }
+                          )
+                        }
+                      />
+                      <Group>
+                        <TextInput
+                          label="Start Date (YYYY-MM)"
+                          value={jobDraft?.start_date ?? ""}
+                          onChange={(e) =>
+                            setJobDraft((d) =>
+                              d && { ...d, start_date: e.currentTarget.value }
+                            )
+                          }
+                        />
+                        <TextInput
+                          label="End Date"
+                          placeholder="YYYY-MM or Present"
+                          value={jobDraft?.end_date ?? ""}
+                          onChange={(e) =>
+                            setJobDraft((d) =>
+                              d && { ...d, end_date: e.currentTarget.value }
+                            )
+                          }
+                        />
+                      </Group>
+                      <Textarea
+                        label="Role Summary"
+                        value={jobDraft?.role_summary ?? ""}
+                        onChange={(e) =>
+                          setJobDraft((d) =>
+                            d && { ...d, role_summary: e.currentTarget.value }
+                          )
+                        }
+                      />
+
+                      <Title order={5}>Responsibilities</Title>
+                      {jobDraft?.responsibilities.map((resp, i) => (
+                        <Group key={i} align="flex-end">
+                          <Textarea
+                            autosize
+                            minRows={1}
+                            value={resp}
+                            onChange={(e) => {
+                              const updated = [...jobDraft.responsibilities];
+                              updated[i] = e.currentTarget.value;
+                              setJobDraft((d) =>
+                                d && { ...d, responsibilities: updated }
+                              );
+                            }}
+                          />
+                          <ActionIcon
+                            color="red"
+                            onClick={() => {
+                              const updated = [...jobDraft.responsibilities];
+                              updated.splice(i, 1);
+                              setJobDraft((d) =>
+                                d && { ...d, responsibilities: updated }
+                              );
+                            }}
+                          >
+                            <IconTrash size="1rem" />
+                          </ActionIcon>
+                        </Group>
+                      ))}
+                      <Button
+                        variant="subtle"
+                        size="xs"
+                        onClick={() =>
+                          setJobDraft((d) =>
+                            d && {
+                              ...d,
+                              responsibilities: [...d.responsibilities, ""],
+                            }
+                          )
+                        }
+                      >
+                        + Add Responsibility
+                      </Button>
+
+                      <Title order={5}>Accomplishments</Title>
+                      {jobDraft?.accomplishments.map((acc, i) => (
+                        <Group key={i} align="flex-end">
+                          <Textarea
+                            autosize
+                            minRows={1}
+                            value={acc}
+                            onChange={(e) => {
+                              const updated = [...jobDraft.accomplishments];
+                              updated[i] = e.currentTarget.value;
+                              setJobDraft((d) =>
+                                d && { ...d, accomplishments: updated }
+                              );
+                            }}
+                          />
+                          <ActionIcon
+                            color="red"
+                            onClick={() => {
+                              const updated = [...jobDraft.accomplishments];
+                              updated.splice(i, 1);
+                              setJobDraft((d) =>
+                                d && { ...d, accomplishments: updated }
+                              );
+                            }}
+                          >
+                            <IconTrash size="1rem" />
+                          </ActionIcon>
+                        </Group>
+                      ))}
+                      <Button
+                        variant="subtle"
+                        size="xs"
+                        onClick={() =>
+                          setJobDraft((d) =>
+                            d && {
+                              ...d,
+                              accomplishments: [...d.accomplishments, ""],
+                            }
+                          )
+                        }
+                      >
+                        + Add Accomplishment
+                      </Button>
+
+                      <Group mt="sm">
+                        <Button size="xs" onClick={() => saveJob(index)}>
+                          Save
+                        </Button>
+                        <Button size="xs" variant="subtle" onClick={cancelEdit}>
+                          Cancel
+                        </Button>
+                      </Group>
+                    </Stack>
+                  </Collapse>
+                </SortableJobCard>
+              ))}
+            </Stack>
+          </SortableContext>
+        </DndContext>
+
+        {/* + Add Job button */}
+        <Group mb="sm">
+          <Button
+            variant="light"
+            onClick={() => {
+              const empty: JobEntry = {
+                title: null,
+                company: null,
+                location: null,
+                start_date: null,
+                end_date: null,
+                role_summary: null,
+                responsibilities: [],
+                accomplishments: [],
+              };
+              setJobsState((prev) => [...prev, empty]);
+              const newIndex = jobsState.length;      // index of the newly added card
+              setEditingIndex(newIndex);
+              setJobDraft(empty);
+            }}
+          >
+            + Add Job
+          </Button>
+        </Group>
+      </Card>
+    )}
+
+
+
 
       {/* Education */}
       {education && (

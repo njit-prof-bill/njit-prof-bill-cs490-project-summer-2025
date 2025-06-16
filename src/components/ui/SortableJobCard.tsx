@@ -38,7 +38,7 @@ export default function SortableJobCard({ id, job, children }: SortableJobCardPr
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
-    transition,
+    transition: isDragging ? transition : "none",
     opacity: isDragging ? 0.6 : 1,
   };
 
