@@ -207,3 +207,41 @@ def add_job_entry(resume_id):
         return jsonify({"message": "Job added successfully"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@resume_bp.route("/resume/<resume_id>/set_jobs", methods=["POST"])
+def set_all_jobs(resume_id):
+    try:
+        if not ObjectId.is_valid(resume_id):
+            return jsonify({"error": "Invalid resume ID"}), 400
+        
+        data = request.get_json()
+        jobs = data.get("jobs")
+        if not isinstance(jobs, list):
+            return jsonify({"error": "Jobs must be a list"}), 400
+        
+        required_fields = [
+            "title", "company", "location", "start_date", "end_date",
+            "role_summary", "responsibilities", "accomplishments"
+        ]
+
+        for idx, job in enumerate(jobs):
+            for field in required_fields:
+                if field not in job:
+                    return jsonify({"error": f"Job {idx+1} missing field: {field}"}), 400
+            if not isinstance(job["responsibilities"], list) or not isinstance(job["accomplishments"], list):
+                return jsonify({"error": f"Job {idx+1}: Responsibilities and accomplishments must be lists"}), 400
+            if not isinstance(job["title"], str) or not job["title"].strip():
+                return jsonify({"error": f"Job {idx+1} has invalid or empty title"}), 400
+            if not isinstance(job["company"], str) or not job["company"].strip():
+                return jsonify({"error": f"Job {idx+1} has invalid or empty company"}), 400
+
+        result = biography_collection.update_one(
+            {"_id": ObjectId(resume_id)},
+            {"$set": {"parse_result.jobs": jobs}}
+        )
+        if result.matched_count == 0:
+            return jsonify({"error": "Resume not found"}), 404
+        
+        return jsonify({"message": "Job order updated successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
