@@ -10,7 +10,8 @@ import { IconGripVertical } from "@tabler/icons-react";
 export interface EducationEntry {
   institution: string | null;
   degree: string | null;
-  graduation_date: string | null;
+  start_date: string | null;
+  end_date: string | null;
   GPA: number | null;
 }
 
@@ -54,7 +55,8 @@ export default function SortableEducationCard({
               {entry.institution ?? "<No School>"} — {entry.degree ?? "<No Degree>"}
             </Title>
             <Text size="sm" c="dimmed">
-              {entry.graduation_date ?? "No Date"} {entry.GPA !== null ? `· GPA: ${entry.GPA}` : ""}
+              {entry.start_date ?? "No start"} – {entry.end_date ?? "No end"}
+              {entry.GPA !== null ? ` · GPA: ${entry.GPA}` : ""}
             </Text>
           </div>
         </Group>

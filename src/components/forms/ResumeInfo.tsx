@@ -70,9 +70,10 @@ interface ResumeInfoProps {
       accomplishments: string[];
     }[];
     education: {
-      degree: string | null;
       institution: string | null;
-      graduation_date: string | null;
+      degree: string | null;
+      start_date: string | null;
+      end_date: string | null;
       GPA: number | null;
     }[];
   };
@@ -98,7 +99,8 @@ type EduEntry = ResumeInfoProps["data"]["education"][number];
 const canonicalizeEdu = (edu: any): EduEntry => ({
   institution: edu.institution ?? null,
   degree: edu.degree ?? null,
-  graduation_date: edu.graduation_date ?? null,
+  start_date: edu.start_date ?? null,
+  end_date: edu.end_date ?? null,
   GPA: typeof edu.GPA === "number" ? edu.GPA : null,
 });
 
@@ -455,7 +457,15 @@ export default function ResumeInfo({ data }: ResumeInfoProps) {
   const [savingEduOrder, setSavingEduOrder] = useState(false);
 
   const isEduSaveDisabled =
-    !eduDraft || !eduDraft.institution?.trim() || !eduDraft.degree?.trim();
+    !eduDraft ||
+    !eduDraft.institution?.trim() ||
+    !eduDraft.degree?.trim() ||
+    !/^\d{4}-\d{2}$/.test(eduDraft.start_date || "") ||
+    !/^\d{4}-\d{2}$/.test(eduDraft.end_date || "");
+
+  const [gpaInput, setGpaInput] = useState<string>(
+    eduDraft?.GPA != null ? eduDraft.GPA.toFixed(2) : ""
+  );
 
   const blockEduUI = editingEduIndex !== null && isEduSaveDisabled;
 
@@ -2416,40 +2426,121 @@ export default function ResumeInfo({ data }: ResumeInfoProps) {
                           }
                           required
                         />
-
-                        <TextInput
-                          label="Graduation Date (YYYY-MM)"
-                          placeholder="2025-06"
-                          value={eduDraft?.graduation_date ?? ""}
-                          onChange={(e) => {
-                            const val = e.currentTarget.value;
-                            setEduDraft((d) =>
-                              canonicalizeEdu(d || {}).graduation_date !==
-                              undefined
-                                ? {
-                                    ...canonicalizeEdu(d || {}),
-                                    graduation_date: val,
-                                  }
+                        <Group grow mt="sm">
+                          {/* Start Date */}
+                          <TextInput
+                            label="Start Date (YYYY-MM)"
+                            placeholder="2021-09"
+                            withAsterisk
+                            required
+                            value={eduDraft?.start_date ?? ""}
+                            error={
+                              !eduDraft?.start_date
+                                ? "Start date is required"
+                                : !/^\d{4}-\d{2}$/.test(eduDraft.start_date)
+                                ? "Use format YYYY-MM"
                                 : null
-                            );
-                          }}
-                        />
+                            }
+                            onChange={(e) => {
+                              const raw = e.currentTarget.value;
+                              const digits = raw.replace(/\D/g, "").slice(0, 6);
+                              const masked =
+                                digits.length > 4
+                                  ? digits.slice(0, 4) + "-" + digits.slice(4)
+                                  : digits;
+                              setEduDraft((d) =>
+                                d
+                                  ? {
+                                      ...canonicalizeEdu(d),
+                                      start_date: masked,
+                                    }
+                                  : d
+                              );
+                            }}
+                          />
 
+                          <TextInput
+                            label="End Date"
+                            placeholder="YYYY-MM or Present"
+                            withAsterisk
+                            required
+                            value={eduDraft?.end_date ?? ""}
+                            error={
+                              !eduDraft?.end_date
+                                ? "End date is required"
+                                : !/^(?:\d{4}-\d{2}|Present)$/i.test(
+                                    eduDraft.end_date
+                                  )
+                                ? "Use YYYY-MM or exactly “Present”"
+                                : eduDraft.start_date &&
+                                  eduDraft.end_date !== "Present" &&
+                                  eduDraft.end_date < eduDraft.start_date
+                                ? "End date must be later than start date"
+                                : null
+                            }
+                            onChange={(e) => {
+                              const raw = e.currentTarget.value;
+                              let next: string;
+
+                              // If they type letters at all, just keep what they type
+                              if (/[A-Za-z]/.test(raw)) {
+                                next = raw;
+                              } else {
+                                // Otherwise mask as YYYY-MM
+                                const digits = raw
+                                  .replace(/\D/g, "")
+                                  .slice(0, 6);
+                                next =
+                                  digits.length > 4
+                                    ? `${digits.slice(0, 4)}-${digits.slice(4)}`
+                                    : digits;
+                              }
+
+                              setEduDraft((d) =>
+                                d
+                                  ? {
+                                      ...d,
+                                      end_date: next,
+                                    }
+                                  : d
+                              );
+                            }}
+                          />
+                        </Group>
                         <TextInput
                           label="GPA"
                           placeholder="e.g. 3.75"
-                          value={
-                            eduDraft?.GPA != null ? eduDraft.GPA.toString() : ""
-                          }
+                          value={gpaInput}
                           onChange={(e) => {
+                            // strip non-digits, max 3 chars (1 before, 2 after)
                             const raw = e.currentTarget.value;
-                            const n = parseFloat(raw);
-                            const updated = {
-                              ...canonicalizeEdu(eduDraft || {}),
-                              GPA: isNaN(n) ? null : n,
-                            };
-                            setEduDraft(updated);
+                            const digits = raw.replace(/\D/g, "").slice(0, 3);
+
+                            // auto-insert decimal after first digit
+                            const formatted =
+                              digits.length <= 1
+                                ? digits
+                                : `${digits[0]}.${digits.slice(1)}`;
+
+                            setGpaInput(formatted);
+                            setEduDraft((d) =>
+                              d
+                                ? {
+                                    ...d,
+                                    GPA:
+                                      formatted === ""
+                                        ? null
+                                        : parseFloat(formatted),
+                                  }
+                                : d
+                            );
                           }}
+                          error={
+                            // only validate non-empty inputs, require exactly X.XX
+                            gpaInput && !/^[0-9]\.[0-9]{2}$/.test(gpaInput)
+                              ? "Use format X.XX"
+                              : null
+                          }
                         />
 
                         <Group mt="sm">
