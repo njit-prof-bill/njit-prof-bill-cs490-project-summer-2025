@@ -6,33 +6,37 @@ import { notifications } from "@mantine/notifications";
 import { IconTrash, IconX, IconPlus, IconGripVertical } from "@tabler/icons-react";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, useSortable, arrayMove, rectSortingStrategy, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import SortableJobCard from "@/components/ui/SortableJobCard";
 import { CSS } from "@dnd-kit/utilities";
 
 interface ResumeInfoProps {
   data: {
     _id?: string;
-    name?: string;
+    name?: string | null;
     contact?: {
       phones?: string[];
       emails?: string[];
     };
-    career_objective?: string;
+    career_objective: string | null;
     skills?: {
       [category: string]: string[];
     };
-    education?: {
-      degree?: string;
-      institution?: string;
-      graduation_date?: string;
-      GPA?: number;
-    };
-    jobs?: {
-      title: string;
-      company: string;
-      location?: string;
-      duration?: string;
-      responsibilities: string[];
+    jobs: {
+      title: string | null;
+      company: string | null;
+      location: string | null;
+      start_date: string | null;      
+      end_date: string | null;        
+      role_summary: string | null;
+      responsibilities: string[];    
+      accomplishments: string[];
     }[];
+    education: {
+      degree: string | null;
+      institution: string | null;
+      graduation_date: string | null;
+      GPA: number | null;
+    };
   };
 }
 
@@ -252,7 +256,7 @@ function SortableCategory({
 export default function ResumeInfo({ data }: ResumeInfoProps) {
   const sensors = useSensors(useSensor(PointerSensor));
 
-  const { name, contact, career_objective, skills, education, jobs } = data;
+  const { name, contact, career_objective, skills, education } = data;
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   
@@ -282,8 +286,14 @@ export default function ResumeInfo({ data }: ResumeInfoProps) {
   
   const [badgeSkillErrors, setBadgeSkillErrors] = useState<{ [category: string]: string | null }>({});
 
+  type JobEntry = ResumeInfoProps["data"]["jobs"][number];
+  const [jobsState, setJobsState] = useState<JobEntry[]>(data.jobs ?? []);
+  const [jobDraft, setJobDraft] = useState<JobEntry | null>(null);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+
   const [saving, setSaving] = useState({ emails: false, phones: false, objective: false, skills: false });
 
+  
 
   const validateEmails = (emails: string[]) => {
     return emails.map((email) => {
@@ -717,6 +727,18 @@ export default function ResumeInfo({ data }: ResumeInfoProps) {
     return null;
   }, [skillsState]);
 
+  const handleJobDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    setJobsState((prev) => {
+      const oldIndex = Number(active.id);
+      const newIndex = Number(over.id);
+      return arrayMove(prev, oldIndex, newIndex);
+    });
+  };
+
+  
 
   return (
     <Container size="lg" py="md">
@@ -852,132 +874,132 @@ export default function ResumeInfo({ data }: ResumeInfoProps) {
 
       {/* Skills */}
       {skillsState && (
-  <Card withBorder mb="md" shadow="sm">
-    <Title order={3}>Skills</Title>
-    <Stack mt="sm">
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleCategoryDragEnd}
-      >
-        <SortableContext items={categoryOrder} strategy={verticalListSortingStrategy}>
-          {categoryOrder.map((category) => {
-            const skillList = skillsState[category] || [];
+        <Card withBorder mb="md" shadow="sm">
+          <Title order={3}>Skills</Title>
+          <Stack mt="sm">
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleCategoryDragEnd}
+            >
+              <SortableContext items={categoryOrder} strategy={verticalListSortingStrategy}>
+                {categoryOrder.map((category) => {
+                  const skillList = skillsState[category] || [];
 
-            return (
-              <SortableCategory key={category} id={category}>
-                <div style={{ marginBottom: "1rem" }}>
-                  {/* Category Header */}
-                  <Group align="center" mb="xs">
-                    <Title order={4} mt="sm">{category}</Title>
-                    <Tooltip 
-                      label={
-                        emptiedCategories.has(category)
-                          ? `Click again to delete "${category}"`
-                          : `Remove all skills in "${category}"`
-                      } 
-                      withArrow
-                    >
-                      <ActionIcon
-                        variant="subtle"
-                        color="gray"
-                        radius="xl"
-                        size="xs"
-                        style={{ opacity: 0.7 }}
-                        onClick={() => {
-                          if((skillsState[category]?.length ?? 0) > 0) {
-                            // Clear the skills
-                            setSkillsState(prev => ({ ...prev, [category]: [] }));
-                            setEmptiedCategories(prev => new Set(prev).add(category));
-                          }
-                          else {
-                            // Fully remove category
-                            setSkillsState(prev => {
-                              const updated = { ...prev };
-                              delete updated[category];
-                              return updated;
-                            });
-                            setCategoryOrder(prev => prev.filter(c => c !== category));
-                            setEmptiedCategories(prev => {
-                              const updated = new Set(prev);
-                              updated.delete(category);
-                              return updated;
-                            });
-                          }
-                        }}
-                      >
-                        <IconX size="0.9rem" stroke={1.5} />
-                      </ActionIcon>
-                    </Tooltip>
-                  </Group>
-
-                  {/* Skills DnD */}
-                  <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
-                    onDragEnd={handleDragEnd}
-                  >
-                    <SortableContext items={skillList} strategy={rectSortingStrategy}>
-                      <Group wrap="wrap" gap={6} align="center">
-                        {skillList.map((skill) => (
-                          <DraggableSkill
-                            key={skill}
-                            id={skill}
-                            category={category}
-                            label={skill}
-                            onRemove={() => removeSkill(category, skill)}
-                            color={getColorFromCategory(category)}
-                          />
-                        ))}
-
-                        {editingBadge[category] ? (
-                          <ClosableEditableBadge
-                            label={newSkillValues[category] || ""}
-                            isEditing
-                            onChange={(val) => {
-                              const lowerVal = val.trim().toLowerCase();
-                              const allSkills = getAllSkills(skillsState).map((s) => s.toLowerCase());
-
-                              setNewSkillValues((prev) => ({ ...prev, [category]: val }));
-
-                              if (!val.trim()) {
-                                setBadgeSkillErrors((prev) => ({ ...prev, [category]: "Skill is required." }));
-                              } else if (allSkills.includes(lowerVal)) {
-                                const matched = getAllSkills(skillsState).find(s => s.toLowerCase() === lowerVal);
-                                const matchUpper = matched ? matched.toUpperCase() : val.toUpperCase();
-                                setBadgeSkillErrors((prev) => ({ ...prev, [category]: `"${matchUpper}" already exists.` }));
-                              } else {
-                                setBadgeSkillErrors((prev) => ({ ...prev, [category]: null }));
-                              }
-                            }}
-                            onClose={() => saveNewSkill(category)}
-                            onCancel={() => {
-                              setEditingBadge((prev) => ({ ...prev, [category]: false }));
-                              setNewSkillValues((prev) => ({ ...prev, [category]: "" }));
-                              setBadgeSkillErrors((prev) => ({ ...prev, [category]: null }));
-                            }}
-                            color={getColorFromCategory(category)}
-                            error={badgeSkillErrors[category]}
-                          />
-                        ) : (
-                          <ActionIcon
-                            variant="light"
-                            onClick={() => startAddSkill(category)}
-                            color={getColorFromCategory(category)}
+                  return (
+                    <SortableCategory key={category} id={category}>
+                      <div style={{ marginBottom: "1rem" }}>
+                        {/* Category Header */}
+                        <Group align="center" mb="xs">
+                          <Title order={4} mt="sm">{category}</Title>
+                          <Tooltip 
+                            label={
+                              emptiedCategories.has(category)
+                                ? `Click again to delete "${category}"`
+                                : `Remove all skills in "${category}"`
+                            } 
+                            withArrow
                           >
-                            <IconPlus size="1rem" />
-                          </ActionIcon>
-                        )}
-                      </Group>
-                    </SortableContext>
-                  </DndContext>
-                </div>
-              </SortableCategory>
-            );
-          })}
-        </SortableContext>
-      </DndContext>
-    </Stack>
+                            <ActionIcon
+                              variant="subtle"
+                              color="gray"
+                              radius="xl"
+                              size="xs"
+                              style={{ opacity: 0.7 }}
+                              onClick={() => {
+                                if((skillsState[category]?.length ?? 0) > 0) {
+                                  // Clear the skills
+                                  setSkillsState(prev => ({ ...prev, [category]: [] }));
+                                  setEmptiedCategories(prev => new Set(prev).add(category));
+                                }
+                                else {
+                                  // Fully remove category
+                                  setSkillsState(prev => {
+                                    const updated = { ...prev };
+                                    delete updated[category];
+                                    return updated;
+                                  });
+                                  setCategoryOrder(prev => prev.filter(c => c !== category));
+                                  setEmptiedCategories(prev => {
+                                    const updated = new Set(prev);
+                                    updated.delete(category);
+                                    return updated;
+                                  });
+                                }
+                              }}
+                            >
+                              <IconX size="0.9rem" stroke={1.5} />
+                            </ActionIcon>
+                          </Tooltip>
+                        </Group>
+
+                        {/* Skills DnD */}
+                        <DndContext
+                          sensors={sensors}
+                          collisionDetection={closestCenter}
+                          onDragEnd={handleDragEnd}
+                        >
+                          <SortableContext items={skillList} strategy={rectSortingStrategy}>
+                            <Group wrap="wrap" gap={6} align="center">
+                              {skillList.map((skill) => (
+                                <DraggableSkill
+                                  key={skill}
+                                  id={skill}
+                                  category={category}
+                                  label={skill}
+                                  onRemove={() => removeSkill(category, skill)}
+                                  color={getColorFromCategory(category)}
+                                />
+                              ))}
+
+                              {editingBadge[category] ? (
+                                <ClosableEditableBadge
+                                  label={newSkillValues[category] || ""}
+                                  isEditing
+                                  onChange={(val) => {
+                                    const lowerVal = val.trim().toLowerCase();
+                                    const allSkills = getAllSkills(skillsState).map((s) => s.toLowerCase());
+
+                                    setNewSkillValues((prev) => ({ ...prev, [category]: val }));
+
+                                    if (!val.trim()) {
+                                      setBadgeSkillErrors((prev) => ({ ...prev, [category]: "Skill is required." }));
+                                    } else if (allSkills.includes(lowerVal)) {
+                                      const matched = getAllSkills(skillsState).find(s => s.toLowerCase() === lowerVal);
+                                      const matchUpper = matched ? matched.toUpperCase() : val.toUpperCase();
+                                      setBadgeSkillErrors((prev) => ({ ...prev, [category]: `"${matchUpper}" already exists.` }));
+                                    } else {
+                                      setBadgeSkillErrors((prev) => ({ ...prev, [category]: null }));
+                                    }
+                                  }}
+                                  onClose={() => saveNewSkill(category)}
+                                  onCancel={() => {
+                                    setEditingBadge((prev) => ({ ...prev, [category]: false }));
+                                    setNewSkillValues((prev) => ({ ...prev, [category]: "" }));
+                                    setBadgeSkillErrors((prev) => ({ ...prev, [category]: null }));
+                                  }}
+                                  color={getColorFromCategory(category)}
+                                  error={badgeSkillErrors[category]}
+                                />
+                              ) : (
+                                <ActionIcon
+                                  variant="light"
+                                  onClick={() => startAddSkill(category)}
+                                  color={getColorFromCategory(category)}
+                                >
+                                  <IconPlus size="1rem" />
+                                </ActionIcon>
+                              )}
+                            </Group>
+                          </SortableContext>
+                        </DndContext>
+                      </div>
+                    </SortableCategory>
+                  );
+                })}
+              </SortableContext>
+            </DndContext>
+          </Stack>
 
           {/* Add new Categories */}
           <Group mt="md">
@@ -1074,38 +1096,44 @@ export default function ResumeInfo({ data }: ResumeInfoProps) {
       )}
 
       {/* Job History */}
-      {Array.isArray(jobs) && jobs.length > 0 && (
+      {jobsState.length > 0 && (
         <Card withBorder mb="md" shadow="sm">
           <Title order={3}>Job History</Title>
-          <Stack mt="sm">
-            {jobs.map((job, index) => (
-              <Card withBorder key={index} mb="sm" p="sm">
-                <Title order={4}>
-                  {job.title} @ {job.company}
-                </Title>
-                {job.location && (
-                  <Text size="sm" mt="xs">
-                    Location: {job.location}
-                  </Text>
-                )}
-                {job.duration && (
-                  <Text size="sm" mt="xs">
-                    Duration: {job.duration}
-                  </Text>
-                )}
-                <Text mt="xs">
-                  <strong>Responsibilities:</strong>
-                </Text>
-                <ul>
-                  {Array.isArray(job.responsibilities)
-                    ? job.responsibilities.map((item, i) => (
-                      <li key={i}>{item}</li>
-                    ))
-                    : null}
-                </ul>
-              </Card>
-            ))}
-          </Stack>
+
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleJobDragEnd}
+          >
+            <SortableContext
+              items={jobsState.map((_, i) => i.toString())}
+              strategy={verticalListSortingStrategy}
+            >
+              <Stack mt="sm">
+                {jobsState.map((job, index) => (
+                  <SortableJobCard
+                    key={index}
+                    id={index.toString()}
+                    job={job}
+                  >
+                    {/* inline editor goes here, e.g.:
+                    <Group position="apart" mb="xs">
+                      <Text>
+                        {job.title ?? '—'} @ {job.company ?? '—'}
+                      </Text>
+                      <ActionIcon onClick={() => toggleEdit(index)}>
+                        {editing === index ? <IconX /> : <IconPencil />}
+                      </ActionIcon>
+                    </Group>
+                    <Collapse in={editing === index}>
+                      …your TextInputs, Textareas, etc…
+                    </Collapse>
+                    */}
+                  </SortableJobCard>
+                ))}
+              </Stack>
+            </SortableContext>
+          </DndContext>
         </Card>
       )}
 
