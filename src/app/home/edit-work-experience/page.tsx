@@ -188,7 +188,7 @@ function ResponsibilitiesForm({resList, jobIdx}: ResponsibilitiesFormProps) {
         <>
             <h3>Responsibilities:</h3>
             {list.map((resEntry, resIdx) => (
-                <>
+                <div key={resIdx}>
                     <input
                         type="text"
                         id={`responsibilities_${resIdx}_job_${jobIdx}`}
@@ -199,7 +199,7 @@ function ResponsibilitiesForm({resList, jobIdx}: ResponsibilitiesFormProps) {
                         size={40}
                     ></input>
                     <button onClick={(event) => removeRes(event, resIdx)}>Remove</button><br></br>
-                </>
+                </div>
             ))}
             <button onClick={addRes}>Add New Responsibility</button>
             <br></br>
