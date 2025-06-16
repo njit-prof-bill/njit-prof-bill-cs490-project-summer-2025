@@ -935,6 +935,14 @@ export default function ResumeInfo({ data }: ResumeInfoProps) {
   };
 
   const deleteJob = async (index: number) => {
+    // If it's a new/unsaved job, just remove from jobsState.
+    if (index >= (data.jobs?.length ?? 0)) {
+      setJobsState((prev) => prev.filter((_, i) => i !== index));
+      // Also exit edit mode if it was editing
+      if (editingIndex === index) cancelEdit();
+      return;
+    }
+    // Otherwise, delete from backend
     if (!data._id) return;
 
     setSaving((prev) => ({ ...prev, jobs: true }));
