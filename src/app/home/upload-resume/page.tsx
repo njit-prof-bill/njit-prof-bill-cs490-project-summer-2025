@@ -147,8 +147,6 @@ if (loading) {
         url="/api/upload"
         accept=".pdf,.PDF,.docx,.DOCX,.txt,.md,.odt,.TXT,.MD,.ODT"
         customUpload
-        showUploadButton={false}
-        showCancelButton={false}
         onUpload={onUpload}
         onSelect={onSelect}
         onError={onClear}
