@@ -120,6 +120,8 @@ function EducationForm({ educationList, setEducationList, user }: EducationFormP
               name={`startDate_${index}`}
               value={entry.startDate}
               placeholder="Enter start date"
+              pattern="\d{4}-\d{2}"
+              title="Format should be: YYYY-MM"
               onChange={(e) => {
                 const updated = { ...entry, startDate: e.target.value };
                 const list = [...educationList];
@@ -135,6 +137,8 @@ function EducationForm({ educationList, setEducationList, user }: EducationFormP
               name={`endDate_${index}`}
               value={entry.endDate}
               placeholder="Enter end date"
+              pattern="(\d{4}-\d{2}|Present)"
+              title="Format should be: YYYY-MM or just write 'Present'"
               onChange={(e) => {
                 const updated = { ...entry, endDate: e.target.value };
                 const list = [...educationList];

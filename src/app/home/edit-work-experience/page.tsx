@@ -122,6 +122,8 @@ function WorkExpForm({ jobList, setJobList, user }: WorkExpFormProps) {
                             id={`startDate_${jobIdx}`}
                             name={`startDate_${jobIdx}`}
                             placeholder="Enter start date here"
+                            pattern="\d{4}-\d{2}"
+                            title="Format should be: YYYY-MM"
                             value={jobEntry.startDate}
                             onChange={(event) => {
                                 const updatedEntry = {...jobEntry, startDate: event.target.value};
@@ -137,6 +139,8 @@ function WorkExpForm({ jobList, setJobList, user }: WorkExpFormProps) {
                             id={`endDate_${jobIdx}`}
                             name={`endDate_${jobIdx}`}
                             placeholder="Enter end date here"
+                            pattern="(\d{4}-\d{2}|Present)"
+                            title="Format should be: YYYY-MM or just write 'Present'"
                             value={jobEntry.endDate}
                             onChange={(event) => {
                                 const updatedEntry = {...jobEntry, endDate: event.target.value};
