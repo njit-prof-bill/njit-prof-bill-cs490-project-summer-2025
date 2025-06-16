@@ -71,7 +71,8 @@ import EducationEditor from '../components/EducationEditor';
 import WorkExperienceEditor from './WorkExperienceEditor';
 import WorkExperienceDisplay from '@/components/WorkExperienceDisplay';
 import EducationDisplay from '@/components/EducationDisplay';
-
+import SummaryDisplay from '@/components/SummaryDisplay';
+import SummaryEditor from '@/components/SummaryEditor';
 
 
 // ✅ Add prop type
@@ -86,7 +87,10 @@ export default function UserProfile({ deduplicateSkills }: ProfileCardProps) {
       <FetchAndDisplayKey keyPath="contact.email" />
       <FetchAndDisplayKey keyPath="contact.phone" />
       <br />
-      <FetchAndDisplayKey keyPath="summary" />
+      {/* <FetchAndDisplayKey keyPath="summary" /> */}
+
+      <SummaryDisplay className="your-custom-classes" />
+      <SummaryEditor  />
       <br />
 
 
