@@ -133,3 +133,77 @@ def update_skills(resume_id):
         return jsonify({"message": "Skills updated successfully"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@resume_bp.route("/resume/<resume_id>/update_job/<int:index>", methods=["POST"])
+def update_job_entry(resume_id, index):
+    try:
+        if not ObjectId.is_valid(resume_id):
+            return jsonify({"error": "Invalid resume ID"}), 400
+        
+        data = request.get_json()
+        if not data or "updatedJob" not in data:
+            return jsonify({"error": "Missing 'updatedJob' in request body"}), 400
+        
+        job = data["updatedJob"]
+        required_fields = ["title", "company", "location", "start_date", "end_date", "role_summary", "responsibilities", "accomplishments"]
+
+        for field in required_fields:
+            if field not in job:
+                return jsonify({"error": f"Missing field: {field}"}), 400
+
+        if not isinstance(job["responsibilities"], list) or not isinstance(job["accomplishments"], list):
+            return jsonify({"error": "Responsibilities and accomplishments must be lists"}), 400
+
+        # Replace the job at the given index
+        resume = biography_collection.find_one({"_id": ObjectId(resume_id)})
+
+        if not resume:
+            return jsonify({"error": "Resume not found"}), 404
+
+        jobs = resume.get("parse_result", {}).get("jobs", [])
+        if index < 0 or index >= len(jobs):
+            return jsonify({"error": "Job index out of range"}), 400
+
+        update_path = f"parse_result.jobs.{index}"
+        result = biography_collection.update_one(
+            {"_id": ObjectId(resume_id)},
+            {"$set": {update_path: job}}
+        )
+
+        return jsonify({"message": "Job updated successfully"}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@resume_bp.route("/resume/<resume_id>/add_job", methods=["POST"])
+def add_job_entry(resume_id):
+    try:
+        if not ObjectId.is_valid(resume_id):
+            return jsonify({"error": "Invalid resume ID"}), 400
+        
+        data = request.get_json()
+        if not data or "newJob" not in data:
+            return jsonify({"error": "Missing 'newJob' in request"}), 400
+
+        new_job = data["newJob"]
+
+        # Basic validation
+        required_fields = ["title", "company", "location", "start_date", "end_date", "role_summary", "responsibilities", "accomplishments"]
+        for field in required_fields:
+            if field not in new_job:
+                return jsonify({"error": f"Missing field: {field}"}), 400
+
+        if not isinstance(new_job["responsibilities"], list) or not isinstance(new_job["accomplishments"], list):
+            return jsonify({"error": "Responsibilities and accomplishments must be lists"}), 400
+
+        result = biography_collection.update_one(
+            {"_id": ObjectId(resume_id)},
+            {"$push": {"parse_result.jobs": new_job}}
+        )
+
+        if result.matched_count == 0:
+            return jsonify({"error": "Resume not found"}), 404
+        
+        return jsonify({"message": "Job added successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
