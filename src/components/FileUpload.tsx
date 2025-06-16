@@ -1,79 +1,148 @@
-'use client';
+"use client";
 
-import { useState, useRef } from 'react';
+import { useState, useRef } from "react";
+
+import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf";
+import pdfjsWorker from "pdfjs-dist/legacy/build/pdf.worker.entry";
+
+import mammoth from "mammoth";
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
 const allowedTypes = [
-  'application/pdf',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'text/plain',
-  'text/markdown',
-  'application/vnd.oasis.opendocument.text'
+  "application/pdf",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "text/plain",
+  "text/markdown",
+  "application/vnd.oasis.opendocument.text",
 ];
 
-const allowedExtensions = ['.pdf', '.docx', '.txt', '.md', '.odt'];
+const allowedExtensions = [".pdf", ".docx", ".txt", ".md", ".odt"];
 
-export default function FileUpload() {
+interface FileUploadProps {
+  onParsed: (parsedData: any) => void; // callback to send parsed resume data upstream
+}
+
+export default function FileUpload({ onParsed }: { onParsed: (data: any) => void }) {
   const [file, setFile] = useState<File | null>(null);
-  const [status, setStatus] = useState<'idle' | 'uploading' | 'success' | 'error' | 'nofile'>('idle');
-  const fileInputRef = useRef<HTMLInputElement | null>(null); // to reset input
+  const [status, setStatus] = useState<
+    "idle" | "uploading" | "success" | "error" | "nofile"
+  >("idle");
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const isValidFile = (file: File) => {
     const mimeOk = allowedTypes.includes(file.type);
-    const extOk = allowedExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
+    const extOk = allowedExtensions.some((ext) =>
+      file.name.toLowerCase().endsWith(ext)
+    );
     return mimeOk || extOk;
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
     if (!selected) {
-        setFile(null);
-        setStatus('idle'); // reset status if user cancels
-        return;
+      setFile(null);
+      setStatus("idle");
+      return;
     }
 
     if (isValidFile(selected)) {
       setFile(selected);
-      setStatus('idle'); // clears previous success/error
+      setStatus("idle");
     } else {
-      alert('Unsupported file type.');
-      setFile(null); // clear state
-      setStatus('idle'); // reset status if file is unsupported
+      alert("Unsupported file type.");
+      setFile(null);
+      setStatus("idle");
       if (fileInputRef.current) {
-        fileInputRef.current.value = ""; // clear input box
+        fileInputRef.current.value = "";
       }
+    }
+  };
+
+  const extractText = async (file: File): Promise<string> => {
+    const ext = file.name.toLowerCase();
+
+    if (ext.endsWith(".pdf")) {
+      const pdfData = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
+      let text = "";
+
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        text += content.items.map((item: any) => item.str).join(" ") + "\n";
+      }
+
+      return text;
+    } else if (ext.endsWith(".docx")) {
+      const buffer = await file.arrayBuffer();
+      const result = await mammoth.extractRawText({ arrayBuffer: buffer });
+      return result.value;
+    } else {
+      // For .txt, .md, .odt — use readAsText
+      return await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject("Error reading file");
+        reader.readAsText(file);
+      });
     }
   };
 
   const handleUpload = async () => {
     if (!file) {
-      setStatus('nofile');
+      setStatus("nofile");
       return;
     }
 
-    setStatus('uploading');
+    setStatus("uploading");
+
     try {
-      await new Promise((res) => setTimeout(res, 1500)); 
-      setStatus('success');
+      const rawText = await extractText(file);
+
+      const res = await fetch("/api/parse", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: rawText }),
+      });
+
+      if (!res.ok) throw new Error("API error");
+
+      const parsed = await res.json();
+
+      onParsed(parsed); // send parsed data upstream
+
+      setStatus("success");
     } catch (error) {
-      console.error('Upload failed:', error);
-      setStatus('error');
+      console.error("Upload failed:", error);
+      setStatus("error");
     }
   };
 
   return (
     <div className="space-y-4">
-      <input
-        type="file"
-        accept=".pdf,.docx,.txt,.md,.odt"
-        onChange={handleFileChange}
-        ref={fileInputRef}
-      />
+      <label className="px-4 py-2 bg-gray-200 text-black rounded cursor-pointer inline-block mr-4">
+        Choose File
+        <input
+          type="file"
+          accept=".pdf,.docx,.txt,.md,.odt"
+          onChange={handleFileChange}
+          ref={fileInputRef}
+          className="hidden"
+        />
+      </label>
+
+      {file && <p className="text-sm text-gray-700">Selected file: {file.name}</p>}
+      {status === "error" && <p className="text-red-600">Upload failed. Try again.</p>}
+      {status === "success" && <p className="text-green-600">Resume parsed successfully!</p>}
+      {status === "nofile" && <p className="text-red-600">No file uploaded.</p>}
+
       <button
         onClick={handleUpload}
         className="px-4 py-2 bg-blue-600 text-white rounded"
-        disabled={status === 'uploading' || !file}
+        disabled={status === "uploading" || !file}
       >
-        {status === 'uploading' ? (
+        {status === "uploading" ? (
           <>
             <svg
               className="animate-spin h-4 w-4 mr-2 text-white inline"
@@ -81,7 +150,14 @@ export default function FileUpload() {
               fill="none"
               viewBox="0 0 24 24"
             >
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              />
               <path
                 className="opacity-75"
                 fill="currentColor"
@@ -91,13 +167,9 @@ export default function FileUpload() {
             Uploading...
           </>
         ) : (
-          'Upload File'
+          "Upload File"
         )}
-
       </button>
-      {status === 'nofile' && <p className="text-red-600">No file uploaded.</p>}
-      {status === 'success' && <p className="text-green-600">Upload successful!</p>}
-      {status === 'error' && <p className="text-red-600">Upload failed. Try again.</p>}
     </div>
   );
 }
