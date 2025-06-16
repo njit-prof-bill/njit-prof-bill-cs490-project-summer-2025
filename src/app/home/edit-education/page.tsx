@@ -204,13 +204,21 @@ export default function EditEducationPage() {
 
   async function getEducation(): Promise<EducationEntry[]> {
     let educationList: EducationEntry[] = [];
+    
     if (user) {
         const documentRef = doc(db, "users", user.uid);
         const document = await getDoc(documentRef);
         const data = document.data();
         if (data?.resumeFields?.education) {
-            educationList = [...data.resumeFields.education];
-        }
+            educationList = data.resumeFields.education.map((entry: any): EducationEntry => ({
+            degree: entry.degree ?? "",
+            institution: entry.institution ?? "",
+            startDate: entry.startDate ?? "",
+            endDate: entry.endDate ?? "",
+            gpa: entry.gpa ?? ""
+            }
+        ));
+}
     }
     return educationList;
   }
