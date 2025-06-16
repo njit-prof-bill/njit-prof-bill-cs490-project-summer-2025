@@ -4,7 +4,6 @@ import { useAuth } from "@/context/authContext";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import UploadCard from "@/components/uploadCard";
 import FreeformInputCard from "@/components/freeformInputCard";
 export default function HomePage() {
