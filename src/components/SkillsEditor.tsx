@@ -5,6 +5,7 @@ import { User } from 'firebase/auth';
 import { Save, Check } from 'lucide-react';
 
 interface SkillsEditorProps {
+  deduplicateSkills?: (skills: string[]) => string[]; // updated for dupe check
   onSuccess?: () => void;
   onError?: (error: string) => void;
 }
@@ -14,7 +15,7 @@ interface GroqResponseData {
   [key: string]: any;
 }
 
-const SkillsEditor: React.FC<SkillsEditorProps> = ({ onSuccess, onError }) => {
+  const SkillsEditor: React.FC<SkillsEditorProps> = ({ deduplicateSkills, onSuccess, onError }) => { //updated for dupe check
   const [isOpen, setIsOpen] = useState(false);
   const [skills, setSkills] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -115,7 +116,7 @@ const SkillsEditor: React.FC<SkillsEditorProps> = ({ onSuccess, onError }) => {
       }
 
       // Update only the skills array, preserving everything else
-      parsedResponse.skills = skills;
+      parsedResponse.skills = deduplicateSkills ? deduplicateSkills(skills) : skills; // updated for dupe check
 
       // Save back in the same format it was stored
       const updatedGroqResponse = typeof currentGroqResponse === 'string' 
