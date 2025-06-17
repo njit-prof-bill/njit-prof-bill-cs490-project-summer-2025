@@ -70,66 +70,73 @@ export default function BioSubmission({
   }, [bio]);
 
   return (
-    <div className="space-y-4 p-6 rounded-lg bg-gray-800 text-white shadow-md">
-
+    <div className="space-y-4 p-6 rounded-lg bg-gray-800 text-white shadow-md w-full max-w-5xl mx-auto">
       <h3 className="text-xl font-semibold mb-2">Biography</h3>
 
-      <label className="block">
-        <span className="block mb-1">Tell us about yourself:</span>
-        <textarea
-          rows={6}
-          maxLength={MAX_LENGTH}
-          placeholder={`Write your biography here (min ${MIN_LENGTH} characters)...`}
-          className="mt-1 block w-full border border-gray-600 rounded bg-gray-700 text-white px-3 py-2 focus:outline-none focus:bg-gray-600 resize-y"
-          value={bio}
-          onChange={(e) => setBio(e.target.value)}
-        />
-      </label>
-
-      <p
-        className={`text-sm ${
-          bio.length < MIN_LENGTH ? "text-red-400" : "text-gray-300"
-        }`}
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSubmit();
+        }}
+        className="w-full"
       >
-        {bio.length} / {MAX_LENGTH} characters
-      </p>
+        <label className="block w-full">
+          <span className="block mb-1">Tell us about yourself:</span>
+          <textarea
+            className="w-full bg-gray-700 text-white rounded p-3 border border-gray-600 focus:outline-none focus:bg-gray-600 resize-y text-base min-h-[220px] md:min-h-[320px] max-w-4xl mx-auto"
+            value={bio}
+            onChange={(e) => setBio(e.target.value)}
+            placeholder="Write a short biography about yourself..."
+            rows={12}
+            style={{ fontSize: "1.1rem" }}
+          />
+        </label>
 
-      {showSubmitButton && (
-        <button
-          onClick={handleSubmit}
-          disabled={status === "submitting"}
-          className={`px-3 py-2 text-white rounded ${
-            status === "submitting"
-              ? "bg-gray-500"
-              : "bg-green-600 hover:bg-green-700"
+        <p
+          className={`text-sm ${
+            bio.length < MIN_LENGTH ? "text-red-400" : "text-gray-300"
           }`}
         >
-          {status === "submitting" ? "Submitting..." : "Submit Bio"}
-        </button>
-      )}
+          {bio.length} / {MAX_LENGTH} characters
+        </p>
 
-      {status === "success" && (
-        <p className="text-green-400">Biography submitted successfully!</p>
-      )}
-      {status === "error" && (
-        <p className="text-red-400">Something went wrong. Please try again.</p>
-      )}
-      {status === "empty" && (
-        <p className="text-red-400">Biography cannot be empty.</p>
-      )}
-      {status === "tooShort" && (
-        <p className="text-red-400">
-          Biography must be at least {MIN_LENGTH} characters.
-        </p>
-      )}
-      {status === "tooLong" && (
-        <p className="text-red-400">
-          Biography must be less than {MAX_LENGTH} characters.
-        </p>
-      )}
-      {status === "invalid" && (
-        <p className="text-red-400">HTML tags are not allowed in your bio.</p>
-      )}
+        {showSubmitButton && (
+          <button
+            onClick={handleSubmit}
+            disabled={status === "submitting"}
+            className={`px-3 py-2 text-white rounded ${
+              status === "submitting"
+                ? "bg-gray-500"
+                : "bg-green-600 hover:bg-green-700"
+            }`}
+          >
+            {status === "submitting" ? "Submitting..." : "Submit Bio"}
+          </button>
+        )}
+
+        {status === "success" && (
+          <p className="text-green-400">Biography submitted successfully!</p>
+        )}
+        {status === "error" && (
+          <p className="text-red-400">Something went wrong. Please try again.</p>
+        )}
+        {status === "empty" && (
+          <p className="text-red-400">Biography cannot be empty.</p>
+        )}
+        {status === "tooShort" && (
+          <p className="text-red-400">
+            Biography must be at least {MIN_LENGTH} characters.
+          </p>
+        )}
+        {status === "tooLong" && (
+          <p className="text-red-400">
+            Biography must be less than {MAX_LENGTH} characters.
+          </p>
+        )}
+        {status === "invalid" && (
+          <p className="text-red-400">HTML tags are not allowed in your bio.</p>
+        )}
+      </form>
     </div>
   );
 }

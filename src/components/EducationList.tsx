@@ -1,6 +1,7 @@
 interface Education {
   school: string;
   degree?: string;
+  certificateOrDiploma?: string;
   datesAttended?: string;
   GPA?: string;
 }
@@ -17,7 +18,7 @@ export default function EducationList({
   const addEducation = () =>
     onChange([
       ...education,
-      { school: "", degree: "", datesAttended: "", GPA: "" },
+      { school: "", degree: "", certificateOrDiploma: "", datesAttended: "", GPA: "" },
     ]);
 
   const updateEducation = (
@@ -35,11 +36,39 @@ export default function EducationList({
     onChange(newEducation);
   };
 
+  const moveEducation = (from: number, to: number) => {
+    if (to < 0 || to >= education.length) return;
+    const newEducation = [...education];
+    const [moved] = newEducation.splice(from, 1);
+    newEducation.splice(to, 0, moved);
+    onChange(newEducation);
+  };
+
   return (
     <div className="space-y-4 p-6 rounded-lg bg-gray-800 text-white shadow-md">
       <h3 className="text-xl font-semibold mb-2">Education</h3>
       {education.map((edu, idx) => (
         <div key={idx} className="space-y-2 border border-gray-600 p-4 rounded bg-gray-700">
+          <div className="flex gap-2 mb-2">
+            <button
+              onClick={() => moveEducation(idx, idx - 1)}
+              disabled={idx === 0}
+              className="text-gray-400 hover:text-gray-200 text-xl"
+              aria-label="Move up"
+              title="Move up"
+            >
+              ↑
+            </button>
+            <button
+              onClick={() => moveEducation(idx, idx + 1)}
+              disabled={idx === education.length - 1}
+              className="text-gray-400 hover:text-gray-200 text-xl"
+              aria-label="Move down"
+              title="Move down"
+            >
+              ↓
+            </button>
+          </div>
           <label className="block">
             School Name:
             <input
@@ -57,7 +86,17 @@ export default function EducationList({
               value={edu.degree || ""}
               onChange={(e) => updateEducation(idx, "degree", e.target.value)}
               className="mt-1 block w-full border border-gray-600 rounded bg-gray-600 text-white px-3 py-2"
-              placeholder="Degree or certificate"
+              placeholder="Degree (optional)"
+            />
+          </label>
+          <label className="block">
+            Diploma/Certificate:
+            <input
+              type="text"
+              value={edu.certificateOrDiploma || ""}
+              onChange={(e) => updateEducation(idx, "certificateOrDiploma", e.target.value)}
+              className="mt-1 block w-full border border-gray-600 rounded bg-gray-600 text-white px-3 py-2"
+              placeholder="Diploma or Certificate (optional)"
             />
           </label>
           <label className="block">

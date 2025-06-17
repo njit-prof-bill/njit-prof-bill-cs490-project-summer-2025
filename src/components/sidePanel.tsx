@@ -4,9 +4,10 @@ import Link from "next/link"; // Import Next.js Link component
 
 interface SidePanelProps {
     isSidePanelOpen: boolean;
+    onForceHome: () => void;
 }
 
-export default function SidePanel({ isSidePanelOpen }: SidePanelProps) {
+export default function SidePanel({ isSidePanelOpen, onForceHome }: SidePanelProps) {
     return (
         <aside
             className={`bg-stone-100 dark:bg-stone-900 p-4 shadow transform transition-transform duration-300 ${isSidePanelOpen ? "translate-x-0" : "-translate-x-full"
@@ -15,9 +16,9 @@ export default function SidePanel({ isSidePanelOpen }: SidePanelProps) {
             <nav>
                 <ul>
                     <li className="mb-2">
-                        <Link href="/home" className="hover:underline">
+                        <a href="/home" className="hover:underline cursor-pointer" onClick={(e) => { e.preventDefault(); onForceHome(); }}>
                             Dashboard
-                        </Link>
+                        </a>
                     </li>
                     <li>
                         <Link href="/home/settings" className="hover:underline">

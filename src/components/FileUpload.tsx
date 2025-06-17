@@ -6,6 +6,7 @@ import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf";
 import pdfjsWorker from "pdfjs-dist/legacy/build/pdf.worker.entry";
 
 import mammoth from "mammoth";
+import JSZip from "jszip";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
@@ -78,8 +79,17 @@ export default function FileUpload({ onParsed }: { onParsed: (data: any) => void
       const buffer = await file.arrayBuffer();
       const result = await mammoth.extractRawText({ arrayBuffer: buffer });
       return result.value;
+    } else if (ext.endsWith(".odt")) {
+      // Use JSZip to extract content.xml and parse text
+      const arrayBuffer = await file.arrayBuffer();
+      const zip = await JSZip.loadAsync(arrayBuffer);
+      const contentXml = await zip.file("content.xml")?.async("string");
+      if (!contentXml) return "";
+      // Extract text from XML (very basic, strips tags)
+      const text = contentXml.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+      return text;
     } else {
-      // For .txt, .md, .odt — use readAsText
+      // For .txt, .md — use readAsText
       return await new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => resolve(reader.result as string);
@@ -121,55 +131,64 @@ export default function FileUpload({ onParsed }: { onParsed: (data: any) => void
 
   return (
     <div className="space-y-4">
-      <label className="px-4 py-2 bg-gray-200 text-black rounded cursor-pointer inline-block mr-4">
-        Choose File
-        <input
-          type="file"
-          accept=".pdf,.docx,.txt,.md,.odt"
-          onChange={handleFileChange}
-          ref={fileInputRef}
-          className="hidden"
-        />
-      </label>
-
-      {file && <p className="text-sm text-gray-700">Selected file: {file.name}</p>}
-      {status === "error" && <p className="text-red-600">Upload failed. Try again.</p>}
-      {status === "success" && <p className="text-green-600">Resume parsed successfully!</p>}
-      {status === "nofile" && <p className="text-red-600">No file uploaded.</p>}
-
-      <button
-        onClick={handleUpload}
-        className="px-4 py-2 bg-blue-600 text-white rounded"
-        disabled={status === "uploading" || !file}
-      >
-        {status === "uploading" ? (
-          <>
-            <svg
-              className="animate-spin h-4 w-4 mr-2 text-white inline"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-              />
-            </svg>
-            Uploading...
-          </>
-        ) : (
-          "Upload File"
-        )}
-      </button>
+      <div className="flex flex-col md:flex-row md:items-center md:space-y-0 md:space-x-4">
+        <div className="flex flex-row items-center space-x-2">
+          <label className="px-4 py-2 bg-gray-200 text-black rounded cursor-pointer inline-block">
+            Choose File
+            <input
+              type="file"
+              accept=".pdf,.docx,.txt,.md,.odt"
+              onChange={handleFileChange}
+              ref={fileInputRef}
+              className="hidden"
+            />
+          </label>
+          <button
+            onClick={handleUpload}
+            className="px-4 py-2 bg-blue-600 text-white rounded"
+            disabled={status === "uploading" || !file}
+          >
+            {status === "uploading" ? (
+              <>
+                <svg
+                  className="animate-spin h-4 w-4 mr-2 text-white inline"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                  />
+                </svg>
+                Uploading...
+              </>
+            ) : (
+              "Upload File"
+            )}
+          </button>
+        </div>
+      </div>
+      {file && (
+        <span className="block text-sm text-indigo-700 dark:text-indigo-300 font-semibold bg-indigo-50 dark:bg-gray-800 px-3 py-1 rounded shadow mt-2">
+          Selected file: {file.name}
+        </span>
+      )}
+      {status === "success" && (
+        <p className="text-green-700 bg-green-100 dark:bg-green-900 dark:text-green-300 font-semibold px-3 py-1 rounded shadow mt-2">
+          File uploaded and parsed successfully!
+        </p>
+      )}
+      {/* Status messages can be added here if needed */}
     </div>
   );
 }

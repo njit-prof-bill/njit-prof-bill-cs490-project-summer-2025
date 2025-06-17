@@ -20,9 +20,9 @@ export async function POST(req: NextRequest) {
 You are a resume parsing assistant. Extract the following structured data in JSON format from the resume text:
 
 {
-  "email": string,
-  "phone": string,
-  "objective": string,
+  "emails": string[],
+  "phones": string[],
+  "objective": string, // The career objective or summary statement, if present
   "skills": string[],
   "jobHistory": [
     {
@@ -45,7 +45,7 @@ You are a resume parsing assistant. Extract the following structured data in JSO
   ]
 }
 
-Only extract what's available. If something is missing, return it as an empty string or empty array.
+If a career objective or summary statement is present, extract it as the value for "objective". Only extract what's available. If something is missing, return it as an empty string or empty array.
 Return valid JSON only (no explanation or markdown).
 
 Resume text:

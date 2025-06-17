@@ -4,9 +4,15 @@ interface SkillsListProps {
 }
 
 export default function SkillsList({ skills, onChange }: SkillsListProps) {
-  const addSkill = () => onChange([...skills, ""]);
+  const addSkill = () => {
+    // Prevent adding empty or duplicate skill
+    if (skills.includes("") || skills.some((s, i) => skills.indexOf(s) !== i)) return;
+    onChange([...skills, ""]);
+  };
 
   const updateSkill = (index: number, value: string) => {
+    // Prevent duplicate skill values
+    if (skills.some((s, i) => i !== index && s.trim().toLowerCase() === value.trim().toLowerCase())) return;
     const newSkills = [...skills];
     newSkills[index] = value;
     onChange(newSkills);
@@ -14,6 +20,14 @@ export default function SkillsList({ skills, onChange }: SkillsListProps) {
 
   const removeSkill = (index: number) => {
     const newSkills = skills.filter((_, i) => i !== index);
+    onChange(newSkills);
+  };
+
+  const moveSkill = (from: number, to: number) => {
+    if (to < 0 || to >= skills.length) return;
+    const newSkills = [...skills];
+    const [moved] = newSkills.splice(from, 1);
+    newSkills.splice(to, 0, moved);
     onChange(newSkills);
   };
 
@@ -36,6 +50,24 @@ export default function SkillsList({ skills, onChange }: SkillsListProps) {
             aria-label="Remove skill"
           >
             &times;
+          </button>
+          <button
+            onClick={() => moveSkill(idx, idx - 1)}
+            disabled={idx === 0}
+            className="text-gray-400 hover:text-gray-200 text-xl"
+            aria-label="Move up"
+            title="Move up"
+          >
+            ↑
+          </button>
+          <button
+            onClick={() => moveSkill(idx, idx + 1)}
+            disabled={idx === skills.length - 1}
+            className="text-gray-400 hover:text-gray-200 text-xl"
+            aria-label="Move down"
+            title="Move down"
+          >
+            ↓
           </button>
         </div>
       ))}

@@ -63,14 +63,39 @@ export default function JobHistory({ jobs, onChange }: JobHistoryProps) {
     onChange(newJobs);
   };
 
+  const moveJob = (from: number, to: number) => {
+    if (to < 0 || to >= jobs.length) return;
+    const newJobs = [...jobs];
+    const [moved] = newJobs.splice(from, 1);
+    newJobs.splice(to, 0, moved);
+    onChange(newJobs);
+  };
+
   return (
     <div className="space-y-6 p-6 rounded-lg bg-gray-800 text-white shadow-md">
       <h3 className="text-xl font-semibold mb-2">Job History</h3>
       {jobs.map((job, idx) => (
-        <div
-          key={idx}
-          className="space-y-3 border border-gray-600 p-4 rounded bg-gray-700"
-        >
+        <div key={idx} className="space-y-2 border-b border-gray-700 pb-4 mb-4">
+          <div className="flex gap-2 mb-2">
+            <button
+              onClick={() => moveJob(idx, idx - 1)}
+              disabled={idx === 0}
+              className="text-gray-400 hover:text-gray-200 text-xl"
+              aria-label="Move up"
+              title="Move up"
+            >
+              ↑
+            </button>
+            <button
+              onClick={() => moveJob(idx, idx + 1)}
+              disabled={idx === jobs.length - 1}
+              className="text-gray-400 hover:text-gray-200 text-xl"
+              aria-label="Move down"
+              title="Move down"
+            >
+              ↓
+            </button>
+          </div>
           <label className="block">
             Company Name:
             <input

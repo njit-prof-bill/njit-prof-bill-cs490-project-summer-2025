@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cert, getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
+import { v4 as uuidv4 } from 'uuid';
 
 if (!getApps().length) {
   initializeApp({
@@ -16,21 +17,48 @@ const db = getFirestore();
 
 export async function POST(req: NextRequest) {
   try {
-    console.log("🟡 Saving resume...");
     const resume = await req.json();
-    console.log("🟢 Resume payload:", resume);
-
-    const docRef = await db.collection("resumes").add({
+    if (!resume.userId) {
+      return NextResponse.json({ error: "Missing userId" }, { status: 400 });
+    }
+    let resumeId = resume.resumeId;
+    if (!resumeId) {
+      resumeId = uuidv4();
+    }
+    await db.collection("resumes").doc(resumeId).set({
       ...resume,
-      createdAt: new Date().toISOString(),
-    });
-
-    console.log("✅ Saved to Firestore with ID:", docRef.id);
-    return NextResponse.json({ success: true, id: docRef.id });
-
+      resumeId,
+      updatedAt: new Date().toISOString(),
+    }, { merge: true });
+    return NextResponse.json({ success: true, resumeId });
   } catch (error: any) {
-    console.error("❌ Error saving resume:", error);
     return NextResponse.json({ error: "Failed to save resume" }, { status: 500 });
+  }
+}
+
+export async function GET(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const userId = searchParams.get("userId");
+    const resumeId = searchParams.get("resumeId");
+    if (!userId) {
+      return NextResponse.json({ error: "Missing userId" }, { status: 400 });
+    }
+    if (resumeId) {
+      // Fetch a specific resume
+      const doc = await db.collection("resumes").doc(resumeId).get();
+      if (!doc.exists) {
+        return NextResponse.json({ resume: null });
+      }
+      return NextResponse.json({ resume: doc.data() });
+    } else {
+      // List all resumes for this user
+      const snapshot = await db.collection("resumes").where("userId", "==", userId).get();
+      const resumes = snapshot.docs.map(doc => doc.data());
+      return NextResponse.json({ resumes });
+    }
+  } catch (error: any) {
+    return NextResponse.json({ error: "Failed to fetch resume(s)" }, { status: 500 });
   }
 }
 
