@@ -1,63 +1,3 @@
-// import { useState, useEffect } from 'react';
-// import { doc, getDoc } from 'firebase/firestore';
-// import { firestore } from '../lib/firebase';
-// import { onAuthStateChanged, User } from 'firebase/auth';
-// import { auth, db } from '@/lib/firebase'; // Adjust path as needed
-// // import { doc, getDoc, setDoc } from 'firebase/firestore';
-// // import { onAuthStateChanged, User } from 'firebase/auth';
-// import FetchAndDisplayKey from "../components/FetchAndDisplayKey";
-// import SkillsEditor from '../components/SkillsEditor';
-// import EducationEditor from '../components/EducationEditor';
-
-
-// export default function UserProfile() {
-
-
-//     // console.log("ASHDAHSDIAISHDsdfsdfs");
-
-
-
-//   return (
-//     <div>
-     
-
-
-//     <FetchAndDisplayKey keyPath="fullName" /> 
-
-//     <FetchAndDisplayKey keyPath="contact.email" />
-
-  
-//     <FetchAndDisplayKey keyPath="contact.phone" />
-
-//     <br />
-//     <FetchAndDisplayKey keyPath="summary" />
-//     <br />
-
-   
-//   <FetchAndDisplayKey keyPath="workExperience" />
-//     {/* <FetchAndDisplayKey keyPath="experience" /> */}
-
-//     <FetchAndDisplayKey keyPath="education" />
-
-//     <EducationEditor />
-
-// {/* 
-//     <FetchAndDisplayKey keyPath="skills.0" />
-//     <FetchAndDisplayKey keyPath="skills.1" /> */}
-
-//     <FetchAndDisplayKey keyPath="skills" />
-//     <SkillsEditor 
-//   onSuccess={() => console.log('Skills saved!')}
-//   onError={(error) => console.error(error)}
-// />
-
-
-
-
-//     </div>
-//   );
-// }
-
 import { useState, useEffect } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
 import { firestore } from '../lib/firebase';
@@ -65,6 +5,9 @@ import { firestore } from '../lib/firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 
+import Reorder from '../components/Reorder';
+import ReorderEducation from '../components/ReorderEducation';
+import ReorderWorkExperience from '@/components/ReorderWorkExperience';
 import FetchAndDisplayKey from "../components/FetchAndDisplayKey";
 import SkillsEditor from '../components/SkillsEditor';
 import EducationEditor from '../components/EducationEditor';
@@ -75,7 +18,7 @@ import SummaryDisplay from '@/components/SummaryDisplay';
 import SummaryEditor from '@/components/SummaryEditor';
 
 
-// ✅ Add prop type
+// Add prop type
 interface ProfileCardProps {
   deduplicateSkills: (skills: string[]) => string[];
 }
@@ -96,19 +39,26 @@ export default function UserProfile({ deduplicateSkills }: ProfileCardProps) {
 
       {/* <FetchAndDisplayKey keyPath="workExperience" /> */}
       {/* <WorkExperienceDisplay /> */}
-      <WorkExperienceDisplay className="my-8" />
+      {/* <WorkExperienceDisplay className="my-8" /> */}
+      <ReorderWorkExperience />
+
       <WorkExperienceEditor 
       onSuccess={() => console.log('Work experience saved!')}
       onError={(error) => console.error('Error:', error)}
       />
 
+
       {/* <FetchAndDisplayKey keyPath="education" /> */}
-      <EducationDisplay />
+      <ReorderEducation/>
+      {/* <EducationDisplay /> */}
       <EducationEditor />
 
-      <FetchAndDisplayKey keyPath="skills" />
-      <SkillsEditor 
-        deduplicateSkills={deduplicateSkills} // ✅ Pass prop
+
+
+      {/* <FetchAndDisplayKey keyPath="skills" /> */}
+      <Reorder tag="skills" />
+      <SkillsEditor
+        deduplicateSkills={deduplicateSkills} // Pass prop
         onSuccess={() => console.log('Skills saved!')}
         onError={(error) => console.error(error)}
       />
