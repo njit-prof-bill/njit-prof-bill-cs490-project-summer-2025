@@ -119,7 +119,7 @@ function EducationForm({ educationList, setEducationList, user }: EducationFormP
               id={`startDate_${index}`}
               name={`startDate_${index}`}
               value={entry.startDate}
-              pattern="\d{4}-\d{2}"
+              pattern="(\d{4}-\d{2}|Present)"
               title="Format: YYYY-MM"
               placeholder="Enter start date"
               onChange={(e) => {
