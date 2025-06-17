@@ -119,7 +119,7 @@ function EducationForm({ educationList, setEducationList, user }: EducationFormP
               id={`startDate_${index}`}
               name={`startDate_${index}`}
               value={entry.startDate}
-              pattern="(\d{4}-\d{2}|Present)"
+              pattern="\d{4}-\d{2}"
               title="Format: YYYY-MM"
               placeholder="Enter start date"
               onChange={(e) => {
@@ -136,7 +136,7 @@ function EducationForm({ educationList, setEducationList, user }: EducationFormP
               id={`endDate_${index}`}
               name={`endDate_${index}`}
               value={entry.endDate}
-              pattern="\d{4}-\d{2}"
+              pattern="(\d{4}-\d{2}|Present)"
               title="Format: YYYY-MM"
               placeholder="Enter end date or Present"
               onChange={(e) => {
