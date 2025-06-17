@@ -72,7 +72,7 @@ export default function EditSummaryPage() {
         <form method="post" onSubmit={handleSubmit}>
           <textarea
             name="summary"
-            placeholder="Enter your professional summary here"
+            placeholder="Enter your professional summary (or your career objectives) here"
             value={summary}
             onChange={(e) => setSummary(e.target.value)}
             rows={6}
