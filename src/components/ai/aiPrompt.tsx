@@ -7,7 +7,7 @@ export const AIPrompt = `Please take this text corpus submitted by a user and pa
 
 1. The user’s full name.
 2. The user’s email address.
-3. The user’s phone number. If this is not present, leave it blank.
+3. The user’s phone number, formatted as XXX-XXX-XXXX where X is a number from 0 to 9. If this is not present, leave it blank.
 4. The user’s city and state or country. If this is not present, leave it blank.
 5. The user’s professional summary (1 to 2 paragraphs). If this is not present, leave it blank.
 6. The list of work experiences the user holds.
@@ -34,7 +34,7 @@ Please return your response as a strict JSON object in the following structure:
 | fullName | String | Full name of the user. |
 | contact | Object | User's contact details. |
 | contact.email | String | Email address. |
-| contact.phone | String | Phone number (optional). |
+| contact.phone | String | Phone number (optional; also should have the format: XXX-XXX-XXXX with X being a number from 0 to 9). |
 | contact.location | String | City and state or country (optional). |
 | summary | String | Professional summary (1-2 paragraphs). |
 | workExperience | Array of Objects | List of work experiences, ordered most recent first. |
@@ -59,19 +59,25 @@ Here is the user's text corpus:
 `;
 
 export async function getAIResponse(prompt: string, corpus: string) {
-    const fullPrompt = prompt + corpus;
-    //console.log(fullPrompt);
-    const result = await model.generateContent(fullPrompt);
-    const response = result.response;
-    const text = response.text();
-    // AI's response has '```json' as first line
-    // and '```' as last line, which prevents
-    // JSON.parse() from processing it correctly.
-    var lines = text.split('\n');
-    lines.splice(0,1);  // Remove 1st line
-    lines.splice(-1,1); // Remove last line
-    var finalResponse = lines.join('\n');
-    return finalResponse;
+    try {
+        const fullPrompt = prompt + corpus;
+        //console.log(fullPrompt);
+        const result = await model.generateContent(fullPrompt);
+        const response = result.response;
+        const text = response.text();
+        // AI's response has '```json' as first line
+        // and '```' as last line, which prevents
+        // JSON.parse() from processing it correctly.
+        var lines = text.split('\n');
+        lines.splice(0,1);  // Remove 1st line
+        lines.splice(-1,1); // Remove last line
+        var finalResponse = lines.join('\n');
+        return finalResponse;
+    } catch (error) {
+        console.error("Error obtaining AI response: ", error);
+        return "";
+    }
+    
 }
 
 export async function saveAIResponse(responseObj: any, user: any, db: any) {
@@ -86,49 +92,49 @@ export async function saveAIResponse(responseObj: any, user: any, db: any) {
             try {
                 await updateDoc(documentRef, { "resumeFields.fullName": responseObj.fullName });
             } catch (error) {
-                ;
+                console.error("Error fetching full name from corpus: ", error);
             }
             // Extract summary and save to userProfile
             try {
                 await updateDoc(documentRef, { "resumeFields.summary": responseObj.summary });
             } catch (error) {
-                ;
+                console.error("Error fetching summary from corpus: ", error);
             }
             // Extract email and save to userProfile
             try {
                 await updateDoc(documentRef, { "resumeFields.contact.email": responseObj.contact.email });
             } catch (error) {
-                ;
+                console.error("Error fetching contact email from corpus: ", error);
             }
             // Extract location and save to userProfile
             try {
                 await updateDoc(documentRef, { "resumeFields.contact.location": responseObj.contact.location });
             } catch (error) {
-                ;
+                console.error("Error fetching contact location from corpus: ", error);
             }
             // Extract phone and save to userProfile
             try {
                 await updateDoc(documentRef, { "resumeFields.contact.phone": responseObj.contact.phone });
             } catch (error) {
-                ;
+                console.error("Error fetching phone number from corpus: ", error);
             }
             // Extract list of skills and save to userProfile
             try {
                 await updateDoc(documentRef, { "resumeFields.skills": responseObj.skills });
             } catch (error) {
-                ;
+                console.error("Error fetching list of skills from corpus: ", error);
             }
             // Extract list of work experiences and save to userProfile
             try {
                 await updateDoc(documentRef, { "resumeFields.workExperience": responseObj.workExperience });
             } catch (error) {
-                ;
+                console.error("Error fetching list of work experiences from corpus: ", error);
             }
             // Extract list of education credentials and save to userProfile
             try {
                 await updateDoc(documentRef, { "resumeFields.education": responseObj.education });
             } catch (error) {
-                ;
+                console.error("Error fetching list of educational credentials from corpus: ", error);
             }
         } catch (error) {
             console.error("Error: could not retrieve document;", error);
