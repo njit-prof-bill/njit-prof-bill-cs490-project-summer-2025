@@ -150,7 +150,7 @@ function SortableWorkCard({
       style={style}
       {...attributes}
       {...listeners}
-      className="border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6 bg-[#1B1917]"
+      className="border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6 bg-[#1B1917] cursor-grab active:cursor-grabbing"
     >
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-4">
         <div className="flex-1">
