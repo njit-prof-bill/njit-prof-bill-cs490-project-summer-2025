@@ -6,6 +6,8 @@ import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 
 import Reorder from '../components/Reorder';
+import ReorderEducation from '../components/ReorderEducation';
+import ReorderWorkExperience from '@/components/ReorderWorkExperience';
 import FetchAndDisplayKey from "../components/FetchAndDisplayKey";
 import SkillsEditor from '../components/SkillsEditor';
 import EducationEditor from '../components/EducationEditor';
@@ -37,7 +39,9 @@ export default function UserProfile({ deduplicateSkills }: ProfileCardProps) {
 
       {/* <FetchAndDisplayKey keyPath="workExperience" /> */}
       {/* <WorkExperienceDisplay /> */}
-      <WorkExperienceDisplay className="my-8" />
+      {/* <WorkExperienceDisplay className="my-8" /> */}
+      <ReorderWorkExperience />
+
       <WorkExperienceEditor 
       onSuccess={() => console.log('Work experience saved!')}
       onError={(error) => console.error('Error:', error)}
@@ -45,7 +49,8 @@ export default function UserProfile({ deduplicateSkills }: ProfileCardProps) {
 
 
       {/* <FetchAndDisplayKey keyPath="education" /> */}
-      <EducationDisplay />
+      <ReorderEducation/>
+      {/* <EducationDisplay /> */}
       <EducationEditor />
 
 
