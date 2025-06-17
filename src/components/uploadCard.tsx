@@ -3,12 +3,12 @@
 import { useRef, useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
 
 interface FileProgress {
   file: File;
   progress: number;
-  status: "idle" | "uploading" | "success" | "error";
+  status: "idle" | "uploading" | "processing" | "success" | "error";
 }
 
 export default function UploadCard() {
@@ -17,14 +17,27 @@ export default function UploadCard() {
 
   const handleFiles = (files: FileList | null) => {
     if (!files) return;
-    const newFiles: FileProgress[] = Array.from(files).map(file => ({
-      file,
-      progress: 0,
-      status: "idle"
-    }));
-    setFileProgress(prev => [...prev, ...newFiles]);
-  };
-
+  
+    setFileProgress(prev => {
+      const newFiles: FileProgress[] = [];
+  
+      Array.from(files).forEach(file => {
+        // Skip duplicates by checking if the file name and size match an existing one (ignoring those marked 'success')
+        const isDuplicate = prev.some(
+          p =>
+            p.file.name === file.name &&
+            p.file.size === file.size &&
+            p.status !== "success"
+        );
+        if (!isDuplicate) {
+          newFiles.push({ file, progress: 0, status: "idle" });
+        }
+      });
+  
+      return [...prev, ...newFiles];
+    });
+  };  
+  
   const handleUpload = async () => {
     fileProgress.forEach(fp => {
       const formData = new FormData();
@@ -43,18 +56,32 @@ export default function UploadCard() {
       };
 
       xhr.onload = () => {
-        if (xhr.status === 200) {
+        // Upload done – now wait for backend to finish parsing
+        setFileProgress(prev =>
+          prev.map(p => p.file === fp.file ? { ...p, progress: 100, status: "processing" } : p)
+        );
+
+        // Use a delay to simulate backend parsing feedback
+        const success = xhr.status === 200;
+        setTimeout(() => {
           setFileProgress(prev =>
-            prev.map(p => p.file === fp.file ? { ...p, status: "success" } : p)
+            prev.map(p =>
+              p.file === fp.file
+                ? {
+                    ...p,
+                    status: success ? "success" : "error"
+                  }
+                : p
+            )
           );
-          setTimeout(() => {
-            setFileProgress(prev => prev.filter(p => p.file !== fp.file));
-          }, 1000);
-        } else {
-          setFileProgress(prev =>
-            prev.map(p => p.file === fp.file ? { ...p, status: "error" } : p)
-          );
-        }
+
+          // Auto-clear success files after short delay
+          if (success) {
+            setTimeout(() => {
+              setFileProgress(prev => prev.filter(p => p.file !== fp.file));
+            }, 1500);
+          }
+        }, 1000); // Simulated backend wait
       };
 
       xhr.onerror = () => {
@@ -73,6 +100,19 @@ export default function UploadCard() {
 
   const removeFile = (file: File) => {
     setFileProgress(prev => prev.filter(p => p.file !== file));
+  };
+
+  const getProgressColor = (status: FileProgress["status"]) => {
+    switch (status) {
+      case "error":
+        return "bg-red-500";
+      case "processing":
+        return "bg-indigo-500";
+      case "success":
+        return "bg-green-500";
+      default:
+        return "bg-blue-600";
+    }
   };
 
   return (
@@ -100,6 +140,10 @@ export default function UploadCard() {
             ref={inputRef}
             className="hidden"
             multiple
+            onClick={() => {
+              // Clear input before each click to allow same file selection
+              if (inputRef.current) inputRef.current.value = "";
+            }}
             onChange={e => handleFiles(e.target.files)}
             accept=".pdf,.doc,.docx"
           />
@@ -107,24 +151,39 @@ export default function UploadCard() {
 
         {fileProgress.map((fp, index) => (
           <div key={index} className="mb-3">
-            <div className="flex justify-between text-sm mb-1">
+            <div className="flex justify-between items-center text-sm mb-1">
               <span>{fp.file.name}</span>
-              <button onClick={() => removeFile(fp.file)} className="text-red-500 hover:underline"><X size={16} /></button>
+              {(() => {
+                switch (fp.status) {
+                  case "uploading":
+                    return (
+                      <span className="flex items-center text-blue-600">
+                        <Loader2 className="animate-spin mr-1" size={16} /> Uploading
+                      </span>
+                    );
+                  case "processing":
+                    return (
+                      <span className="flex items-center text-indigo-600">
+                        <Loader2 className="animate-spin mr-1" size={16} /> Processing
+                      </span>
+                    );
+                  default:
+                    return (
+                      <button onClick={() => removeFile(fp.file)} className="text-red-500 hover:underline">
+                        <X size={16} />
+                      </button>
+                    );
+                }
+              })()}
             </div>
             <div className="w-full h-2 bg-gray-200 rounded">
               <div
-                className={`h-2 rounded transition-all duration-300 ${
-                  fp.status === "error" ? "bg-red-500" : "bg-blue-600"
-                }`}
+                className={`h-2 rounded transition-all duration-300 ${getProgressColor(fp.status)}`}
                 style={{ width: `${fp.progress}%` }}
               ></div>
             </div>
           </div>
         ))}
-
-        {/* <Button onClick={handleUpload} disabled={fileProgress.length === 0}>
-          Upload
-        </Button> */}
       </CardContent>
       <CardFooter className="justify-end">
         <Button onClick={handleUpload} disabled={fileProgress.length === 0}>
