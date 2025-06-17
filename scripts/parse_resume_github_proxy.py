@@ -59,7 +59,11 @@ Extract the following structured information from this resume and return it as a
     {{
       "degree": "Degree Name",
       "institution": "University Name",
-      "years": "Start - End"
+      "years": "Start - End",
+      "major": "Major Name",
+      'minor": "Minor Name",
+      "gpa": "GPA",
+      "relevant_coursework": ["Course1", "Course2"]
     }}
   ]
 }}

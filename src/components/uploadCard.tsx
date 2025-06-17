@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { X, Loader2 } from "lucide-react";
+import { uploadFileWithToken } from "@/lib/upload";
 
 interface FileProgress {
   file: File;
@@ -17,85 +18,61 @@ export default function UploadCard() {
 
   const handleFiles = (files: FileList | null) => {
     if (!files) return;
-  
+
     setFileProgress(prev => {
       const newFiles: FileProgress[] = [];
-  
+
       Array.from(files).forEach(file => {
-        // Skip duplicates by checking if the file name and size match an existing one (ignoring those marked 'success')
         const isDuplicate = prev.some(
-          p =>
-            p.file.name === file.name &&
-            p.file.size === file.size &&
-            p.status !== "success"
+          p => p.file.name === file.name && p.file.size === file.size && p.status !== "success"
         );
         if (!isDuplicate) {
           newFiles.push({ file, progress: 0, status: "idle" });
         }
       });
-  
+
       return [...prev, ...newFiles];
     });
-  };  
-  
+  };
+
   const handleUpload = async () => {
-    fileProgress.forEach(fp => {
-      const formData = new FormData();
-      formData.append("file", fp.file);
-
-      const xhr = new XMLHttpRequest();
-      xhr.open("POST", "/api/history/upload");
-
-      xhr.upload.onprogress = e => {
-        if (e.lengthComputable) {
-          const percent = (e.loaded / e.total) * 100;
-          setFileProgress(prev =>
-            prev.map(p => p.file === fp.file ? { ...p, progress: percent } : p)
-          );
-        }
-      };
-
-      xhr.onload = () => {
-        // Upload done – now wait for backend to finish parsing
-        setFileProgress(prev =>
-          prev.map(p => p.file === fp.file ? { ...p, progress: 100, status: "processing" } : p)
-        );
-
-        // Use a delay to simulate backend parsing feedback
-        const success = xhr.status === 200;
-        setTimeout(() => {
-          setFileProgress(prev =>
-            prev.map(p =>
-              p.file === fp.file
-                ? {
-                    ...p,
-                    status: success ? "success" : "error"
-                  }
-                : p
-            )
-          );
-
-          // Auto-clear success files after short delay
-          if (success) {
-            setTimeout(() => {
-              setFileProgress(prev => prev.filter(p => p.file !== fp.file));
-            }, 1500);
-          }
-        }, 1000); // Simulated backend wait
-      };
-
-      xhr.onerror = () => {
-        setFileProgress(prev =>
-          prev.map(p => p.file === fp.file ? { ...p, status: "error" } : p)
-        );
-      };
-
+    for (const fp of fileProgress) {
       setFileProgress(prev =>
         prev.map(p => p.file === fp.file ? { ...p, status: "uploading" } : p)
       );
 
-      xhr.send(formData);
-    });
+      // Simulate progress bar for uploading
+      setFileProgress(prev =>
+        prev.map(p => p.file === fp.file ? { ...p, progress: 50 } : p)
+      );
+
+      try {
+        const result = await uploadFileWithToken(fp.file);
+
+        setFileProgress(prev =>
+          prev.map(p =>
+            p.file === fp.file
+              ? {
+                  ...p,
+                  status: result === "success" ? "processing" : "error",
+                  progress: 100,
+                }
+              : p
+          )
+        );
+
+        if (result === "success") {
+          setTimeout(() => {
+            setFileProgress(prev => prev.filter(p => p.file !== fp.file));
+          }, 1500);
+        }
+      } catch (err) {
+        console.error("Upload error:", err);
+        setFileProgress(prev =>
+          prev.map(p => p.file === fp.file ? { ...p, status: "error" } : p)
+        );
+      }
+    }
   };
 
   const removeFile = (file: File) => {
@@ -141,7 +118,6 @@ export default function UploadCard() {
             className="hidden"
             multiple
             onClick={() => {
-              // Clear input before each click to allow same file selection
               if (inputRef.current) inputRef.current.value = "";
             }}
             onChange={e => handleFiles(e.target.files)}
