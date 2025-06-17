@@ -14,6 +14,9 @@ export default function FreeFormPage() {
     const router = useRouter();
     // For retrieving any free-form text the user entered in the past (if it exists)
     const [corpusValue, setCorpusValue] = useState("");
+    const [submitting, setSubmitting] = useState(false);
+    const [submitted, setSubmitted] = useState(false);
+
 
     useEffect(() => {
         if (!loading && user) {
@@ -42,10 +45,15 @@ export default function FreeFormPage() {
             // Don't try to send anything if user is logged out
             return;
         }
+        setSubmitting(true);
+        setSubmitted(false);
+        setTimeout(() => setSubmitted(false), 3000); // reset after 3s
 
         // Should overwrite the user's pre-existing submission
         const newSubmissionRef = doc(db, "users", uid);
         await updateDoc(newSubmissionRef, { freeFormText: { text: corpus } });
+        setSubmitting(false);
+        setSubmitted(true);
 
         // For debugging purposes
         //console.log("User    UID: ", user.uid);
@@ -111,13 +119,13 @@ export default function FreeFormPage() {
         } catch (error) {
             console.error("Error fetching AI response: ", error);
         }
-        
+
     }
     return (
         <div className="flex items-center justify-center min-h-screen text-gray-900 dark:text-gray-100">
             <div className="w-full max-w-md">
+                <h1 className="text-2xl font-bold mb-6">Free-form Text</h1>
                 <form method="post" onSubmit={handleSubmit}>
-                    <h1 className="text-2xl font-bold mb-6">Free-form Text</h1>
                     <p>Enter some text in the box below. <br></br>When you are done, hit 'Submit'.</p>
                     <textarea
                         name="text"
@@ -126,10 +134,22 @@ export default function FreeFormPage() {
                         // instead of updating the field while the user is typing in it.
                         defaultValue={corpusValue}
                         placeholder="Start typing here"
-                        rows={24}
-                        cols={50}
+                        rows={15}
+                        className="w-full p-3 border border-gray-300 rounded-md mb-4"
+
                     ></textarea>
-                    <button type="submit">Submit</button>
+                    <button
+                        type="submit"
+                        disabled={submitting}
+                        className={`px-4 py-2 rounded text-white font-semibold transition duration-300 ${submitted
+                                ? "bg-blue-600 cursor-not-allowed"
+                                : submitting
+                                    ? "bg-gray-500 cursor-wait"
+                                    : "bg-blue-600 hover:bg-blue-700 cursor-pointer"
+                            }`}
+                    >
+                        {submitting ? "Submitting..." : submitted ? "Submitted!" : "Submit"}
+                    </button>
                 </form>
             </div>
         </div>

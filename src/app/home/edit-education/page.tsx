@@ -119,9 +119,9 @@ function EducationForm({ educationList, setEducationList, user }: EducationFormP
               id={`startDate_${index}`}
               name={`startDate_${index}`}
               value={entry.startDate}
-              placeholder="Enter start date"
               pattern="\d{4}-\d{2}"
-              title="Format should be: YYYY-MM"
+              title="Format: YYYY-MM"
+              placeholder="Enter start date"
               onChange={(e) => {
                 const updated = { ...entry, startDate: e.target.value };
                 const list = [...educationList];
@@ -136,9 +136,9 @@ function EducationForm({ educationList, setEducationList, user }: EducationFormP
               id={`endDate_${index}`}
               name={`endDate_${index}`}
               value={entry.endDate}
-              placeholder="Enter end date"
               pattern="(\d{4}-\d{2}|Present)"
-              title="Format should be: YYYY-MM or just write 'Present'"
+              title="Format: YYYY-MM or Present"
+              placeholder="End Date (YYYY-MM or Present)"
               onChange={(e) => {
                 const updated = { ...entry, endDate: e.target.value };
                 const list = [...educationList];
@@ -208,21 +208,21 @@ export default function EditEducationPage() {
 
   async function getEducation(): Promise<EducationEntry[]> {
     let educationList: EducationEntry[] = [];
-    
+
     if (user) {
-        const documentRef = doc(db, "users", user.uid);
-        const document = await getDoc(documentRef);
-        const data = document.data();
-        if (data?.resumeFields?.education) {
-            educationList = data.resumeFields.education.map((entry: any): EducationEntry => ({
-            degree: entry.degree ?? "",
-            institution: entry.institution ?? "",
-            startDate: entry.startDate ?? "",
-            endDate: entry.endDate ?? "",
-            gpa: entry.gpa ?? ""
-            }
+      const documentRef = doc(db, "users", user.uid);
+      const document = await getDoc(documentRef);
+      const data = document.data();
+      if (data?.resumeFields?.education) {
+        educationList = data.resumeFields.education.map((entry: any): EducationEntry => ({
+          degree: entry.degree ?? "",
+          institution: entry.institution ?? "",
+          startDate: entry.startDate ?? "",
+          endDate: entry.endDate ?? "",
+          gpa: entry.gpa ?? ""
+        }
         ));
-}
+      }
     }
     return educationList;
   }
@@ -231,10 +231,10 @@ export default function EditEducationPage() {
 
   return (
     <div className="flex items-center justify-center min-h-screen p-4">
-        <div className="w-full max-w-md">
-            <h1 className="text-2xl font-bold mb-4">Edit Education</h1>
-                <EducationForm educationList={education} setEducationList={setEducation} user={user} />
-        </div>
+      <div className="w-full max-w-md">
+        <h1 className="text-2xl font-bold mb-4">Edit Education</h1>
+        <EducationForm educationList={education} setEducationList={setEducation} user={user} />
+      </div>
     </div>
   );
 }
