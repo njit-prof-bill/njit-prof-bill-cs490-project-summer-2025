@@ -1,7 +1,8 @@
+// src/pages/api/history/upload.ts
 import type { NextApiRequest, NextApiResponse } from "next";
-import { IncomingForm } from "formidable";
 import fs from "fs";
 import path from "path";
+import { execFile } from "child_process";
 
 export const config = {
   api: {
@@ -10,29 +11,64 @@ export const config = {
 };
 
 const uploadDir = path.join(process.cwd(), "public/uploads");
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+const extractDir = path.join(process.cwd(), "public/extracted");
+const parsedDir = path.join(process.cwd(), "public/parsed");
+
+// Ensure all directories exist
+[uploadDir, extractDir, parsedDir].forEach((dir) => {
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+});
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
     return res.status(405).json({ status: "error", message: "Method not allowed" });
   }
 
-  const form = new IncomingForm({ uploadDir, keepExtensions: true, multiples: false });
+  try {
+    const formidable = (await import("formidable")).default;
+    const form = formidable({
+      uploadDir,
+      keepExtensions: true,
+      multiples: false,
+    });
 
-  form.parse(req, (err, fields, files) => {
-    if (err) {
-      console.error("Error parsing form:", err);
-      return res.status(500).json({ status: "error", message: "Upload failed" });
-    }
+    form.parse(req, async (err, fields, files) => {
+      if (err || !files.file) {
+        console.error("Form parse error:", err);
+        return res.status(400).json({ status: "error", message: "Upload failed or no file." });
+      }
 
-    const uploaded = files.file;
-    if (!uploaded || (Array.isArray(uploaded) && uploaded.length === 0)) {
-      return res.status(400).json({ status: "error", message: "No file uploaded" });
-    }
+      const file = Array.isArray(files.file) ? files.file[0] : files.file;
+      const filePath = file.filepath;
+      const fileName = path.basename(filePath);
 
-    const file = Array.isArray(uploaded) ? uploaded[0] : uploaded;
-    const fileId = path.basename(file.filepath);
+      // Step 1: Extract text from PDF/DOCX
+      const extractScriptPath = path.join(process.cwd(), "scripts/extract_text.py");
+      const extractedTxtPath = path.join(extractDir, `${fileName}.txt`);
 
-    return res.status(200).json({ status: "processing", fileId });
-  });
+      execFile("python3", [extractScriptPath, filePath, extractedTxtPath], (extractErr) => {
+        if (extractErr) {
+          console.error("Text extraction failed:", extractErr);
+          return res.status(500).json({ status: "error", message: "Text extraction failed." });
+        }
+
+        // Step 2: Parse extracted text with GitHub GPT-4o Mini proxy
+        const parseScriptPath = path.join(process.cwd(), "scripts/parse_resume_github_proxy.py");
+        const parsedJsonPath = path.join(parsedDir, `${fileName}.json`);
+
+        execFile("python3", [parseScriptPath, extractedTxtPath, parsedJsonPath], (parseErr, stdout, stderr) => {
+          if (parseErr) {
+            console.error("Parsing failed:", stderr);
+            return res.status(500).json({ status: "error", message: "Resume parsing failed" });
+          }
+
+          console.log("Parsing complete:", stdout);
+          return res.status(200).json({ status: "processing", fileId: fileName });
+        });
+      });
+    });
+  } catch (e) {
+    console.error("Handler error:", e);
+    return res.status(500).json({ status: "error", message: "Internal server error" });
+  }
 }
