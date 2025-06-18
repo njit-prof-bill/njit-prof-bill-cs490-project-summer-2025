@@ -45,9 +45,10 @@ function EmailForm({emailList, setEmailList, submitted, setSubmitted, error, set
       {emailList.map((email, emailIdx) => (
         <div key={emailIdx}>
           <input
-            type="email"
+            type="text"
             name="email"
             value={email}
+            pattern="^[a-zA-Z0-9.!#$%&'*\+\/=?^_`\{\|\}~\-]+@[a-zA-Z0-9\-]+(\.[a-zA-Z0-9\-]+)+$"
             onChange={(event) => handleChange(emailIdx, event.target.value)}
             placeholder="Enter your email address here"
             className="border p-2 rounded w-full"
