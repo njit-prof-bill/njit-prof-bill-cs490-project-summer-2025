@@ -9,6 +9,7 @@ import { doc, getDoc, updateDoc } from "firebase/firestore";
 type JobEntry = {
     jobTitle: string;
     company: string;
+    jobSummary: string;
     startDate: string;
     endDate: string;
     responsibilities: string[];
@@ -79,6 +80,20 @@ function WorkExpForm({ jobList, setJobList, user }: WorkExpFormProps) {
         setJobList(newList);
     }
 
+    function moveJobUp(index: number) {
+        if (index === 0) return;
+        const newList = [...jobList];
+        [newList[index - 1], newList[index]] = [newList[index], newList[index - 1]];
+        setJobList(newList);
+    }
+
+    function moveJobDown(index: number) {
+        if (index === jobList.length - 1) return;
+        const newList = [...jobList];
+        [newList[index + 1], newList[index]] = [newList[index], newList[index + 1]];
+        setJobList(newList);
+    }
+
     async function submitJobList(newJobList: JobEntry[]) {
         if (!user) return;
         try {
@@ -104,6 +119,7 @@ function WorkExpForm({ jobList, setJobList, user }: WorkExpFormProps) {
         const newJob: JobEntry = {
             jobTitle: "",
             company: "",
+            jobSummary: "",
             startDate: "",
             endDate: "",
             responsibilities: [],
@@ -138,6 +154,13 @@ function WorkExpForm({ jobList, setJobList, user }: WorkExpFormProps) {
                         onChange={(e) => updateJobAt(i, { ...job, company: e.target.value })}
                         className="w-full p-2 mb-2 border rounded"
                     />
+                    <textarea
+                        name={`jobSummary_${i}`}
+                        placeholder="Summary of your role"
+                        value={job.jobSummary}
+                        onChange={(e) => updateJobAt(i, { ...job, jobSummary: e.target.value })}
+                        className="w-full p-2 mb-2 border rounded h-24"
+                    />
                     <input
                         type="text"
                         name={`startDate_${i}`}
@@ -166,6 +189,29 @@ function WorkExpForm({ jobList, setJobList, user }: WorkExpFormProps) {
                         }
                         jobIdx={i}
                     />
+                    <div className="flex space-x-2 mt-4">
+                        <button
+                            onClick={(e) => {
+                                e.preventDefault();
+                                moveJobUp(i);
+                            }}
+                            className="bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600 disabled:opacity-50 cursor-pointer"
+                            disabled={i === 0}
+                        >
+                            Move Up
+                        </button>
+                        <button
+                            onClick={(e) => {
+                                e.preventDefault();
+                                moveJobDown(i);
+                            }}
+                            className="bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600 disabled:opacity-50 cursor-pointer"
+                            disabled={i === jobList.length - 1}
+                        >
+                            Move Down
+                        </button>
+                    </div>
+
                     <div>
                         <button
                             onClick={(e) => removeJob(e, i)}
@@ -187,7 +233,7 @@ function WorkExpForm({ jobList, setJobList, user }: WorkExpFormProps) {
             <div>
                 <button
                     type="submit"
-                    className="mt-4 bg-green-500 text-white px-6 py-2 rounded hover:bg-green-600 disabled:opacity-50"
+                    className="mt-4 bg-green-500 text-white px-6 py-2 rounded hover:bg-green-600 disabled:opacity-50 cursor-pointer"
                     disabled={isSubmitting}
                 >
                     {isSubmitting ? "Saving..." : "Save"}
@@ -228,6 +274,7 @@ export default function EditWorkExpPage() {
                 return data.resumeFields.workExperience.map((entry: any): JobEntry => ({
                     jobTitle: entry.jobTitle ?? "",
                     company: entry.company ?? "",
+                    jobSummary: entry.jobSummary ?? "",
                     startDate: entry.startDate ?? "",
                     endDate: entry.endDate ?? "",
                     responsibilities: Array.isArray(entry.responsibilities) ? entry.responsibilities : [],

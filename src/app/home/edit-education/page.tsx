@@ -24,6 +24,20 @@ function EducationForm({ educationList, setEducationList, user }: EducationFormP
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  function moveEduUp(index: number) {
+    if (index === 0) return;
+    const newList = [...educationList];
+    [newList[index - 1], newList[index]] = [newList[index], newList[index - 1]];
+    setEducationList(newList);
+  }
+
+  function moveEduDown(index: number) {
+    if (index === educationList.length - 1) return;
+    const newList = [...educationList];
+    [newList[index + 1], newList[index]] = [newList[index], newList[index + 1]];
+    setEducationList(newList);
+  }
+
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.target as HTMLFormElement;
@@ -162,6 +176,29 @@ function EducationForm({ educationList, setEducationList, user }: EducationFormP
               }}
               className="mb-2 w-full p-2 border rounded"
             />
+            <div className="flex space-x-2 mt-2">
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  moveEduUp(index);
+                }}
+                className="bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600 disabled:opacity-50 cursor-pointer"
+                disabled={index === 0}
+              >
+                Move Up
+              </button>
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  moveEduDown(index);
+                }}
+                className="bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600 disabled:opacity-50 cursor-pointer"
+                disabled={index === educationList.length - 1}
+              >
+                Move Down
+              </button>
+            </div>
+
             <button
               onClick={(event) => removeEdu(event, index)}
               className="bg-red-500 text-white px-3 py-1 mt-2 rounded hover:bg-red-600 cursor-pointer"

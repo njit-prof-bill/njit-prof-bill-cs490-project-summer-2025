@@ -16,6 +16,21 @@ function SkillsForm({ skillsList, setSkillsList, user }: SkillsFormProps) {
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  function moveSkillUp(index: number) {
+    if (index === 0) return;
+    const newList = [...skillsList];
+    [newList[index - 1], newList[index]] = [newList[index], newList[index - 1]];
+    setSkillsList(newList);
+  }
+
+  function moveSkillDown(index: number) {
+    if (index === skillsList.length - 1) return;
+    const newList = [...skillsList];
+    [newList[index + 1], newList[index]] = [newList[index], newList[index + 1]];
+    setSkillsList(newList);
+  }
+
+
   async function submitSkills(skills: string[]) {
     if (!user) return;
     try {
@@ -64,7 +79,31 @@ function SkillsForm({ skillsList, setSkillsList, user }: SkillsFormProps) {
     <div>
       <form method="post" onSubmit={handleSubmit}>
         {skillsList.map((field, index) => (
-          <div key={index} className="mb-4 flex items-center gap-2">
+          <div key={index} className="mb-2 flex items-center gap-2">
+            <div className="flex flex-col space-y-1">
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  moveSkillUp(index);
+                }}
+                className="bg-gray-400 text-white px-2 rounded hover:bg-gray-500 disabled:opacity-50 cursor-pointer"
+                disabled={index === 0}
+                title="Move Up"
+              >
+                ↑
+              </button>
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  moveSkillDown(index);
+                }}
+                className="bg-gray-400 text-white px-2 rounded hover:bg-gray-500 disabled:opacity-50 cursor-pointer"
+                disabled={index === skillsList.length - 1}
+                title="Move Down"
+              >
+                ↓
+              </button>
+            </div>
             <input
               type="text"
               id={index.toString()}
@@ -78,10 +117,11 @@ function SkillsForm({ skillsList, setSkillsList, user }: SkillsFormProps) {
               onClick={(event) => removeSkill(event, index)}
               className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 cursor-pointer"
             >
-              Remove
+              ✕
             </button>
           </div>
         ))}
+
         <button
           onClick={addNewSkill}
           className="bg-blue-500 text-white px-4 py-2 mt-2 rounded hover:bg-blue-600 cursor-pointer"
@@ -121,10 +161,10 @@ export default function EditSkillsPage() {
     if (user) {
       const documentRef = doc(db, "users", user.uid);
       const document = await getDoc(documentRef);
-        const data = document.data();
-        if (data && Array.isArray(data.resumeFields?.skills)) {
-          skillList = [...data.resumeFields.skills];
-        
+      const data = document.data();
+      if (data && Array.isArray(data.resumeFields?.skills)) {
+        skillList = [...data.resumeFields.skills];
+
       }
     }
     return skillList;
