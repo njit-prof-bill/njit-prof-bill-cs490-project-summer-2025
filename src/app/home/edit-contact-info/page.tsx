@@ -167,13 +167,30 @@ export default function EditContactInfoPage() {
     setError(null);        // Clear any previous error message
 
     try {
+      // Remove duplicates and empty/whitespace strings for the email array
+      const cleanedEmails = [
+        ...new Set(email) // Remove duplicates
+      ].filter((email) => email.trim() !== ""); // Remove empty/whitespace emails
+
+      // Remove duplicates and empty/whitespace strings for the phone array
+      const cleanedPhoneNums = [
+        ...new Set(phone) // Remove duplicates
+      ].filter((phone) => phone.trim() !== ""); // Remove empty/whitespace phone numbers
+
+      // Confirm if arrays were cleaned
+      // console.log("Cleaned Emails: ", cleanedEmails);
+      // console.log("Cleaned Phone Numbers: ", cleanedPhoneNums);
+
       const userDocRef = doc(db, "users", user.uid);
       await updateDoc(userDocRef, {
         "resumeFields.fullName": fullName,
-        "resumeFields.contact.email": email,
+        "resumeFields.contact.email": cleanedEmails,
         "resumeFields.contact.location": location,
-        "resumeFields.contact.phone": phone,
+        "resumeFields.contact.phone": cleanedPhoneNums,
       });
+
+      setEmail(cleanedEmails);
+      setPhone(cleanedPhoneNums);
 
       setSubmitting(false); // Hide spinner
       setSubmitted(true);   // Trigger visual success feedback
