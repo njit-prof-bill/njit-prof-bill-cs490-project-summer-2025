@@ -72,8 +72,8 @@ export default function TopBanner({ toggleSidePanel }: TopBannerProps) {
                 </button>
                 <Link href="/" className="flex items-center">
                     <Image
-                        src="/logo.png"
-                        alt="Marcus Home"
+                        src="/new-logo.png"
+                        alt="Pisces Home"
                         width={48}
                         height={48}
                         className="mr-2"
