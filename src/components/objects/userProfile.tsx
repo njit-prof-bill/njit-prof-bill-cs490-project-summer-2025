@@ -98,28 +98,28 @@ class eduObj {
 
 // Represents contact info on a single user's resume
 class contactObj {
-    private emails: string[] = [];
-    private phones: string[] = [];
+    private email: string[] = [];
+    private phone: string[] = [];
     private location: string = "";
 
     // Setter functions
     public updateEmail(newEmail: string, index: number) {
-        this.emails[index] = newEmail;
+        this.email[index] = newEmail;
     }
     public addEmail(newEmail: string, index: number) {
-        this.emails.splice(index, 0, newEmail);
+        this.email.splice(index, 0, newEmail);
     }
     public removeEmail(index: number) {
-        this.emails.splice(index, 1);
+        this.email.splice(index, 1);
     }
     public updatePhone(newPhone: string, index: number) {
-        this.phones[index] = newPhone;
+        this.phone[index] = newPhone;
     }
     public addPhone(newPhone: string, index: number) {
-        this.phones.splice(index, 0, newPhone);
+        this.phone.splice(index, 0, newPhone);
     }
     public removePhone(index: number) {
-        this.phones.splice(index, 1);
+        this.phone.splice(index, 1);
     }
     public updateLocation(newLoc: string) {
         this.location = newLoc;
@@ -127,10 +127,10 @@ class contactObj {
 
     // Getter functions
     public getEmail(index: number) {
-        return this.emails[index];
+        return this.email[index];
     }
     public getPhone(index: number) {
-        return this.phones[index];
+        return this.phone[index];
     }
     public getLocation() {
         return this.location;
