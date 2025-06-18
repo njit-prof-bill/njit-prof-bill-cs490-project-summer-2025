@@ -40,6 +40,13 @@ export default function TopBanner({ toggleSidePanel }: TopBannerProps) {
     const pageTitles: { [key: string]: string } = {
         "/home": "Home",
         "/home/settings": "Settings",
+        "/home/upload-resume": "Upload Resume",
+        "/home/free-form": "Submit Freeform Text",
+        "/home/edit-contact-info": "Edit Contact Info",
+        "/home/edit-summary": "Edit Professional Summary",
+        "/home/edit-skills": "Edit Skills",
+        "/home/edit-education": "Edit Education",
+        "/home/edit-work-experience": "Edit Work Experience",
     };
 
     const pageTitle = pageTitles[pathname] || "Page"; // Default to "Page" if no match
