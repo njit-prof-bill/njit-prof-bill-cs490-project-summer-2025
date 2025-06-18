@@ -9,14 +9,22 @@ import { doc, getDoc, updateDoc } from "firebase/firestore";
 type EmailFormProps = {
   emailList: string[];
   setEmailList: React.Dispatch<React.SetStateAction<string[]>>;
+  submitted: boolean;
+  setSubmitted: React.Dispatch<React.SetStateAction<boolean>>;
+  error: string | null;
+  setError: React.Dispatch<React.SetStateAction<string | null>>;
 };
 
-function EmailForm({emailList, setEmailList}: EmailFormProps) {
+function EmailForm({emailList, setEmailList, submitted, setSubmitted, error, setError}: EmailFormProps) {
   function handleChange(index: number, value: string) {
+    if (submitted) setSubmitted(false); // Hide success message if editing again
+    if (error) setError(null);          // Clear error message on user change
     setEmailList((oldEmails) => oldEmails.map((email, i) => (i === index ? value : email)));
   }
 
   function addEmail(event: React.MouseEvent<HTMLButtonElement>) {
+    if (submitted) setSubmitted(false); // Hide success message if editing again
+    if (error) setError(null);          // Clear error message on user change
     // Prevent browser from reloading page
     event.preventDefault();
     // Add a new, empty string to the array
@@ -24,6 +32,8 @@ function EmailForm({emailList, setEmailList}: EmailFormProps) {
   }
 
   function removeEmail(event: React.MouseEvent<HTMLButtonElement>, index: number) {
+    if (submitted) setSubmitted(false); // Hide success message if editing again
+    if (error) setError(null);          // Clear error message on user change
     // Prevent browser from reloading page
     event.preventDefault();
     // Remove the email from the array
@@ -57,14 +67,22 @@ function EmailForm({emailList, setEmailList}: EmailFormProps) {
 type PhoneNumFormProps = {
   phoneList: string[];
   setPhoneList: React.Dispatch<React.SetStateAction<string[]>>;
+  submitted: boolean;
+  setSubmitted: React.Dispatch<React.SetStateAction<boolean>>;
+  error: string | null;
+  setError: React.Dispatch<React.SetStateAction<string | null>>;
 };
 
-function PhoneNumForm({phoneList, setPhoneList}: PhoneNumFormProps) {
+function PhoneNumForm({phoneList, setPhoneList, submitted, setSubmitted, error, setError}: PhoneNumFormProps) {
   function handleChange(index: number, value: string) {
+    if (submitted) setSubmitted(false); // Hide success message if editing again
+    if (error) setError(null);          // Clear error message on user change
     setPhoneList((oldNums) => oldNums.map((num, i) => (i === index ? value : num)));
   }
 
   function addPhoneNum(event: React.MouseEvent<HTMLButtonElement>) {
+    if (submitted) setSubmitted(false); // Hide success message if editing again
+    if (error) setError(null);          // Clear error message on user change
     // Prevent browser from reloading page
     event.preventDefault();
     // Add a new, empty string to the array
@@ -72,6 +90,8 @@ function PhoneNumForm({phoneList, setPhoneList}: PhoneNumFormProps) {
   }
 
   function removePhoneNum(event: React.MouseEvent<HTMLButtonElement>, index: number) {
+    if (submitted) setSubmitted(false); // Hide success message if editing again
+    if (error) setError(null);          // Clear error message on user change
     // Prevent browser from reloading page
     event.preventDefault();
     // Remove the phone number from the array
@@ -189,7 +209,7 @@ export default function EditContactInfoPage() {
         className="border p-2 rounded w-full"
       />
 
-      <EmailForm emailList={email} setEmailList={setEmail} />
+      <EmailForm emailList={email} setEmailList={setEmail} submitted={submitted} setSubmitted={setSubmitted} error={error} setError={setError} />
       {/* <h2 className="text-l font-bold">Email Address:</h2>
       <input
         type="email"
@@ -200,7 +220,7 @@ export default function EditContactInfoPage() {
         className="border p-2 rounded w-full"
       /> */}
 
-      <PhoneNumForm phoneList={phone} setPhoneList={setPhone} />
+      <PhoneNumForm phoneList={phone} setPhoneList={setPhone} submitted={submitted} setSubmitted={setSubmitted} error={error} setError={setError} />
       {/* <h2 className="text-l font-bold">Phone Number (Format: 123-456-7890):</h2>
       <input
         type="tel"
