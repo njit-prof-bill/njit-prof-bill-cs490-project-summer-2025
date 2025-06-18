@@ -4,6 +4,7 @@ class jobObj {
     private company: string = "";
     private startDate: string = "";
     private endDate: string = "";
+    private jobSummary: string = "";
     private responsibilities: string[] = [];
 
     // Setter functions
@@ -18,6 +19,9 @@ class jobObj {
     }
     public updateEndDate(newDate: string) {
         this.endDate = newDate;
+    }
+    public updateSummary(newSummary: string) {
+        this.jobSummary = newSummary;
     }
     public updateResponsibility(newRes: string, index: number) {
         this.responsibilities[index] = newRes;
@@ -40,6 +44,9 @@ class jobObj {
     }
     public getEndDate() {
         return this.endDate;
+    }
+    public getSummary() {
+        return this.jobSummary;
     }
     public getResponsibility(index: number) {
         return this.responsibilities[index];
@@ -91,27 +98,39 @@ class eduObj {
 
 // Represents contact info on a single user's resume
 class contactObj {
-    private email: string = "";
-    private phone: string = "";
+    private emails: string[] = [];
+    private phones: string[] = [];
     private location: string = "";
 
     // Setter functions
-    public updateEmail(newEmail: string) {
-        this.email = newEmail;
+    public updateEmail(newEmail: string, index: number) {
+        this.emails[index] = newEmail;
     }
-    public updatePhone(newPhone: string) {
-        this.phone = newPhone;
+    public addEmail(newEmail: string, index: number) {
+        this.emails.splice(index, 0, newEmail);
+    }
+    public removeEmail(index: number) {
+        this.emails.splice(index, 1);
+    }
+    public updatePhone(newPhone: string, index: number) {
+        this.phones[index] = newPhone;
+    }
+    public addPhone(newPhone: string, index: number) {
+        this.phones.splice(index, 0, newPhone);
+    }
+    public removePhone(index: number) {
+        this.phones.splice(index, 1);
     }
     public updateLocation(newLoc: string) {
         this.location = newLoc;
     }
 
     // Getter functions
-    public getEmail() {
-        return this.email;
+    public getEmail(index: number) {
+        return this.emails[index];
     }
-    public getPhone() {
-        return this.phone;
+    public getPhone(index: number) {
+        return this.phones[index];
     }
     public getLocation() {
         return this.location;
@@ -135,11 +154,11 @@ class resume {
     // User might only want to update 
     // one or two contact info fields 
     // instead of all three of them at once
-    public updateContactEmail(newEmail: string) {
-        this.contact.updateEmail(newEmail);
+    public updateContactEmail(newEmail: string, index: number) {
+        this.contact.updateEmail(newEmail, index);
     }
-    public updateContactPhone(newPhone: string) {
-        this.contact.updatePhone(newPhone);
+    public updateContactPhone(newPhone: string, index: number) {
+        this.contact.updatePhone(newPhone, index);
     }
     public updateContactLoc(newLoc: string) {
         this.contact.updateLocation(newLoc);
@@ -164,6 +183,9 @@ class resume {
     }
     public updateJobEndDate(newEnd: string, jobIdx: number) {
         this.workExperience[jobIdx].updateEndDate(newEnd);
+    }
+    public updateJobSummary(newSummary: string, jobIdx: number) {
+        this.workExperience[jobIdx].updateSummary(newSummary);
     }
     public updateResponsibility(newRes: string, jobIdx: number, resIdx: number) {
         this.workExperience[jobIdx].updateResponsibility(newRes, resIdx);
@@ -207,11 +229,11 @@ class resume {
     public getFullName() {
         return this.fullName;
     }
-    public getContactEmail() {
-        return this.contact.getEmail();
+    public getContactEmail(index: number) {
+        return this.contact.getEmail(index);
     }
-    public getContactPhone() {
-        return this.contact.getPhone();
+    public getContactPhone(index: number) {
+        return this.contact.getPhone(index);
     }
     public getContactLoc() {
         return this.contact.getLocation();
@@ -231,6 +253,9 @@ class resume {
     }
     public getJobEndDate(jobIdx: number) {
         this.workExperience[jobIdx].getEndDate();
+    }
+    public getJobSummary(jobIdx: number) {
+        this.workExperience[jobIdx].getSummary();
     }
     public getResponsibility(jobIdx: number, resIdx: number) {
         this.workExperience[jobIdx].getResponsibility(resIdx);
