@@ -6,10 +6,58 @@ import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 
+type EmailFormProps = {
+  emailList: string[];
+  setEmailList: React.Dispatch<React.SetStateAction<string[]>>;
+};
+
+function EmailForm({emailList, setEmailList}: EmailFormProps) {
+  function handleChange(index: number, value: string) {
+    setEmailList((oldEmails) => oldEmails.map((email, i) => (i === index ? value : email)));
+  }
+
+  function addEmail(event: React.MouseEvent<HTMLButtonElement>) {
+    // Prevent browser from reloading page
+    event.preventDefault();
+    // Add a new, empty string to the array
+    setEmailList((oldEmails) => [...oldEmails, ""]);
+  }
+
+  function removeEmail(event: React.MouseEvent<HTMLButtonElement>, index: number) {
+    // Prevent browser from reloading page
+    event.preventDefault();
+    // Remove the email from the array
+    setEmailList((oldEmails) => oldEmails.filter((currEmail, i) => i !== index));
+  }
+  return (
+    <>
+      <h2 className="text-l font-bold">Email Address:</h2>
+      {emailList.map((email, emailIdx) => (
+        <div key={emailIdx}>
+          <input
+            type="email"
+            name="email"
+            value={email}
+            onChange={(event) => handleChange(emailIdx, event.target.value)}
+            placeholder="Enter your email address here"
+            className="border p-2 rounded w-full"
+          />
+          <button
+            className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 cursor-pointer"
+            onClick={(event) => removeEmail(event, emailIdx)}>Remove</button><br></br>
+        </div>
+      ))}
+      <button
+        className="bg-blue-500 text-white px-4 py-2 mt-2 rounded hover:bg-blue-600 cursor-pointer"
+        onClick={addEmail}>Add New Email Address</button>
+    </>
+  );
+}
+
 type PhoneNumFormProps = {
   phoneList: string[];
-  setPhoneList: React.Dispatch<React.SetStateAction<string[]>>
-}
+  setPhoneList: React.Dispatch<React.SetStateAction<string[]>>;
+};
 
 function PhoneNumForm({phoneList, setPhoneList}: PhoneNumFormProps) {
   function handleChange(index: number, value: string) {
@@ -61,7 +109,7 @@ export default function EditContactInfoPage() {
   const router = useRouter();
 
   const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState<string[]>([]);
   const [location, setLocation] = useState("");
   const [phone, setPhone] = useState<string[]>([]);
 
@@ -84,7 +132,7 @@ export default function EditContactInfoPage() {
     if (document.exists()) {
       const data = document.data();
       setFullName(data?.resumeFields?.fullName ?? "");
-      setEmail(data?.resumeFields?.contact?.email ?? "");
+      setEmail(data?.resumeFields?.contact?.email ?? []);
       setLocation(data?.resumeFields?.contact?.location ?? "");
       setPhone(data?.resumeFields?.contact?.phone ?? []);
     }
@@ -141,7 +189,8 @@ export default function EditContactInfoPage() {
         className="border p-2 rounded w-full"
       />
 
-      <h2 className="text-l font-bold">Email Address:</h2>
+      <EmailForm emailList={email} setEmailList={setEmail} />
+      {/* <h2 className="text-l font-bold">Email Address:</h2>
       <input
         type="email"
         name="email"
@@ -149,7 +198,7 @@ export default function EditContactInfoPage() {
         onChange={handleInputChange(setEmail)}
         placeholder="Enter your email address here"
         className="border p-2 rounded w-full"
-      />
+      /> */}
 
       <PhoneNumForm phoneList={phone} setPhoneList={setPhone} />
       {/* <h2 className="text-l font-bold">Phone Number (Format: 123-456-7890):</h2>
