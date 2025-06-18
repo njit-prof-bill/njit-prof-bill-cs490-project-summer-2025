@@ -6,14 +6,133 @@ import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 
+type EmailFormProps = {
+  emailList: string[];
+  setEmailList: React.Dispatch<React.SetStateAction<string[]>>;
+  submitted: boolean;
+  setSubmitted: React.Dispatch<React.SetStateAction<boolean>>;
+  error: string | null;
+  setError: React.Dispatch<React.SetStateAction<string | null>>;
+};
+
+function EmailForm({emailList, setEmailList, submitted, setSubmitted, error, setError}: EmailFormProps) {
+  function handleChange(index: number, value: string) {
+    if (submitted) setSubmitted(false); // Hide success message if editing again
+    if (error) setError(null);          // Clear error message on user change
+    setEmailList((oldEmails) => oldEmails.map((email, i) => (i === index ? value : email)));
+  }
+
+  function addEmail(event: React.MouseEvent<HTMLButtonElement>) {
+    if (submitted) setSubmitted(false); // Hide success message if editing again
+    if (error) setError(null);          // Clear error message on user change
+    // Prevent browser from reloading page
+    event.preventDefault();
+    // Add a new, empty string to the array
+    setEmailList((oldEmails) => [...oldEmails, ""]);
+  }
+
+  function removeEmail(event: React.MouseEvent<HTMLButtonElement>, index: number) {
+    if (submitted) setSubmitted(false); // Hide success message if editing again
+    if (error) setError(null);          // Clear error message on user change
+    // Prevent browser from reloading page
+    event.preventDefault();
+    // Remove the email from the array
+    setEmailList((oldEmails) => oldEmails.filter((currEmail, i) => i !== index));
+  }
+  return (
+    <>
+      <h2 className="text-l font-bold">Email Address:</h2>
+      {emailList.map((email, emailIdx) => (
+        <div key={emailIdx}>
+          <input
+            type="text"
+            name="email"
+            value={email}
+            pattern="^[a-zA-Z0-9.!#$%&'*\+\/=?^_`\{\|\}~\-]+@[a-zA-Z0-9\-]+(\.[a-zA-Z0-9\-]+)+$"
+            onChange={(event) => handleChange(emailIdx, event.target.value)}
+            placeholder="Enter your email address here"
+            className="border p-2 rounded w-full"
+          />
+          <button
+            className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 cursor-pointer"
+            onClick={(event) => removeEmail(event, emailIdx)}>Remove</button><br></br>
+        </div>
+      ))}
+      <button
+        className="bg-blue-500 text-white px-4 py-2 mt-2 rounded hover:bg-blue-600 cursor-pointer"
+        onClick={addEmail}>Add New Email Address</button>
+    </>
+  );
+}
+
+type PhoneNumFormProps = {
+  phoneList: string[];
+  setPhoneList: React.Dispatch<React.SetStateAction<string[]>>;
+  submitted: boolean;
+  setSubmitted: React.Dispatch<React.SetStateAction<boolean>>;
+  error: string | null;
+  setError: React.Dispatch<React.SetStateAction<string | null>>;
+};
+
+function PhoneNumForm({phoneList, setPhoneList, submitted, setSubmitted, error, setError}: PhoneNumFormProps) {
+  function handleChange(index: number, value: string) {
+    if (submitted) setSubmitted(false); // Hide success message if editing again
+    if (error) setError(null);          // Clear error message on user change
+    setPhoneList((oldNums) => oldNums.map((num, i) => (i === index ? value : num)));
+  }
+
+  function addPhoneNum(event: React.MouseEvent<HTMLButtonElement>) {
+    if (submitted) setSubmitted(false); // Hide success message if editing again
+    if (error) setError(null);          // Clear error message on user change
+    // Prevent browser from reloading page
+    event.preventDefault();
+    // Add a new, empty string to the array
+    setPhoneList((oldNums) => [...oldNums, ""]);
+  }
+
+  function removePhoneNum(event: React.MouseEvent<HTMLButtonElement>, index: number) {
+    if (submitted) setSubmitted(false); // Hide success message if editing again
+    if (error) setError(null);          // Clear error message on user change
+    // Prevent browser from reloading page
+    event.preventDefault();
+    // Remove the phone number from the array
+    setPhoneList((oldNums) => oldNums.filter((currNum, i) => i !== index));
+  }
+
+  return (
+    <>
+      <h2 className="text-l font-bold">Phone Number (Format: 123-456-7890):</h2>
+      {phoneList.map((phoneNum, phoneIdx) => (
+        <div key={phoneIdx}>
+          <input
+            type="tel"
+            name="phone"
+            pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}"
+            value={phoneNum}
+            onChange={(event) => handleChange(phoneIdx, event.target.value)}
+            placeholder="Enter your number here"
+            className="border p-2 rounded w-full"
+          />
+          <button
+            className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 cursor-pointer"
+            onClick={(event) => removePhoneNum(event, phoneIdx)}>Remove</button><br></br>
+        </div>
+      ))}
+      <button
+        className="bg-blue-500 text-white px-4 py-2 mt-2 rounded hover:bg-blue-600 cursor-pointer"
+        onClick={addPhoneNum}>Add New Phone Number</button>
+    </>
+  );
+}
+
 export default function EditContactInfoPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
 
   const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState<string[]>([]);
   const [location, setLocation] = useState("");
-  const [phone, setPhone] = useState("");
+  const [phone, setPhone] = useState<string[]>([]);
 
   const [submitting, setSubmitting] = useState(false); // Tracks if form is being submitted
   const [submitted, setSubmitted] = useState(false); // Tracks if submission succeeded
@@ -34,9 +153,9 @@ export default function EditContactInfoPage() {
     if (document.exists()) {
       const data = document.data();
       setFullName(data?.resumeFields?.fullName ?? "");
-      setEmail(data?.resumeFields?.contact?.email ?? "");
+      setEmail(data?.resumeFields?.contact?.email ?? []);
       setLocation(data?.resumeFields?.contact?.location ?? "");
-      setPhone(data?.resumeFields?.contact?.phone ?? "");
+      setPhone(data?.resumeFields?.contact?.phone ?? []);
     }
   }
 
@@ -49,13 +168,30 @@ export default function EditContactInfoPage() {
     setError(null);        // Clear any previous error message
 
     try {
+      // Remove duplicates and empty/whitespace strings for the email array
+      const cleanedEmails = [
+        ...new Set(email) // Remove duplicates
+      ].filter((email) => email.trim() !== ""); // Remove empty/whitespace emails
+
+      // Remove duplicates and empty/whitespace strings for the phone array
+      const cleanedPhoneNums = [
+        ...new Set(phone) // Remove duplicates
+      ].filter((phone) => phone.trim() !== ""); // Remove empty/whitespace phone numbers
+
+      // Confirm if arrays were cleaned
+      // console.log("Cleaned Emails: ", cleanedEmails);
+      // console.log("Cleaned Phone Numbers: ", cleanedPhoneNums);
+
       const userDocRef = doc(db, "users", user.uid);
       await updateDoc(userDocRef, {
         "resumeFields.fullName": fullName,
-        "resumeFields.contact.email": email,
+        "resumeFields.contact.email": cleanedEmails,
         "resumeFields.contact.location": location,
-        "resumeFields.contact.phone": phone,
+        "resumeFields.contact.phone": cleanedPhoneNums,
       });
+
+      setEmail(cleanedEmails);
+      setPhone(cleanedPhoneNums);
 
       setSubmitting(false); // Hide spinner
       setSubmitted(true);   // Trigger visual success feedback
@@ -91,7 +227,8 @@ export default function EditContactInfoPage() {
         className="border p-2 rounded w-full"
       />
 
-      <h2 className="text-l font-bold">Email Address:</h2>
+      <EmailForm emailList={email} setEmailList={setEmail} submitted={submitted} setSubmitted={setSubmitted} error={error} setError={setError} />
+      {/* <h2 className="text-l font-bold">Email Address:</h2>
       <input
         type="email"
         name="email"
@@ -99,9 +236,10 @@ export default function EditContactInfoPage() {
         onChange={handleInputChange(setEmail)}
         placeholder="Enter your email address here"
         className="border p-2 rounded w-full"
-      />
+      /> */}
 
-      <h2 className="text-l font-bold">Phone Number (Format: 123-456-7890):</h2>
+      <PhoneNumForm phoneList={phone} setPhoneList={setPhone} submitted={submitted} setSubmitted={setSubmitted} error={error} setError={setError} />
+      {/* <h2 className="text-l font-bold">Phone Number (Format: 123-456-7890):</h2>
       <input
         type="tel"
         name="phone"
@@ -110,7 +248,7 @@ export default function EditContactInfoPage() {
         onChange={handleInputChange(setPhone)}
         placeholder="Enter your number here"
         className="border p-2 rounded w-full"
-      />
+      /> */}
 
       <h2 className="text-l font-bold">Location:</h2>
       <input
