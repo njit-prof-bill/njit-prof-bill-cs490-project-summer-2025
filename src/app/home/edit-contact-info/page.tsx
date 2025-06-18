@@ -6,6 +6,56 @@ import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 
+type PhoneNumFormProps = {
+  phoneList: string[];
+  setPhoneList: React.Dispatch<React.SetStateAction<string[]>>
+}
+
+function PhoneNumForm({phoneList, setPhoneList}: PhoneNumFormProps) {
+  function handleChange(index: number, value: string) {
+    setPhoneList((oldNums) => oldNums.map((num, i) => (i === index ? value : num)));
+  }
+
+  function addPhoneNum(event: React.MouseEvent<HTMLButtonElement>) {
+    // Prevent browser from reloading page
+    event.preventDefault();
+    // Add a new, empty string to the array
+    setPhoneList((oldNums) => [...oldNums, ""]);
+  }
+
+  function removePhoneNum(event: React.MouseEvent<HTMLButtonElement>, index: number) {
+    // Prevent browser from reloading page
+    event.preventDefault();
+    // Remove the phone number from the array
+    setPhoneList((oldNums) => oldNums.filter((currNum, i) => i !== index));
+  }
+
+  return (
+    <>
+      <h2 className="text-l font-bold">Phone Number (Format: 123-456-7890):</h2>
+      {phoneList.map((phoneNum, phoneIdx) => (
+        <div key={phoneIdx}>
+          <input
+            type="tel"
+            name="phone"
+            pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}"
+            value={phoneNum}
+            onChange={(event) => handleChange(phoneIdx, event.target.value)}
+            placeholder="Enter your number here"
+            className="border p-2 rounded w-full"
+          />
+          <button
+            className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 cursor-pointer"
+            onClick={(event) => removePhoneNum(event, phoneIdx)}>Remove</button><br></br>
+        </div>
+      ))}
+      <button
+        className="bg-blue-500 text-white px-4 py-2 mt-2 rounded hover:bg-blue-600 cursor-pointer"
+        onClick={addPhoneNum}>Add New Phone Number</button>
+    </>
+  );
+}
+
 export default function EditContactInfoPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -13,7 +63,7 @@ export default function EditContactInfoPage() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [location, setLocation] = useState("");
-  const [phone, setPhone] = useState("");
+  const [phone, setPhone] = useState<string[]>([]);
 
   const [submitting, setSubmitting] = useState(false); // Tracks if form is being submitted
   const [submitted, setSubmitted] = useState(false); // Tracks if submission succeeded
@@ -36,7 +86,7 @@ export default function EditContactInfoPage() {
       setFullName(data?.resumeFields?.fullName ?? "");
       setEmail(data?.resumeFields?.contact?.email ?? "");
       setLocation(data?.resumeFields?.contact?.location ?? "");
-      setPhone(data?.resumeFields?.contact?.phone ?? "");
+      setPhone(data?.resumeFields?.contact?.phone ?? []);
     }
   }
 
@@ -101,7 +151,8 @@ export default function EditContactInfoPage() {
         className="border p-2 rounded w-full"
       />
 
-      <h2 className="text-l font-bold">Phone Number (Format: 123-456-7890):</h2>
+      <PhoneNumForm phoneList={phone} setPhoneList={setPhone} />
+      {/* <h2 className="text-l font-bold">Phone Number (Format: 123-456-7890):</h2>
       <input
         type="tel"
         name="phone"
@@ -110,7 +161,7 @@ export default function EditContactInfoPage() {
         onChange={handleInputChange(setPhone)}
         placeholder="Enter your number here"
         className="border p-2 rounded w-full"
-      />
+      /> */}
 
       <h2 className="text-l font-bold">Location:</h2>
       <input
