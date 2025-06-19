@@ -1,3 +1,6 @@
+"use client";
+import { Timestamp } from "firebase/firestore";
+
 // Represents info about a single job on the user's resume
 class jobObj {
     private jobTitle: string = "";
@@ -286,14 +289,14 @@ class resume {
 class freeFormSubmission {
     private text: string = "";
     private label: string = "";
-    private dateSubmitted: Date = new Date();
+    private dateSubmitted: Timestamp = new Timestamp(0,0);
     public updateText(newText: string) {
         this.text = newText;
     }
     public updateLabel(newLabel: string) {
         this.label = newLabel;
     }
-    public updateDate(newDate: Date) {
+    public updateDate(newDate: Timestamp) {
         this.dateSubmitted = newDate;
     }
     public getText() {
