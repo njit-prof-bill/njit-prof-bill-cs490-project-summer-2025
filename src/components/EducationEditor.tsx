@@ -384,7 +384,7 @@ const EducationEditor: React.FC<EducationEditorProps> = ({ onSuccess, onError })
     return (
       <button
         onClick={handleOpen}
-        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+        className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded"
       >
         Edit Education
       </button>
