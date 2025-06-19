@@ -1,8 +1,9 @@
 // Import the functions you need from the Firebase SDKs
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore"
-import { HarmBlockThreshold, HarmCategory, getAI, getGenerativeModel, GoogleAIBackend } from "firebase/ai"
+import { getFirestore } from "firebase/firestore";
+import { HarmBlockThreshold, HarmCategory, getAI, getGenerativeModel, GoogleAIBackend } from "firebase/ai";
+import { getStorage } from "firebase/storage";
 
 // Firebase configuration using environment variables
 const firebaseConfig = {
@@ -40,3 +41,6 @@ export const safetySettings = [
 
 // Create a `GenerativeModel` instance
 export const model = getGenerativeModel(ai, { model: "gemini-2.0-flash-001", safetySettings });
+
+// Initialize Cloud Storage and get a reference to the service
+const storage = getStorage(app);
