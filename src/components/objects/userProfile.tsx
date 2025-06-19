@@ -283,13 +283,27 @@ class resume {
 }
 
 // For unstructured, biographical text submitted directly by the user.
-class freeForm {
+class freeFormSubmission {
     private text: string = "";
+    private label: string = "";
+    private dateSubmitted: Date = new Date();
     public updateText(newText: string) {
         this.text = newText;
     }
+    public updateLabel(newLabel: string) {
+        this.label = newLabel;
+    }
+    public updateDate(newDate: Date) {
+        this.dateSubmitted = newDate;
+    }
     public getText() {
         return this.text;
+    }
+    public getLabel() {
+        return this.label;
+    }
+    public getDate() {
+        return this.dateSubmitted;
     }
 }
 
@@ -297,6 +311,6 @@ class freeForm {
 export class userProfile {
     // theme property is used by src/context/themeContext.tsx
     theme: string = "system";
-    freeFormText: freeForm = new freeForm;
+    freeFormText: freeFormSubmission[] = [];
     resumeFields: resume = new resume;
 }
