@@ -6,8 +6,8 @@ import { doc, getDoc, updateDoc } from "firebase/firestore";
 export const AIPrompt = `Please take this text corpus submitted by a user and parse the following information from it:
 
 1. The user’s full name.
-2. The user’s email address.
-3. The user’s phone number, formatted as XXX-XXX-XXXX where X is a number from 0 to 9. If this is not present, leave it blank.
+2. The user’s email addresses.
+3. The user’s phone numbers, each one formatted as XXX-XXX-XXXX where X is a number from 0 to 9. If no phone numbers are present, leave it blank.
 4. The user’s city and state or country. If this is not present, leave it blank.
 5. The user’s professional summary (1 to 2 paragraphs). If this is not present, leave it blank.
 6. The list of work experiences the user holds.
@@ -16,6 +16,7 @@ export const AIPrompt = `Please take this text corpus submitted by a user and pa
       - The name of the company.
       - The start date of the job in YYYY-MM format.
       - The end date of the job either in YYYY-MM format. If this cannot be parsed in YYYY-MM format, substitute it with the word “Present”.
+      - The summary of the job role. If this is not present, leave it blank.
       - The list of the user’s responsibilities and accomplishments while working at the job.
 7. The list of educational qualifications the user holds.
     For each educational qualification the user holds, parse the following information:
@@ -33,8 +34,8 @@ Please return your response as a strict JSON object in the following structure:
 |-------|------|-------------|
 | fullName | String | Full name of the user. |
 | contact | Object | User's contact details. |
-| contact.email | String | Email address. |
-| contact.phone | String | Phone number (optional; also should have the format: XXX-XXX-XXXX with X being a number from 0 to 9). |
+| contact.email | Array of Strings | Email addresses. |
+| contact.phone | Array of Strings | Phone numbers (optional; also should have the format: XXX-XXX-XXXX with X being a number from 0 to 9). |
 | contact.location | String | City and state or country (optional). |
 | summary | String | Professional summary (1-2 paragraphs). |
 | workExperience | Array of Objects | List of work experiences, ordered most recent first. |
@@ -42,6 +43,7 @@ Please return your response as a strict JSON object in the following structure:
 | workExperience[].company | String | Company name. |
 | workExperience[].startDate | String | Start date (format: YYYY-MM). |
 | workExperience[].endDate | String | End date (or \"Present\"). |
+| workExperience[].jobSummary | String | Summary of the job role. |
 | workExperience[].responsibilities | Array of Strings | Bullet points of responsibilities/accomplishments. |
 | education | Array of Objects | Educational qualifications, ordered by most recent first. |
 | education[].degree | String | Degree title (e.g., \"Bachelor of Science in Computer Science\"). |
