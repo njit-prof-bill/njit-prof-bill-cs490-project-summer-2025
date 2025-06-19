@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase'; // Adjust path to your Firebase config
 import { User } from 'firebase/auth';
-import { Save, Check, Edit2 } from 'lucide-react';
+import { Save, Edit2 } from 'lucide-react';
 
 interface SummaryEditorProps {
   onSuccess?: () => void;
@@ -272,7 +272,8 @@ const SummaryEditor: React.FC<SummaryEditorProps> = ({ onSuccess, onError }) => 
     return (
       <button
         onClick={handleOpen}
-        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+        className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded"
+
       >
         Edit Summary
       </button>

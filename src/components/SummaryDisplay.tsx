@@ -119,18 +119,13 @@ const SummaryDisplay: React.FC<SummaryDisplayProps> = ({ className = '' }) => {
   return (
     <div className={`p-4 ${className}`}>
       <div className="max-w-4xl mx-auto">
-        <h2 className="text-2xl font-bold mb-6">Summary/Career Objective</h2>
-        
-        <div className="border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6">
-          <div className="prose dark:prose-invert max-w-none">
-            <div className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
-              {summary}
-            </div>
+        <div>
+          <div className="text-gray-300 leading-relaxed whitespace-pre-wrap">
+            {summary}
           </div>
         </div>
       </div>
     </div>
-  );
-};
-
+  )
+}
 export default SummaryDisplay;

@@ -1,19 +1,7 @@
-import { useState, useEffect } from 'react';
-import { doc, getDoc } from 'firebase/firestore';
-import { firestore } from '../lib/firebase';
-
-import { onAuthStateChanged, User } from 'firebase/auth';
-import { auth, db } from '@/lib/firebase';
-
 import Reorder from '../components/Reorder';
 import ReorderEducation from '../components/ReorderEducation';
 import ReorderWorkExperience from '@/components/ReorderWorkExperience';
 import FetchAndDisplayKey from "../components/FetchAndDisplayKey";
-import SkillsEditor from '../components/SkillsEditor';
-import EducationEditor from '../components/EducationEditor';
-import WorkExperienceEditor from './WorkExperienceEditor';
-import WorkExperienceDisplay from '@/components/WorkExperienceDisplay';
-import EducationDisplay from '@/components/EducationDisplay';
 import SummaryDisplay from '@/components/SummaryDisplay';
 import SummaryEditor from '@/components/SummaryEditor';
 
@@ -32,8 +20,16 @@ export default function UserProfile({ deduplicateSkills }: ProfileCardProps) {
       <br />
       {/* <FetchAndDisplayKey keyPath="summary" /> */}
 
-      <SummaryDisplay className="your-custom-classes" />
-      <SummaryEditor  />
+      <div className="w-full max-w-4xl mx-auto mt-6">
+        <h2 className="text-2xl font-bold mb-4">Summary/Career Objective</h2>
+        <SummaryDisplay className="p-6 bg-[#1B1917] border border-gray-700 rounded-lg shadow-sm" />
+        <div className="mt-4">
+          <SummaryEditor />
+        </div>
+      </div>
+
+
+
       <br />
 
 
@@ -42,26 +38,28 @@ export default function UserProfile({ deduplicateSkills }: ProfileCardProps) {
       {/* <WorkExperienceDisplay className="my-8" /> */}
       <ReorderWorkExperience />
 
-      <WorkExperienceEditor 
+      {/* <WorkExperienceEditor 
       onSuccess={() => console.log('Work experience saved!')}
       onError={(error) => console.error('Error:', error)}
-      />
+      /> */}
 
 
       {/* <FetchAndDisplayKey keyPath="education" /> */}
       <ReorderEducation/>
       {/* <EducationDisplay /> */}
-      <EducationEditor />
+      {/* <EducationEditor /> */}
 
 
 
       {/* <FetchAndDisplayKey keyPath="skills" /> */}
-      <Reorder tag="skills" />
-      <SkillsEditor
+      <div className="w-full max-w-4xl mx-auto mt-10">
+        <Reorder tag="skills" />
+      </div>
+      {/* <SkillsEditor
         deduplicateSkills={deduplicateSkills} // Pass prop
         onSuccess={() => console.log('Skills saved!')}
         onError={(error) => console.error(error)}
-      />
+      /> */}
     </div>
   );
 }

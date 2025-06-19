@@ -125,7 +125,7 @@ const EducationDisplay: React.FC<EducationDisplayProps> = ({ className = '' }) =
   return (
     <div className={`p-4 ${className}`}>
       <div className="max-w-4xl mx-auto">
-        <h2 className="text-2xl font-bold mb-6">Education</h2>
+        {/* <h2 className="text-2xl font-bold mb-6">Education</h2> */}
         
         <div className="space-y-6">
           {education.map((edu, index) => (
