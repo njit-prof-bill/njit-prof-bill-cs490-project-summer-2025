@@ -34,8 +34,8 @@ export default function LandingPage() {
           <div className="px-4">
             <div className="flex items-center space-x-4 bg-transparent">
               <Image
-                src="/logo.png"
-                alt="Marcus Logo"
+                src="/new-logo.png"
+                alt="Pisces Logo"
                 width={60} // Increased size
                 height={60} // Increased size
               />
