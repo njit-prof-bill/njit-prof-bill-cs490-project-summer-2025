@@ -12,12 +12,6 @@ export default function RouteLoader() {
   useEffect(() => {
     setIsLoading(true);
 
-    // Simulate loading delay (replace this with your real logic if needed)
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 400); // 400ms fake delay
-
-    return () => clearTimeout(timer);
   }, [pathname]);
 
   return isLoading ? <LoadingLayout /> : null;
