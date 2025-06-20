@@ -88,9 +88,9 @@ export async function POST(req: NextRequest) {
     }
 
     const formData = await req.formData();
-    const file = formData.get('file') as Blob;
+    const file = formData.get('file');
 
-    if (!file) {
+    if (!(file instanceof File)) {
       return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
     }
 
@@ -100,6 +100,10 @@ export async function POST(req: NextRequest) {
 
     let rawText = '';
 
+    if (!ext) {
+      // ext is either of type 'string' or 'undefined'
+      return NextResponse.json({ error: 'Unsupported file type' }, { status: 415 });
+    }
     if (ext === 'pdf') {
       // const pdfParse = (await import('pdf-parse')).default;
       const result = await pdfParse(buffer);
