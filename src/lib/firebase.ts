@@ -43,4 +43,4 @@ export const safetySettings = [
 export const model = getGenerativeModel(ai, { model: "gemini-2.0-flash-001", safetySettings });
 
 // Initialize Cloud Storage and get a reference to the service
-const storage = getStorage(app);
+export const storage = getStorage(app);
