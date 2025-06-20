@@ -15,7 +15,7 @@ export default function RouteLoader() {
     // Simulate loading delay (replace this with your real logic if needed)
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 100); // 100ms fake delay
+    }, 300); // 300ms fake delay
 
     return () => clearTimeout(timer);
   }, [pathname]);
