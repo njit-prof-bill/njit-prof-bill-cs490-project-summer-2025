@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useState, useEffect } from "react";
-import { FileUpload } from "primereact/fileupload";
+import { FileUpload, FileUploadFile, FileUploadSelectEvent } from "primereact/fileupload";
 import { Button } from "primereact/button";
 import { getAIResponse, saveAIResponse, AIPrompt } from "@/components/ai/aiPrompt";
 import { db } from "@/lib/firebase";
@@ -24,7 +24,7 @@ export default function UploadResumePage() {
     return <p>Loading...</p>; // Show a loading state while checking auth
   }
 
-  const fileUploadRef = useRef(null);
+  const fileUploadRef = useRef<FileUpload>(null);
 
   const [uploadMessage, setUploadMessage] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState<boolean | null>(null);
@@ -106,16 +106,20 @@ export default function UploadResumePage() {
     }
   };
 
-  const onRemove = (file, callback) => {
+  const onRemove = (file: File, callback: () => void) => {
     callback();
     setUploadMessage(null);
     setExtractedText(null);
   };
 
-  const onSelect = (e) => {
+  const onSelect = (e: FileUploadSelectEvent) => {
     const allowedExtensions = ["pdf", "docx", "txt", "md", "odt", "PDF", "DOCX", "TXT", "ODT"];
     const isValid = e.files.every((file) => {
       const ext = file.name.split(".").pop()?.toLowerCase();
+      // ext might be of type 'undefined' instead of 'string'
+      if (!ext) {
+        return false;
+      }
       return allowedExtensions.includes(ext);
     });
 
