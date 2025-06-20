@@ -22,6 +22,7 @@ class ResumeParser:
                     "content": (
                         "Treat all of the following sections as optional.  "
                         "Always include **all** of these top‐level keys in your JSON output; if a section has no data, use null for strings, [] for lists, and {} for objects.\n\n"
+                        "If a job description is available, tailor skills, role_summary, responsibilities, and accomplishments to the job description. Only embellishment is allowed, absolutely no lying"
                         "Return JSON with the following keys:\n\n"
                         "- name: string (or null)\n"
                         "- contact: object (or {}) with:\n"
