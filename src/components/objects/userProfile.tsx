@@ -1,3 +1,6 @@
+"use client";
+import { Timestamp } from "firebase/firestore";
+
 // Represents info about a single job on the user's resume
 class jobObj {
     private jobTitle: string = "";
@@ -283,13 +286,27 @@ class resume {
 }
 
 // For unstructured, biographical text submitted directly by the user.
-class freeForm {
+class freeFormSubmission {
     private text: string = "";
+    private label: string = "";
+    private dateSubmitted: Timestamp = new Timestamp(0,0);
     public updateText(newText: string) {
         this.text = newText;
     }
+    public updateLabel(newLabel: string) {
+        this.label = newLabel;
+    }
+    public updateDate(newDate: Timestamp) {
+        this.dateSubmitted = newDate;
+    }
     public getText() {
         return this.text;
+    }
+    public getLabel() {
+        return this.label;
+    }
+    public getDate() {
+        return this.dateSubmitted;
     }
 }
 
@@ -297,6 +314,6 @@ class freeForm {
 export class userProfile {
     // theme property is used by src/context/themeContext.tsx
     theme: string = "system";
-    freeFormText: freeForm = new freeForm;
+    freeFormText: freeFormSubmission[] = [];
     resumeFields: resume = new resume;
 }
