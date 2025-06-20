@@ -403,7 +403,7 @@ const EducationEditor: React.FC<EducationEditorProps> = ({ onSuccess, onError })
         <div className="p-6 max-h-96 overflow-y-auto">
           {loading ? (
             <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400">Education</div>
             </div>
           ) : (
             <form onSubmit={(e) => e.preventDefault()}>
