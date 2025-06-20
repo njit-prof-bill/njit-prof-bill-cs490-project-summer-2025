@@ -1,0 +1,3 @@
+I'm a self-taught developer named Amy Chen. 
+I started coding during the pandemic and now I specialize in JavaScript, with a strong focus on building SPAs using React. 
+I completed a bootcamp at General Assembly and recently published a personal finance app on GitHub.

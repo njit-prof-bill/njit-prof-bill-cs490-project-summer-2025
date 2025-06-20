@@ -1,0 +1,28 @@
+John Doe  
+john.doe@example.com  
+(123) 456-7890  
+New York, NY  
+
+Skills:  
+- Programming: Python, Java, C++  
+- Web: HTML, CSS, JavaScript  
+- Tools: Git, Docker, Jenkins  
+
+Education:  
+B.S. in Computer Science  
+University of California, Berkeley  
+Graduation: May 2022  
+GPA: 3.8  
+
+Experience:  
+Software Engineer  
+Google, Mountain View, CA  
+Jan 2023 – Present  
+- Developed scalable backend services  
+- Integrated RESTful APIs with frontend teams  
+
+Intern  
+Facebook, Menlo Park, CA  
+Jun 2021 – Aug 2021  
+- Worked on internal developer tools  
+- Improved build pipeline performance

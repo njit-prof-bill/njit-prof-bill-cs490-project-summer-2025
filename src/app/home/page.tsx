@@ -3,36 +3,95 @@
 import { useAuth } from "@/context/authContext";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
+import {Container, Grid, SimpleGrid, Skeleton, Card, Image, Text, Button, Group, Badge,} from "@mantine/core";
+
+const PRIMARY_COL_HEIGHT = "80vh";
+
 export default function HomePage() {
-    const { user, loading } = useAuth();
-    const router = useRouter();
+  const { user, loading } = useAuth();
+  const router = useRouter();
 
-    useEffect(() => {
-        if (!loading && !user) {
-            router.push("/"); // Redirect to landing page if not authenticated
-        }
-    }, [user, loading, router]);
-
-    if (loading) {
-        return <p>Loading...</p>; // Show a loading state while checking auth
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push("/"); // Redirect to landing page if not authenticated
     }
+  }, [user, loading, router]);
 
-    return (
-        <div className="flex items-center justify-center min-h-screen">
-            <Card className="w-full max-w-md shadow-lg">
-                <CardHeader>
-                    <CardTitle>Marcus App Template</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <CardDescription>
-                        This app is a starter template for SaaS applications. To use this template, simply fork the repository and install the app dependencies.
-                    </CardDescription>
-                </CardContent>
-                <CardFooter>
-                    <CardDescription>Copyright 2025 Fourier Gauss Labs</CardDescription>
-                </CardFooter>
+  if (loading) {
+    return <p>Loading...</p>; // Show a loading state while checking auth
+  }
+
+  return (
+    <Container size="xl" my="md">
+      <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+        <Card shadow="sm" padding="lg" radius="md" withBorder onClick={() => router.push('/home/resume_builder')} style={{cursor:"pointer"}}>
+          <Card.Section component="span">
+            <Image
+              src="/resume_builder_image.png" // Find image for Resume Builder
+              height={160}
+              alt="Resume_Png"
+            />
+          </Card.Section>
+
+          <Group justify="space-between" mt="md" mb="xs">
+            <Text fw={500}>Resume Builder</Text>{"Filler Text"}
+            {/* Input Text for description*/}
+          </Group>
+        </Card>
+
+        <Grid gutter="md">
+          <Grid.Col>
+            <Card shadow="sm" padding="lg" radius="md" withBorder>
+              <Card.Section component="a" href="https://mantine.dev/">
+                <Image
+                  src="https://raw.githubusercontent.com/mantinedev/mantine/master/.demo/images/bg-8.png" // Find image for Resume Builder
+                  height={160}
+                  alt="Norway"
+                />
+              </Card.Section>
+
+              <Group justify="space-between" mt="md" mb="xs">
+                <Text fw={500}>Continue Editing</Text>{" "}
+                {/* Input Text for description*/}
+              </Group>
             </Card>
-        </div>
-    );
+          </Grid.Col>
+
+          <Grid.Col span={6}>
+            <Card shadow="sm" padding="lg" radius="md" withBorder>
+              <Card.Section component="a" href="https://mantine.dev/">
+                <Image
+                  src="https://raw.githubusercontent.com/mantinedev/mantine/master/.demo/images/bg-8.png" // Find image for Resume Builder
+                  height={160}
+                  alt="Norway"
+                />
+              </Card.Section>
+
+              <Group justify="space-between" mt="md" mb="xs">
+                <Text fw={500}>View Completed Resumes</Text>{" "}
+                {/* Input Text for description*/}
+              </Group>
+            </Card>
+          </Grid.Col>
+
+          <Grid.Col span={6}>
+            <Card shadow="sm" padding="lg" radius="md" withBorder>
+              <Card.Section component="a" href="https://mantine.dev/">
+                <Image
+                  src="https://raw.githubusercontent.com/mantinedev/mantine/master/.demo/images/bg-8.png" // Find image for Resume Builder
+                  height={160}
+                  alt="Norway"
+                />
+              </Card.Section>
+
+              <Group justify="space-between" mt="md" mb="xs">
+                <Text fw={500}>About Us</Text>{" "}
+                {/* Input Text for description*/}
+              </Group>
+            </Card>
+          </Grid.Col>
+        </Grid>
+      </SimpleGrid>
+    </Container>
+  );
 }

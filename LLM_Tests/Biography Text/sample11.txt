@@ -1,0 +1,7 @@
+Aishwarya Patel is a data scientist with a background in mathematics and cognitive science. 
+After graduating magna cum laude from the University of Toronto with a double major, 
+she joined IBM as a machine learning engineer where she worked on natural language processing (NLP) solutions for customer service chatbots. 
+At LinkedIn, she contributed to the development of a recommendation engine that increased job match accuracy by 17%. 
+Aishwarya is proficient in Python, R, SQL, TensorFlow, and AWS, and she holds a certificate in Deep Learning from Coursera. 
+She’s passionate about ethical AI and frequently contributes to open-source projects related to fairness and transparency. 
+Outside of work, she enjoys writing technical blogs and organizing data science meetups in the Bay Area.

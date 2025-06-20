@@ -1,0 +1,11 @@
+Sup. My name’s Tavon, though most people call me T. Here’s the quick rundown:
+
+I started messing with code in high school—wrote a bot for League of Legends back in the day. Went to NYU for a year (Comp Sci), but the classes were boring, and tuition was wild, so I bailed.
+
+I launched two startups after that. First one was a Discord analytics tool (died fast, no traction). The second was a browser extension that hit 40k users before Google changed the API rules.
+
+Then I joined a fintech company as a contract dev—can’t say which one ‘cause of legal stuff, but I built out some of their crypto wallet infrastructure in Go. I mostly work in Kotlin, Go, and TypeScript these days. I hate front-end but can do it when I have to.
+
+I’ve never really done the resume thing. You can see my projects on GitHub. I live somewhere between Philly and NYC—depends on the week.
+
+You can reach me via my burner: thedude1234[at]protonmail[dot]com. Phone? Maybe later.

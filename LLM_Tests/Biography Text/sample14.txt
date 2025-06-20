@@ -1,0 +1,9 @@
+Hey there, I’m Jake Reynolds. My path’s been anything but linear. I started out studying mechanical engineering at some university in Ohio (never finished, long story), then transitioned into tech after messing around with WordPress and building a couple of janky e-commerce sites.
+
+Around 2016, I landed a contract with a small logistics company to automate inventory reports using Excel macros, and somehow that turned into a full-time role. From there, I taught myself Python and SQL—mostly through YouTube and forums like Stack Overflow. Eventually, I found myself at Amazon as a Solutions Analyst (intern at first, then part-time). I left after two years because I didn’t feel like the work aligned with my values.
+
+Took a sabbatical, volunteered at a nonprofit in Kenya for six months doing database management. After coming back to the States, I freelanced, mostly data cleanup and automation scripts for small businesses. Now I’m doing contract work for an AI startup (NDAs, so I can’t disclose much) but mostly focused on ETL pipelines.
+
+Skills? I dabble in a bit of everything: Python, Bash scripting, some light React, data visualization (Tableau, Power BI), and yeah, I can still write an Excel macro blindfolded.
+
+I’m based in Cincinnati now. Reach me at jake1988[at]hotmail[dot]com or (513)-000-1200. I’m not great at keeping track of GPA stuff, but I think it was around 3.2 before I dropped out. I’ve never let school get in the way of my education.

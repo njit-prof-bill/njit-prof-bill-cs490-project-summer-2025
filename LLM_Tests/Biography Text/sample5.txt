@@ -1,0 +1,4 @@
+Hello, I am Pedro Alvarez from Madrid, Spain. 
+I have a master's degree in Information Systems and speak Spanish and English fluently. 
+I've worked in both Europe and South America, building data analysis pipelines using R and Tableau. 
+My most recent role was as a data analyst at Telefonica.

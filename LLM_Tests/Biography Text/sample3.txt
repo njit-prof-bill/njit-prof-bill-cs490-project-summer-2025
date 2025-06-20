@@ -1,0 +1,4 @@
+My name is Marcus Talbot, and I’ve been working in backend development for over 5 years. 
+I specialize in Python and Django and have built scalable APIs for e-commerce platforms.
+ Most recently, I led a team of engineers at a logistics startup. 
+ I hold a bachelor's degree in Computer Engineering from Georgia Tech.

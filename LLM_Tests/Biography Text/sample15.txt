@@ -1,0 +1,15 @@
+Maria Teresa Fernández is a technology strategist with over 10 years of experience spanning user experience, product design, and digital transformation. She began her career in 2011 as a Junior UX Researcher at Telefónica in Madrid, where she later assumed a role as Lead UX Strategist in 2017. Her tenure included a number of cross-functional projects across Spain and Latin America.
+
+In 2020, María relocated to Berlin and joined a global consultancy firm as a design thinking facilitator and agile product mentor. Currently, she operates independently as a digital transformation advisor to early-stage startups and non-profits.
+
+María holds a Bachelor’s degree in Human-Computer Interaction from Universidad de Madrid (2015). GPA was not applicable per the university’s grading structure.
+
+Her technical competencies include front-end development (HTML5, CSS3, ES6), design systems (Material, Bootstrap), Figma, and some Python.
+
+Soft skills include cross-cultural leadership, workshop facilitation, and stakeholder management.
+
+Email: maria.fernandez.example@gmail.com
+Phone: +34 555 234 8765
+Location: Berlin, Germany
+
+Additional info: María is fluent in Spanish, English, and German and currently seeking hybrid or remote consulting roles.

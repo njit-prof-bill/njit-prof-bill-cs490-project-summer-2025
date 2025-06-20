@@ -60,6 +60,8 @@ NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID="your-messaging-sender-id"
 NEXT_PUBLIC_FIREBASE_APP_ID="your-app-id"
 NEXT_PUBLIC_FIREBASE_CLIENT_EMAIL="firebase-adminsdk-xxx@your-project-id.iam.gserviceaccount.com"
 NEXT_PUBLIC_FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nYOUR_PRIVATE_KEY\n-----END PRIVATE KEY-----\n"
+
+MONGO_URI="mongodb+srv://<USERNAME>:<PASSWORD>@<CLUSTER_URL>/<DATABASE_NAME>?retryWrites=true&w=majority&appName=<APP_NAME>"
 ```
 
 > ⚠️ Be sure to replace each value with the actual config from your Firebase project. For the private key, escape each line break with `\n`.

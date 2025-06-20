@@ -1,0 +1,6 @@
+Dr. Priya Narayanan is a postdoctoral researcher at the University of Washington, focusing on computational neuroscience and brain-computer interfaces. 
+She earned her PhD from MIT, where her dissertation involved machine learning models for decoding motor signals from neural activity. 
+She has published over 15 peer-reviewed papers and presented at NeurIPS, ICML, and SFN. 
+Priya has received research grants from the NSF and DARPA, and collaborated with interdisciplinary teams including electrical engineers, 
+cognitive scientists, and clinicians. She also teaches undergraduate neuroscience and mentors PhD candidates in their research. 
+Her long-term goal is to translate neural decoding technologies into accessible assistive devices for patients with paralysis.

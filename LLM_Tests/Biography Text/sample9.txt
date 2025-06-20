@@ -1,0 +1,2 @@
+After 8 years in retail management, I’ve decided to transition into software development. 
+I’ve been studying Python, SQL, and web development through online courses and recently completed my first freelance project — a small business inventory system built with Flask.

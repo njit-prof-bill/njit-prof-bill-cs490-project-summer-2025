@@ -5,6 +5,10 @@ import { AuthProvider } from "@/context/authContext";
 import { Toaster } from "sonner";
 import "@/styles/globals.css";
 import { ThemeProvider as AppThemeProvider } from "@/context/themeContext";
+import '@mantine/core/styles.css';
+import { ColorSchemeScript, MantineProvider, mantineHtmlProps } from '@mantine/core';
+import '@mantine/notifications/styles.css';
+import { Notifications } from "@mantine/notifications";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -22,8 +26,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" {...mantineHtmlProps}>
       <head>
+        <ColorSchemeScript />
         <meta charSet="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta name="description" content="Marcus - A modern SaaS application template" />
@@ -47,12 +52,15 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <AuthProvider>
-          <AppThemeProvider>
-            <Toaster position="top-right" />
-            {children}
-          </AppThemeProvider>
-        </AuthProvider>
+        <MantineProvider>
+          <Notifications></Notifications>
+          <AuthProvider>
+            <AppThemeProvider>
+              <Toaster position="top-right" />
+              {children}
+            </AppThemeProvider>
+          </AuthProvider>
+        </MantineProvider>
       </body>
     </html>
   );
