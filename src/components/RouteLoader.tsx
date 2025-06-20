@@ -2,27 +2,23 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/router";
+import { usePathname } from "next/navigation";
 import LoadingLayout from "@/components/LoadingLayout";
 
 export default function RouteLoader() {
-  const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
-    const handleStart = () => setLoading(true);
-    const handleStop = () => setLoading(false);
+    setIsLoading(true);
 
-    router.events.on("routeChangeStart", handleStart);
-    router.events.on("routeChangeComplete", handleStop);
-    router.events.on("routeChangeError", handleStop);
+    // Simulate loading delay (replace this with your real logic if needed)
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 400); // 400ms fake delay
 
-    return () => {
-      router.events.off("routeChangeStart", handleStart);
-      router.events.off("routeChangeComplete", handleStop);
-      router.events.off("routeChangeError", handleStop);
-    };
-  }, [router]);
+    return () => clearTimeout(timer);
+  }, [pathname]);
 
-  return loading ? <LoadingLayout /> : null;
+  return isLoading ? <LoadingLayout /> : null;
 }
