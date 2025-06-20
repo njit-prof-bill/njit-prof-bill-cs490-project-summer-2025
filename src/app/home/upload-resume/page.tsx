@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useState, useEffect } from "react";
-import { FileUpload, FileUploadFile, FileUploadSelectEvent } from "primereact/fileupload";
+import { FileUpload, FileUploadSelectEvent, ItemTemplateOptions } from "primereact/fileupload";
 import { Button } from "primereact/button";
 import { getAIResponse, saveAIResponse, AIPrompt } from "@/components/ai/aiPrompt";
 import { db } from "@/lib/firebase";
@@ -138,7 +138,10 @@ export default function UploadResumePage() {
     setUploadProgress(0);
   };
 
-  const itemTemplate = (file, props) => (
+  const itemTemplate = (
+    file: { [key: string]: any },
+    options: ItemTemplateOptions
+  ) => (
     <div className="flex items-center justify-between p-3 border rounded-md w-full bg-white dark:bg-stone-800 mt-2">
       <div className="flex items-center gap-3">
         <i className="pi pi-file" style={{ fontSize: "1.5rem" }}></i>
@@ -158,7 +161,7 @@ export default function UploadResumePage() {
         <Button
           icon="pi pi-times"
           className="p-button-sm p-button-danger p-button-text"
-          onClick={() => onRemove(file, props.onRemove)}
+          onClick={options.onRemove}
         />
       </div>
     </div>
