@@ -3,35 +3,13 @@ import Skeleton from "./Skeleton";
 
 export default function LoadingLayout() {
   return (
-    <div className="flex h-screen w-full p-6 gap-6">
-      {/* Left */}
-      <div className="flex flex-col w-1/3 gap-6">
-        {/* Top: saved resumes */}
-        <div className="flex-1 border border-gray-200 rounded-md p-4">
-          <Skeleton className="h-full" />
-        </div>
-        {/* Bottom: saved job descriptions */}
-        <div className="flex-1 border border-gray-200 rounded-md p-4">
-          <Skeleton className="h-full" />
-        </div>
-      </div>
-
-      {/* Middle: resume preview */}
-      <div className="w-1/3 border border-gray-200 rounded-md p-4">
-        <Skeleton className="h-full" />
-      </div>
-
-      <div className="flex flex-col w-1/3 gap-6">
-        {/* Right: Structured Profile */}
-        <div className="flex-1 border border-gray-200 rounded-md p-4">
-          <Skeleton className="h-full" />
-        </div>
-      </div>
-
-      
+    <div className="relative flex justify-center items-center">
+      <div className="absolute animate-spin rounded-full h-32 w-32 border-t-4 border-b-4 border-purple-500" />
+      <img
+        src="/code/phoenix-cs490-project-summer-2025/public/team-logo-p.png"
+        alt="Loading avatar"
+        className="rounded-full h-28 w-28"
+      />
     </div>
-
-
-
   );
 }
