@@ -18,7 +18,7 @@ export default function FileUploadForm() {
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             setSelectedFile(e.target.files[0])
-            setBiographyText("");
+            //setBiographyText("");
             notifications.clean();
         }
     };
@@ -155,7 +155,7 @@ export default function FileUploadForm() {
                 value={biographyText}
                 onChange={(e) => {
                     setBiographyText(e.target.value);
-                    setSelectedFile(null);
+                    //setSelectedFile(null);
                     notifications.clean();
                 }}
                 placeholder="Type your biography here..."

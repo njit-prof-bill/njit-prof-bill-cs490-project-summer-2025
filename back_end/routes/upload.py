@@ -57,28 +57,38 @@ def upload():
     except Exception as e:
         return jsonify({"error": f"Database error: {str(e)}"}), 500
 
-    # Now do parsing immediately:
-    # 1. Extract text
+    # Prepare corpuss for parsing
+    corpus = []
+
+    # Extract text from file if present
     if "file_content" in doc and "filename" in doc:
         suffix = os.path.splitext(doc["filename"])[-1]
         with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
             tmp.write(doc["file_content"])
             tmp_path = tmp.name
         try:
-            text = extract_text(tmp_path)
+            extracted = extract_text(tmp_path)
+            corpus.append(extracted)
         except Exception as e:
             os.remove(tmp_path)
             return jsonify({"error": f"Failed to extract text: {str(e)}"}), 500
-        os.remove(tmp_path)
-    elif "biography_text" in doc:
-        text = doc["biography_text"]
-    else:
+        finally:
+            os.remove(tmp_path)
+
+    # Append freeform biography text if present
+    if "biography_text" in doc:
+        corpus.append(doc["biography_text"])
+
+    if not corpus:
         return jsonify({"error": "No file or biography text to parse"}), 400
+
+    # Combine all parts into one string
+    full_text = "\n\n".join(corpus)
 
     # 2. Parse with LLM
     parser = ResumeParser()
     try:
-        parse_result = parser.parse(text)
+        parse_result = parser.parse(full_text)
     except Exception as e:
         return jsonify({"error": f"LLM parsing failed: {str(e)}"}), 500
 
