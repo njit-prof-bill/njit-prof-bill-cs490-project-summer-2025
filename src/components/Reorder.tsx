@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { auth, db } from '@/lib/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
-import SkillsEditor from './SkillsEditor';
 import {
   DndContext,
   closestCenter,
@@ -97,7 +96,7 @@ export default function Reorder({ tag }: ReorderProps) {
 
   return (
     <div className="w-full max-w-4xl mx-auto mt-6">
-      <h2 className="text-2xl font-semibold text-white mb-3 capitalize">{tag}</h2>
+      <h2 className="text-xl font-semibold text-white mb-3 capitalize">{tag}</h2>
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={items} strategy={verticalListSortingStrategy}>
@@ -115,18 +114,13 @@ export default function Reorder({ tag }: ReorderProps) {
         </div>
       )}
 
-      <div className="mt-4 flex justify-start gap-3">
-        <button
-          onClick={saveOrder}
-          disabled={saving}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded"
-        >
-          {saving ? 'Saving...' : 'Save Order'}
-        </button>
-
-        {tag === 'skills' && <SkillsEditor />}
-      </div>
-
+      <button
+        onClick={saveOrder}
+        disabled={saving}
+        className="mt-4 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded"
+      >
+        {saving ? 'Saving...' : 'Save Order'}
+      </button>
     </div>
   );
 }

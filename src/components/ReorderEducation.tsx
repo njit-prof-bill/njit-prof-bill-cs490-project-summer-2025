@@ -17,7 +17,6 @@ import {
   verticalListSortingStrategy
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import EducationEditor from './EducationEditor';
 
 interface Education {
   degree: string;
@@ -80,10 +79,11 @@ export default function ReorderEducation() {
   };
 
   return (
+    // <div className="p-4 max-w-4xl mx-auto">
     <div className="p-4 w-full max-w-[58rem] mx-auto">
-      <div className="w-full max-w-4xl mx-auto mt-10">
-        <h2 className="text-2xl font-bold mb-4">Education</h2>
-      </div>
+
+      <h2 className="text-2xl font-bold mb-4">Reorder Education</h2>
+
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={education.map((e) => e.degree)} strategy={verticalListSortingStrategy}>
           <div className="space-y-4">
@@ -98,20 +98,13 @@ export default function ReorderEducation() {
         <div className="text-yellow-400 mt-4 font-medium">You have unsaved changes.</div>
       )}
 
-      <div className="mt-4 flex gap-4">
-        <button
-          onClick={saveOrder}
-          disabled={saving}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded"
-
-
-        >
-          {saving ? 'Saving...' : 'Save Order'}
-        </button>
-
-        <EducationEditor/>
-      </div>
-
+      <button
+        onClick={saveOrder}
+        disabled={saving}
+        className="mt-4 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded"
+      >
+        {saving ? 'Saving...' : 'Save Order'}
+      </button>
     </div>
   );
 }
@@ -130,6 +123,7 @@ function SortableItem({ id, edu }: { id: string; edu: Education }) {
       {...attributes}
       {...listeners}
       className="border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6 bg-[#1B1917] cursor-grab"
+    // className="w-full border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6 bg-[#1B1917] cursor-grab"
 
     >
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-4">

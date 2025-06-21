@@ -32,14 +32,12 @@ export default function HomePage() {
         <div className="flex flex-col items-center">
            
             <br />
-        
-            <Card className="w-full max-w-5xl mx-auto px-4 rounded-xl bg-[#1B1917] border border-gray-700">
-
-
+          
+            <Card className="w-full max-w shadow-lg">
                 <CardHeader>
                 </CardHeader>
 
-                    <GroqProcessor />
+            <GroqProcessor />
 
               {/* <ProfileCard /> */}
               <ProfileCard deduplicateSkills={deduplicateSkills} />
