@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
 import { doc, getDoc, updateDoc, Timestamp } from "firebase/firestore";
+import { jobAdAIPrompt, getAIResponse } from "@/components/ai/aiPrompt";
 
 type JobAdEntry = {
   description: string;
@@ -31,18 +32,25 @@ export default function UploadJobAdPage() {
     setSubmitted(null);
 
     try {
+      // Use Gemini AI to extract structured info
+      const aiResponse = await getAIResponse(jobAdAIPrompt + "\n\nJob Ad:\n", jobDescription);
+      const { companyName, jobTitle, jobDescription: desc } = JSON.parse(aiResponse);
+
       const userRef = doc(db, "users", user.uid);
       const userSnap = await getDoc(userRef);
-      let jobAds: JobAdEntry[] = [];
+      let jobAds = [];
       if (userSnap.exists() && Array.isArray(userSnap.data().jobAds)) {
         jobAds = userSnap.data().jobAds;
       }
-      const newJobAd: JobAdEntry = {
-        description: jobDescription,
+      const newJobAd = {
+        companyName,
+        jobTitle,
+        jobDescription: desc,
         dateSubmitted: Timestamp.now(),
       };
       const newList = [...jobAds, newJobAd];
       await updateDoc(userRef, { jobAds: newList });
+
       setSubmitted("success");
       setJobDescription("");
     } catch (error) {

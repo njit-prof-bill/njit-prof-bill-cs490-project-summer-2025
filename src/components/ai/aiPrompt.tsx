@@ -143,3 +143,19 @@ export async function saveAIResponse(responseObj: any, user: any, db: any) {
         }
     }
 }
+
+export const jobAdAIPrompt = `
+Extract the following information from the job ad text:
+- Company Name
+- Job Title
+- Job Description
+
+Return the result as a JSON object with keys: companyName, jobTitle, jobDescription.
+`;
+
+export async function getJobAdAIResponse(aiClient: any, jobAdText: string) {
+  // Replace with your actual AI call logic
+  const prompt = jobAdAIPrompt + "\n\nJob Ad:\n" + jobAdText;
+  const aiResponse = await aiClient(prompt);
+  return aiResponse;
+}
