@@ -17,7 +17,6 @@ import {
   verticalListSortingStrategy
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import WorkExperienceEditor from './WorkExperienceEditor';
 
 interface WorkExperience {
   jobTitle: string;
@@ -101,10 +100,9 @@ export default function ReorderWorkExperience() {
   if (loading) return <div className="text-white p-4">Loading work experience...</div>;
 
   return (
+    // <div className="p-4 max-w-4xl mx-auto">
     <div className="w-full max-w-[56rem] mx-auto">
-      <div className="w-full max-w-4xl mx-auto mt-10">
-        <h2 className="text-2xl font-bold mb-6">Experience</h2>
-      </div>
+      <h2 className="text-2xl font-bold mb-6">Experience</h2>
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={items.map(item => JSON.stringify(item))} strategy={verticalListSortingStrategy}>
@@ -122,18 +120,13 @@ export default function ReorderWorkExperience() {
         </div>
       )}
 
-      <div className="mt-4 flex justify-start gap-3">
-        <button
-          onClick={saveOrder}
-          disabled={saving}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded"
-        >
-          {saving ? 'Saving...' : 'Save Order'}
-        </button>
-
-        {/* Render Edit button inline here */}
-        <WorkExperienceEditor />
-      </div>
+      <button
+        onClick={saveOrder}
+        disabled={saving}
+        className="mt-4 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded"
+      >
+        {saving ? 'Saving...' : 'Save Order'}
+      </button>
     </div>
   );
 }

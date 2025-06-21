@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { AuthProvider } from "@/context/authContext";
 import { Toaster } from "sonner";
 import "@/styles/globals.css";
+import RouteLoader from "@/components/RouteLoader";
 import { ThemeProvider as AppThemeProvider } from "@/context/themeContext";
 
 const geistSans = Geist({
@@ -50,6 +51,7 @@ export default function RootLayout({
         <AuthProvider>
           <AppThemeProvider>
             <Toaster position="top-right" />
+            <RouteLoader />
             {children}
           </AppThemeProvider>
         </AuthProvider>

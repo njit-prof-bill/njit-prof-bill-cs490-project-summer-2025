@@ -384,7 +384,7 @@ const EducationEditor: React.FC<EducationEditorProps> = ({ onSuccess, onError })
     return (
       <button
         onClick={handleOpen}
-        className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded"
+        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
       >
         Edit Education
       </button>
@@ -403,7 +403,7 @@ const EducationEditor: React.FC<EducationEditorProps> = ({ onSuccess, onError })
         <div className="p-6 max-h-96 overflow-y-auto">
           {loading ? (
             <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400">Education</div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400"></div>
             </div>
           ) : (
             <form onSubmit={(e) => e.preventDefault()}>
