@@ -1,16 +1,40 @@
 "use client";
 
-import React, { useRef, useState } from "react";
-import { FileUpload } from "primereact/fileupload";
+import React, { useRef, useState, useEffect } from "react";
+import { FileUpload, FileUploadSelectEvent, ItemTemplateOptions } from "primereact/fileupload";
 import { Button } from "primereact/button";
+import { getAIResponse, saveAIResponse, AIPrompt } from "@/components/ai/aiPrompt";
+import { db } from "@/lib/firebase";
+import { useAuth } from "@/context/authContext";
+import { useRouter } from "next/navigation";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 
 export default function UploadResumePage() {
-  const fileUploadRef = useRef(null);
+  // For checking whether the user is logged in and redirecting them accordingly
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push("/"); // Redirect to landing page if not authenticated
+    }
+  }, [user, loading, router]);
+
+  if (loading) {
+    return <p>Loading...</p>; // Show a loading state while checking auth
+  }
+
+  const fileUploadRef = useRef<FileUpload>(null);
 
   const [uploadMessage, setUploadMessage] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState<boolean | null>(null);
   const [extractedText, setExtractedText] = useState<string | null>(null);
 
+  // New states for combined progress bar
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+
+  // Upload handler wired to both default button and custom upload button
   const onUpload = async () => {
     const files = fileUploadRef.current?.getFiles();
     if (!files || files.length === 0) return;
@@ -19,42 +43,83 @@ export default function UploadResumePage() {
     const formData = new FormData();
     formData.append("file", file);
 
+    // Reset states and start progress
+    setIsUploading(true);
+    setUploadProgress(0);
+    setUploadMessage(null);
+    setUploadSuccess(null);
+    setExtractedText(null);
+
     try {
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
+      const xhr = new XMLHttpRequest();
+
+      // 🟦 File upload progress (0% → 80%)
+      xhr.upload.addEventListener("progress", (event) => {
+        if (event.lengthComputable) {
+          const percent = Math.round((event.loaded / event.total) * 80);
+          setUploadProgress(percent);
+        }
       });
 
-      const result = await res.json();
+      xhr.onreadystatechange = async () => {
+        if (xhr.readyState === 4) {
+          const result = JSON.parse(xhr.responseText);
 
-      if (res.ok) {
-        console.log("Extracted raw text:", result.rawText);
-        setUploadSuccess(true);
-        setUploadMessage("✅ File uploaded and text extracted successfully!");
-        setExtractedText(result.rawText);
-      } else {
-        setUploadSuccess(false);
-        setUploadMessage(`❌ Upload failed: ${result.error || "Something went wrong"}`);
-        setExtractedText(null);
-      }
-    } catch (error) {
+          if (xhr.status === 200) {
+            setExtractedText(result.rawText);
+
+            // 🟨 Simulate AI analysis (80% → 100%)
+            for (let i = 81; i <= 99; i++) {
+              await new Promise((r) => setTimeout(r, 20)); // small delay
+              setUploadProgress(i);
+            }
+
+            try {
+              const AIResponse = await getAIResponse(AIPrompt, result.rawText);
+              const parsed = JSON.parse(AIResponse);
+              await saveAIResponse(parsed, user, db);
+
+              setUploadProgress(100);
+              setUploadSuccess(true);
+              setUploadMessage("✅ File uploaded and text extracted successfully!");
+            } catch (error) {
+              console.error("Error fetching or saving AI response:", error);
+              setUploadSuccess(false);
+              setUploadMessage("❌ AI processing failed.");
+            }
+          } else {
+            setUploadSuccess(false);
+            setUploadMessage(`❌ Upload failed: ${result.error || "Something went wrong"}`);
+          }
+
+          setIsUploading(false);
+        }
+      };
+
+      xhr.open("POST", "/api/upload");
+      xhr.send(formData);
+    } catch (error: any) {
       console.error("Upload error:", error);
       setUploadSuccess(false);
-      setUploadMessage("❌ Network or server error.");
-      setExtractedText(null);
+      setUploadMessage("❌ Upload failed. " + error.message);
+      setIsUploading(false);
     }
   };
 
-  const onRemove = (file, callback) => {
+  const onRemove = (file: File, callback: () => void) => {
     callback();
     setUploadMessage(null);
     setExtractedText(null);
   };
 
-  const onSelect = (e) => {
+  const onSelect = (e: FileUploadSelectEvent) => {
     const allowedExtensions = ["pdf", "docx", "txt", "md", "odt", "PDF", "DOCX", "TXT", "ODT"];
     const isValid = e.files.every((file) => {
       const ext = file.name.split(".").pop()?.toLowerCase();
+      // ext might be of type 'undefined' instead of 'string'
+      if (!ext) {
+        return false;
+      }
       return allowedExtensions.includes(ext);
     });
 
@@ -69,9 +134,14 @@ export default function UploadResumePage() {
     setUploadMessage(null);
     setUploadSuccess(null);
     setExtractedText(null);
+    setIsUploading(false);
+    setUploadProgress(0);
   };
 
-  const itemTemplate = (file, props) => (
+  const itemTemplate = (
+    file: { [key: string]: any },
+    options: ItemTemplateOptions
+  ) => (
     <div className="flex items-center justify-between p-3 border rounded-md w-full bg-white dark:bg-stone-800 mt-2">
       <div className="flex items-center gap-3">
         <i className="pi pi-file" style={{ fontSize: "1.5rem" }}></i>
@@ -79,21 +149,19 @@ export default function UploadResumePage() {
           <span className="font-medium text-gray-800 dark:text-gray-100 truncate max-w-xs">
             {file.name}
           </span>
-          <small className="text-gray-500 dark:text-gray-400">
-            {new Date().toLocaleDateString()}
-          </small>
+          <small className="text-gray-500 dark:text-gray-400">{new Date().toLocaleDateString()}</small>
         </div>
       </div>
       <div className="flex gap-2">
         <Button
           icon="pi pi-upload"
           className="p-button-sm p-button-success p-button-text"
-          onClick={onUpload}
+          onClick={onUpload} // custom upload button
         />
         <Button
           icon="pi pi-times"
           className="p-button-sm p-button-danger p-button-text"
-          onClick={() => onRemove(file, props.onRemove)}
+          onClick={options.onRemove}
         />
       </div>
     </div>
@@ -114,15 +182,32 @@ export default function UploadResumePage() {
         url="/api/upload"
         accept=".pdf,.PDF,.docx,.DOCX,.txt,.md,.odt,.TXT,.MD,.ODT"
         customUpload
-        showUploadButton={false}
-        showCancelButton={false}
-        onUpload={onUpload}
+        uploadHandler={onUpload} // <--- This wires default upload button to your handler
         onSelect={onSelect}
         onError={onClear}
         onClear={onClear}
         itemTemplate={itemTemplate}
         emptyTemplate={emptyTemplate}
       />
+
+      {isUploading && (
+        <div className="mt-4 relative w-full bg-gray-300 rounded-md h-6 overflow-hidden">
+          {/* Blue progress fill */}
+          <div
+            className="absolute top-0 left-0 h-full bg-blue-600 transition-all duration-300 ease-in-out"
+            style={{ width: `${uploadProgress}%` }}
+          ></div>
+
+          {/* Centered text inside progress bar */}
+          <div className="absolute inset-0 flex items-center justify-center text-white font-medium text-sm">
+            {uploadProgress < 80
+              ? `Uploading... ${uploadProgress}%`
+              : uploadProgress < 100
+              ? `Processing with AI... ${uploadProgress}%`
+              : `Finalizing...`}
+          </div>
+        </div>
+      )}
 
       {uploadMessage && (
         <div
@@ -143,11 +228,6 @@ export default function UploadResumePage() {
     </div>
   );
 }
-
-
-
-
-
 
 // "use client";
 
