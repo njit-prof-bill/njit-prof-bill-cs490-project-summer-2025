@@ -3,36 +3,84 @@
 import { useAuth } from "@/context/authContext";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
+import { motion } from "framer-motion";
+import { Upload } from "@/components/icons/uploadField";
+import { FileText } from "@/components/icons/fileText";
+import { useToast } from "@/context/toastContext";
+import { useProfile } from "@/context/profileContext";
+
+import FileUpload from "@/components/fileUpload";
+import BiographyForm from "@/components/biographyForm";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card";
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "@/components/ui/tabs";
+
 export default function HomePage() {
-    const { user, loading } = useAuth();
-    const router = useRouter();
+  const { user, loading } = useAuth();
+  const router = useRouter();
+  const toast = useToast();
+  const { parseAndUpdate } = useProfile();
 
-    useEffect(() => {
-        if (!loading && !user) {
-            router.push("/"); // Redirect to landing page if not authenticated
-        }
-    }, [user, loading, router]);
-
-    if (loading) {
-        return <p>Loading...</p>; // Show a loading state while checking auth
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push("/");
     }
+  }, [user, loading, router]);
 
-    return (
-        <div className="flex items-center justify-center min-h-screen">
-            <Card className="w-full max-w-md shadow-lg">
+  if (loading) return <p>Loading...</p>;
+
+  return (
+    <div className="min-h-screen py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              <Card>
                 <CardHeader>
-                    <CardTitle>Marcus App Template</CardTitle>
+                  <CardTitle>Import Your Professional History</CardTitle>
+                  <CardDescription>
+                    Upload documents or write your career biography to get started
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <CardDescription>
-                        This app is a starter template for SaaS applications. To use this template, simply fork the repository and install the app dependencies.
-                    </CardDescription>
+                  <Tabs defaultValue="upload" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="upload" className="flex items-center space-x-2">
+                        <Upload className="h-4 w-4" />
+                        <span>Upload Files</span>
+                      </TabsTrigger>
+                      <TabsTrigger value="biography" className="flex items-center space-x-2">
+                        <FileText className="h-4 w-4" />
+                        <span>Write Biography</span>
+                      </TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="upload" className="mt-6">
+                      <FileUpload />
+                    </TabsContent>
+                    <TabsContent value="biography" className="mt-6">
+                      <BiographyForm />
+                    </TabsContent>
+                  </Tabs>
                 </CardContent>
-                <CardFooter>
-                    <CardDescription>Copyright 2025 Fourier Gauss Labs</CardDescription>
-                </CardFooter>
-            </Card>
+              </Card>
+            </motion.div>
+          </div>
         </div>
-    );
+      </div>
+    </div>
+  );
 }
