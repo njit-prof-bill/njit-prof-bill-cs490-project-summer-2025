@@ -3,7 +3,6 @@ import * as mammoth from 'mammoth';
 import * as unzipper from 'unzipper';
 import pdfParse from 'pdf-parse/lib/pdf-parse.js';
 import { bucket } from '@/lib/firebaseAdmin';
-import { getAIResponse, saveAIResponse, AIPrompt } from '@/components/ai/aiPrompt';
 import { db } from '@/lib/firebase';
 import { getAuth } from 'firebase-admin/auth';
 
@@ -63,18 +62,9 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Unsupported file type' }, { status: 415 });
         }
 
-        // Send the parsed text to the AI with a prompt 
-        // instructing it to return an object in JSON format
-        const aiResponse = await getAIResponse(AIPrompt, rawText);
-        const parsedAIResponse = JSON.parse(aiResponse);
-
-        // Save the AI's response to the user's database
-        await saveAIResponse(parsedAIResponse, { uid }, db);
-
         return NextResponse.json({
             success: true,
-            rawText,
-            aiResponse: parsedAIResponse,
+            rawText
         });
     } catch (err: any) {
         console.error('Processing error: ', err);

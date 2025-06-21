@@ -8,12 +8,22 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/authContext";
 import { useRouter } from "next/navigation";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { ref, uploadBytesResumable } from "firebase/storage";
+import { storage } from "@/lib/firebase";
+import { getAuth } from "firebase/auth"; 
 
 export default function UploadResumePage() {
   // For checking whether the user is logged in and redirecting them accordingly
   const { user, loading } = useAuth();
   const router = useRouter();
+  const fileUploadRef = useRef<FileUpload>(null);
 
+  const [uploadMessage, setUploadMessage] = useState<string | null>(null);
+  const [uploadSuccess, setUploadSuccess] = useState<boolean | null>(null);
+  const [extractedText, setExtractedText] = useState<string | null>(null);
+    // New states for combined progress bar
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   useEffect(() => {
     if (!loading && !user) {
       router.push("/"); // Redirect to landing page if not authenticated
@@ -24,24 +34,17 @@ export default function UploadResumePage() {
     return <p>Loading...</p>; // Show a loading state while checking auth
   }
 
-  const fileUploadRef = useRef<FileUpload>(null);
-
-  const [uploadMessage, setUploadMessage] = useState<string | null>(null);
-  const [uploadSuccess, setUploadSuccess] = useState<boolean | null>(null);
-  const [extractedText, setExtractedText] = useState<string | null>(null);
-
-  // New states for combined progress bar
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-
   // Upload handler wired to both default button and custom upload button
   const onUpload = async () => {
     const files = fileUploadRef.current?.getFiles();
-    if (!files || files.length === 0) return;
+    if (!files || files.length === 0 || !user) return;
 
     const file = files[0];
-    const formData = new FormData();
-    formData.append("file", file);
+    const filePath = `users/${user.uid}/${file.name}`;
+    const fileRef = ref(storage, filePath);
+    const uploadTask = uploadBytesResumable(fileRef, file);
+    // const formData = new FormData();
+    // formData.append("file", file);
 
     // Reset states and start progress
     setIsUploading(true);
@@ -50,60 +53,71 @@ export default function UploadResumePage() {
     setUploadSuccess(null);
     setExtractedText(null);
 
-    try {
-      const xhr = new XMLHttpRequest();
-
-      // 🟦 File upload progress (0% → 80%)
-      xhr.upload.addEventListener("progress", (event) => {
-        if (event.lengthComputable) {
-          const percent = Math.round((event.loaded / event.total) * 80);
-          setUploadProgress(percent);
-        }
-      });
-
-      xhr.onreadystatechange = async () => {
-        if (xhr.readyState === 4) {
-          const result = JSON.parse(xhr.responseText);
-
-          if (xhr.status === 200) {
-            setExtractedText(result.rawText);
-
-            // 🟨 Simulate AI analysis (80% → 100%)
-            for (let i = 81; i <= 99; i++) {
-              await new Promise((r) => setTimeout(r, 20)); // small delay
-              setUploadProgress(i);
-            }
-
-            try {
-              const AIResponse = await getAIResponse(AIPrompt, result.rawText);
-              const parsed = JSON.parse(AIResponse);
-              await saveAIResponse(parsed, user, db);
-
-              setUploadProgress(100);
-              setUploadSuccess(true);
-              setUploadMessage("✅ File uploaded and text extracted successfully!");
-            } catch (error) {
-              console.error("Error fetching or saving AI response:", error);
-              setUploadSuccess(false);
-              setUploadMessage("❌ AI processing failed.");
-            }
-          } else {
-            setUploadSuccess(false);
-            setUploadMessage(`❌ Upload failed: ${result.error || "Something went wrong"}`);
+    uploadTask.on(
+      "state_changed",
+      (snapshot) => {
+        // Update the progress of the upload operation
+        const percent = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 80);
+        setUploadProgress(percent);
+      },
+      (error) => {
+        console.error("Upload error: ", error);
+        setIsUploading(false);
+        setUploadSuccess(false);
+        setUploadMessage(`❌ Upload failed. ${error.message}`);
+      },
+      async () => {
+        try {
+          // Simulate progress while processing
+          for (let i = 81; i <= 90; i++) {
+            await new Promise((r) => setTimeout(r,20));
+            setUploadProgress(i);
           }
 
+          // Get the user's ID token
+          const idToken = await getAuth().currentUser?.getIdToken();
+          if (!idToken) {
+            throw new Error("Failed to get ID token.");
+          }
+
+          // Call the file processing API
+          const response = await fetch("/api/process-upload", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ filePath, idToken }),
+          });
+
+          const result = await response.json();
+
+          if (!response.ok) {
+            throw new Error(result.error || result.message || "Processing failed");
+          }
+
+          setExtractedText(result.rawText);
+
+          // Simulate AI processing progress
+          for (let i = 91; i <= 100; i++) {
+            await new Promise((r) => setTimeout(r, 20));
+            setUploadProgress(i);
+          }
+
+          // Run an API call (on the client side) to the AI
+          const aiResponse = await getAIResponse(AIPrompt, result.rawText);
+          const parsedAIResponse = JSON.parse(aiResponse);
+          await saveAIResponse(parsedAIResponse, {uid: user.uid}, db);
+
+          setUploadProgress(100);
+          setUploadSuccess(true);
+          setUploadMessage("✅ File uploaded, text extracted, and AI processed successfully!");
+        } catch (error: any) {
+          console.error("Processing error: ", error);
+          setUploadSuccess(false);
+          setUploadMessage(`❌ Processing failed: ${error.message}`);
+        } finally {
           setIsUploading(false);
         }
-      };
-
-      xhr.open("POST", "/api/upload");
-      xhr.send(formData);
-    } catch (error: any) {
-      console.error("Upload error:", error);
-      setUploadSuccess(false);
-      setUploadMessage("❌ Upload failed. " + error.message);
-      setIsUploading(false);
-    }
+      }
+    );
   };
 
   const onRemove = (file: File, callback: () => void) => {
@@ -113,7 +127,7 @@ export default function UploadResumePage() {
   };
 
   const onSelect = (e: FileUploadSelectEvent) => {
-    const allowedExtensions = ["pdf", "docx", "txt", "md", "odt", "PDF", "DOCX", "TXT", "ODT"];
+    const allowedExtensions = ["pdf", "docx", "txt", "md", "odt"];
     const isValid = e.files.every((file) => {
       const ext = file.name.split(".").pop()?.toLowerCase();
       // ext might be of type 'undefined' instead of 'string'
@@ -179,7 +193,7 @@ export default function UploadResumePage() {
       <FileUpload
         ref={fileUploadRef}
         name="file"
-        url="/api/upload"
+        //url="/api/upload"
         accept=".pdf,.PDF,.docx,.DOCX,.txt,.md,.odt,.TXT,.MD,.ODT"
         customUpload
         uploadHandler={onUpload} // <--- This wires default upload button to your handler
