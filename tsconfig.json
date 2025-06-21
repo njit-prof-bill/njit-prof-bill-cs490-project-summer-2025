@@ -19,7 +19,7 @@
     "jsx": "preserve",
     "incremental": true,
     "typeRoots": [
-      "./types",
+      "./src/types",
       "./node_modules/@types"
     ],
     "plugins": [
