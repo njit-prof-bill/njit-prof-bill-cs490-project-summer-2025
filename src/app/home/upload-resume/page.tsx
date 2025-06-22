@@ -17,6 +17,7 @@ import * as mammoth from "mammoth";
 // For PDF previews
 import * as pdfjsLib from 'pdfjs-dist/build/pdf.mjs';
 pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.mjs';
+import parse from "html-react-parser";
 
 export default function UploadResumePage() {
   // For checking whether the user is logged in and redirecting them accordingly
@@ -345,10 +346,9 @@ export default function UploadResumePage() {
       {docxPreviewHTML && (
         <div className="mt-6 p-4 bg-gray-100 rounded-md text-sm text-black max-h-96 overflow-y-auto">
           <h3 className="font-semibold mb-2">DOCX Preview:</h3>
-          <div
-            className="prose max-w-none"
-            dangerouslySetInnerHTML={{ __html: docxPreviewHTML }}
-          ></div>
+          <div className="prose max-w-none">
+            {parse(docxPreviewHTML)}
+          </div>
         </div>
       )}
 
