@@ -10,7 +10,10 @@ import { useRouter } from "next/navigation";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { ref, uploadBytesResumable } from "firebase/storage";
 import { storage } from "@/lib/firebase";
-import { getAuth } from "firebase/auth"; 
+import { getAuth } from "firebase/auth";
+
+import * as pdfjsLib from 'pdfjs-dist/build/pdf.mjs';
+pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.mjs';
 
 export default function UploadResumePage() {
   // For checking whether the user is logged in and redirecting them accordingly
