@@ -13,11 +13,13 @@ import { storage } from "@/lib/firebase";
 import { getAuth } from "firebase/auth";
 // For DOCX previews
 import * as mammoth from "mammoth";
+import { renderAsync } from "docx-preview";
 
 // For PDF previews
 import * as pdfjsLib from 'pdfjs-dist/build/pdf.mjs';
 pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.mjs';
 import parse from "html-react-parser";
+import { render } from "@testing-library/react";
 
 export default function UploadResumePage() {
   // For checking whether the user is logged in and redirecting them accordingly
@@ -35,7 +37,8 @@ export default function UploadResumePage() {
   // For controlling PDF previews
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
   // For controlling DOCX previews
-  const [docxPreviewHTML, setDocxPreviewHtml] = useState<string | null>(null);
+  // const [docxPreviewHTML, setDocxPreviewHtml] = useState<string | null>(null);
+  const docxContainerRef = useRef<HTMLDivElement>(null);
   // For controlling extracted text
   const [extractedText, setExtractedText] = useState<string | null>(null);
   
@@ -190,7 +193,10 @@ export default function UploadResumePage() {
 
       const dataUrl = canvas.toDataURL();
       setPdfPreviewUrl(dataUrl);
-      setDocxPreviewHtml(null); // If user switches to PDF file
+      // setDocxPreviewHtml(null); // If user switches to PDF file
+      if (docxContainerRef.current) {
+        docxContainerRef.current.innerHTML = "";
+      }
     } catch (err) {
       console.error("PDF preview error: ", err);
       setPdfPreviewUrl(null);
@@ -200,12 +206,21 @@ export default function UploadResumePage() {
   const generateDocxPreview = async (file: File) => {
     try {
       const arrayBuffer = await file.arrayBuffer();
-      const { value } = await mammoth.convertToHtml({ arrayBuffer });
-      setDocxPreviewHtml(value);
-      setPdfPreviewUrl(null) // If user switches to DOCX file
+      // const { value } = await mammoth.convertToHtml({ arrayBuffer });
+      // setDocxPreviewHtml(value);
+      if (docxContainerRef.current) {
+        docxContainerRef.current.innerHTML = "";
+        await renderAsync(arrayBuffer, docxContainerRef.current, undefined, {
+          className: "docx-preview-content",
+        });
+        setPdfPreviewUrl(null) // If user switches to DOCX file
+      }
     } catch (err) {
       console.error("DOCX preview error: ", err);
-      setDocxPreviewHtml("❌ Failed to generate DOCX preview");
+      // setDocxPreviewHtml("❌ Failed to generate DOCX preview");
+      if (docxContainerRef.current) {
+        docxContainerRef.current.innerHTML = "<p>❌ Failed to generate DOCX preview</p>"
+      }
     }
   };
 
@@ -220,16 +235,18 @@ export default function UploadResumePage() {
 
     if (!isValid) {
       setUploadSuccess(false);
-      setUploadMessage("<p>❌ This file type is not supported.</p>");
+      setUploadMessage("❌ This file type is not supported.");
       fileUploadRef.current?.clear();
       setPdfPreviewUrl(null);
-      setDocxPreviewHtml(null);
+      // setDocxPreviewHtml(null);
+      if (docxContainerRef.current) {
+        docxContainerRef.current.innerHTML = "";
+      }
       return;
     }
 
-    // If a PDF file was selected, generate a preview of it
+    // Determine the file type
     const pdfFile = e.files.find((file) => file.name.toLowerCase().endsWith(".pdf"));
-    // If a DOCX file was selected, generate a preview of it
     const docxFile = e.files.find((file) => file.name.toLowerCase().endsWith(".docx"));
     if (pdfFile) {
       generatePdfPreview(pdfFile);
@@ -237,7 +254,10 @@ export default function UploadResumePage() {
       generateDocxPreview(docxFile);
     } else {
       setPdfPreviewUrl(null);
-      setDocxPreviewHtml(null);
+      // setDocxPreviewHtml(null);
+      if (docxContainerRef.current) {
+        docxContainerRef.current.innerHTML = "";
+      }
     }
   };
 
@@ -247,8 +267,11 @@ export default function UploadResumePage() {
     setIsUploading(false);
     setUploadProgress(0);
     setPdfPreviewUrl(null);
-    setDocxPreviewHtml(null);
+    // setDocxPreviewHtml(null);
     setExtractedText(null);
+    if (docxContainerRef.current) {
+      docxContainerRef.current.innerHTML = "";
+    }
   };
 
   const itemTemplate = (
@@ -343,14 +366,19 @@ export default function UploadResumePage() {
         </div>
       )}
 
-      {docxPreviewHTML && (
+      {/* {docxPreviewHTML && (
         <div className="mt-6 p-4 bg-gray-100 rounded-md text-sm text-black max-h-96 overflow-y-auto">
           <h3 className="font-semibold mb-2">DOCX Preview:</h3>
           <div className="prose max-w-none">
             {parse(docxPreviewHTML)}
           </div>
         </div>
-      )}
+      )} */}
+
+      <div className="mt-6 p-4 bg-gray-100 rounded-md text-sm text-black max-h-96 overflow-y-auto">
+        <h3 className="font-semibold mb-2">DOCX Preview:</h3>
+        <div ref={docxContainerRef} className="prose max-w-none"></div>
+      </div>
 
       {extractedText && (
         <div className="mt-6 p-4 bg-gray-100 rounded-md text-sm text-black max-h-96 overflow-y-auto whitespace-pre-wrap">
