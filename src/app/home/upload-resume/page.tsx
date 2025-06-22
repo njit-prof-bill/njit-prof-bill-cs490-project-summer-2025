@@ -20,13 +20,15 @@ export default function UploadResumePage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const fileUploadRef = useRef<FileUpload>(null);
-
+  // For visual feedback to the user
   const [uploadMessage, setUploadMessage] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState<boolean | null>(null);
   const [extractedText, setExtractedText] = useState<string | null>(null);
-    // New states for combined progress bar
+  // New states for combined progress bar
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  // For controlling PDF previews
+  const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
   useEffect(() => {
     if (!loading && !user) {
       router.push("/"); // Redirect to landing page if not authenticated
@@ -127,6 +129,32 @@ export default function UploadResumePage() {
     callback();
     setUploadMessage(null);
     setExtractedText(null);
+    setPdfPreviewUrl(null);
+  };
+
+  const generatePdfPreview = async (file: File) => {
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const page = await pdf.getPage(1);
+      const viewport = page.getViewport({ scale: 1.5 });
+
+      const canvas = document.createElement("canvas");
+      const context = canvas.getContext("2d");
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+
+      await page.render({
+        canvasContext: context!,
+        viewport: viewport,
+      }).promise;
+
+      const dataUrl = canvas.toDataURL();
+      setPdfPreviewUrl(dataUrl);
+    } catch (err) {
+      console.error("PDF preview error: ", err);
+      setPdfPreviewUrl(null);
+    }
   };
 
   const onSelect = (e: FileUploadSelectEvent) => {
@@ -144,6 +172,16 @@ export default function UploadResumePage() {
       setUploadSuccess(false);
       setUploadMessage("❌ This file type is not supported.");
       fileUploadRef.current?.clear();
+      setPdfPreviewUrl(null);
+      return;
+    }
+
+    // If a PDF file was selected, generate a preview of it
+    const pdfFile = e.files.find((file) => file.name.toLowerCase().endsWith(".pdf"));
+    if (pdfFile) {
+      generatePdfPreview(pdfFile);
+    } else {
+      setPdfPreviewUrl(null);
     }
   };
 
@@ -153,6 +191,7 @@ export default function UploadResumePage() {
     setExtractedText(null);
     setIsUploading(false);
     setUploadProgress(0);
+    setPdfPreviewUrl(null);
   };
 
   const itemTemplate = (
@@ -233,6 +272,17 @@ export default function UploadResumePage() {
           }`}
         >
           {uploadMessage}
+        </div>
+      )}
+
+      {pdfPreviewUrl && (
+        <div className="mt-4">
+          <h3 className="font-semibold mb-2">PDF Preview (Page 1):</h3>
+          <img
+            src={pdfPreviewUrl}
+            alt="PDF Preview"
+            className="border rounded shadow max-w-full h-auto"
+          ></img>
         </div>
       )}
 
