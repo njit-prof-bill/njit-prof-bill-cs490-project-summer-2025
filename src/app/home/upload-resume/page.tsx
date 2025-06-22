@@ -73,8 +73,27 @@ export default function UploadResumePage() {
       },
       async () => {
         try {
+          // If the PDF preview image exists, upload it
+          if (pdfPreviewUrl) {
+            const previewBlob = dataURLtoBlob(pdfPreviewUrl);
+            const previewPath = `users/${user.uid}/${file.name}_preview.png`;
+            const previewRef = ref(storage, previewPath);
+            const previewUploadTask = uploadBytesResumable(previewRef, previewBlob);
+
+            await new Promise<void>((resolve, reject) => {
+              previewUploadTask.on(
+                "state_changed",
+                (snapshot) => {
+                  const percent = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 5);
+                  setUploadProgress((prev) => Math.min(prev + percent, 90));
+                },
+                reject,
+                resolve
+              );
+            });
+          }
           // Simulate progress while processing
-          for (let i = 81; i <= 90; i++) {
+          for (let i = 91; i <= 95; i++) {
             await new Promise((r) => setTimeout(r,20));
             setUploadProgress(i);
           }
@@ -101,7 +120,7 @@ export default function UploadResumePage() {
           setExtractedText(result.rawText);
 
           // Simulate AI processing progress
-          for (let i = 91; i <= 100; i++) {
+          for (let i = 96; i <= 100; i++) {
             await new Promise((r) => setTimeout(r, 20));
             setUploadProgress(i);
           }
@@ -124,6 +143,18 @@ export default function UploadResumePage() {
       }
     );
   };
+
+  const dataURLtoBlob = (dataurl: string): Blob => {
+    const arr = dataurl.split(',');
+    const mime = arr[0].match(/:(.*?);/)![1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new Blob([u8arr], {type: mime});
+  }
 
   const onRemove = (file: File, callback: () => void) => {
     callback();
@@ -177,7 +208,9 @@ export default function UploadResumePage() {
     }
 
     // If a PDF file was selected, generate a preview of it
-    const pdfFile = e.files.find((file) => file.name.toLowerCase().endsWith(".pdf"));
+    const pdfFile = e.files.find(
+      (file) => file.name.toLowerCase().endsWith(".pdf")
+    );
     if (pdfFile) {
       generatePdfPreview(pdfFile);
     } else {
