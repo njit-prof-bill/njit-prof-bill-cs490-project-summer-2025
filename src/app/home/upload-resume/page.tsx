@@ -7,11 +7,14 @@ import { getAIResponse, saveAIResponse, AIPrompt } from "@/components/ai/aiPromp
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/authContext";
 import { useRouter } from "next/navigation";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { ref, uploadBytesResumable } from "firebase/storage";
 import { storage } from "@/lib/firebase";
 import { getAuth } from "firebase/auth";
+// For DOCX previews
+import * as mammoth from "mammoth";
 
+// For PDF previews
 import * as pdfjsLib from 'pdfjs-dist/build/pdf.mjs';
 pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.mjs';
 
@@ -23,12 +26,18 @@ export default function UploadResumePage() {
   // For visual feedback to the user
   const [uploadMessage, setUploadMessage] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState<boolean | null>(null);
-  const [extractedText, setExtractedText] = useState<string | null>(null);
+  
   // New states for combined progress bar
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  
   // For controlling PDF previews
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
+  // For controlling DOCX previews
+  const [docxPreviewHTML, setDocxPreviewHtml] = useState<string | null>(null);
+  // For controlling extracted text
+  const [extractedText, setExtractedText] = useState<string | null>(null);
+  
   useEffect(() => {
     if (!loading && !user) {
       router.push("/"); // Redirect to landing page if not authenticated
@@ -100,9 +109,7 @@ export default function UploadResumePage() {
 
           // Get the user's ID token
           const idToken = await getAuth().currentUser?.getIdToken();
-          if (!idToken) {
-            throw new Error("Failed to get ID token.");
-          }
+          if (!idToken) throw new Error("Failed to get ID token.");
 
           // Call the file processing API
           const response = await fetch("/api/process-upload", {
@@ -182,9 +189,22 @@ export default function UploadResumePage() {
 
       const dataUrl = canvas.toDataURL();
       setPdfPreviewUrl(dataUrl);
+      setDocxPreviewHtml(null); // If user switches to PDF file
     } catch (err) {
       console.error("PDF preview error: ", err);
       setPdfPreviewUrl(null);
+    }
+  };
+
+  const generateDocxPreview = async (file: File) => {
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const { value } = await mammoth.convertToHtml({ arrayBuffer });
+      setDocxPreviewHtml(value);
+      setPdfPreviewUrl(null) // If user switches to DOCX file
+    } catch (err) {
+      console.error("DOCX preview error: ", err);
+      setDocxPreviewHtml("❌ Failed to generate DOCX preview");
     }
   };
 
@@ -193,38 +213,41 @@ export default function UploadResumePage() {
     const isValid = e.files.every((file) => {
       const ext = file.name.split(".").pop()?.toLowerCase();
       // ext might be of type 'undefined' instead of 'string'
-      if (!ext) {
-        return false;
-      }
+      if (!ext) return false;
       return allowedExtensions.includes(ext);
     });
 
     if (!isValid) {
       setUploadSuccess(false);
-      setUploadMessage("❌ This file type is not supported.");
+      setUploadMessage("<p>❌ This file type is not supported.</p>");
       fileUploadRef.current?.clear();
       setPdfPreviewUrl(null);
+      setDocxPreviewHtml(null);
       return;
     }
 
     // If a PDF file was selected, generate a preview of it
-    const pdfFile = e.files.find(
-      (file) => file.name.toLowerCase().endsWith(".pdf")
-    );
+    const pdfFile = e.files.find((file) => file.name.toLowerCase().endsWith(".pdf"));
+    // If a DOCX file was selected, generate a preview of it
+    const docxFile = e.files.find((file) => file.name.toLowerCase().endsWith(".docx"));
     if (pdfFile) {
       generatePdfPreview(pdfFile);
+    } else if (docxFile) {
+      generateDocxPreview(docxFile);
     } else {
       setPdfPreviewUrl(null);
+      setDocxPreviewHtml(null);
     }
   };
 
   const onClear = () => {
     setUploadMessage(null);
     setUploadSuccess(null);
-    setExtractedText(null);
     setIsUploading(false);
     setUploadProgress(0);
     setPdfPreviewUrl(null);
+    setDocxPreviewHtml(null);
+    setExtractedText(null);
   };
 
   const itemTemplate = (
@@ -316,6 +339,16 @@ export default function UploadResumePage() {
             alt="PDF Preview"
             className="border rounded shadow max-w-full h-auto"
           ></img>
+        </div>
+      )}
+
+      {docxPreviewHTML && (
+        <div className="mt-6 p-4 bg-gray-100 rounded-md text-sm text-black max-h-96 overflow-y-auto">
+          <h3 className="font-semibold mb-2">DOCX Preview:</h3>
+          <div
+            className="prose max-w-none"
+            dangerouslySetInnerHTML={{ __html: docxPreviewHTML }}
+          ></div>
         </div>
       )}
 
