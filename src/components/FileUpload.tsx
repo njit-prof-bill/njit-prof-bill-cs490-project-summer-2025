@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf";
 import pdfjsWorker from "pdfjs-dist/legacy/build/pdf.worker.entry";
 
 import mammoth from "mammoth";
 import JSZip from "jszip";
+import DocumentList from "./DocumentList";
+import { marked } from "marked";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
@@ -25,274 +27,275 @@ interface FileUploadProps {
 }
 
 export default function FileUpload({ onParsed }: { onParsed: (data: any) => void }) {
-  const [file, setFile] = useState<File | null>(null);
-  const [status, setStatus] = useState<
-    "idle" | "uploading" | "success" | "error" | "nofile"
-  >("idle");
-  const [fileUrl, setFileUrl] = useState<string | null>(null);
-  const [showPreview, setShowPreview] = useState(false);
-  const [fullscreen, setFullscreen] = useState(true);
-  const [textPreview, setTextPreview] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewName, setPreviewName] = useState<string | null>(null); // Track previewed file name
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const isValidFile = (file: File) => {
-    const mimeOk = allowedTypes.includes(file.type);
-    const extOk = allowedExtensions.some((ext) =>
-      file.name.toLowerCase().endsWith(ext)
-    );
-    return mimeOk || extOk;
-  };
+  // Load files from localStorage on mount
+  useEffect(() => {
+    const files = JSON.parse(localStorage.getItem("localDocuments") || "[]");
+    setDocuments(files);
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selected = e.target.files?.[0];
-    if (!selected) {
-      setFile(null);
-      setFileUrl(null);
-      setTextPreview(null);
-      setStatus("idle");
+    setError(null);
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!allowedTypes.includes(file.type) && !allowedExtensions.some(ext => file.name.endsWith(ext))) {
+      setError("Unsupported file type.");
       return;
     }
-
-    if (isValidFile(selected)) {
-      setFile(selected);
-      setFileUrl(URL.createObjectURL(selected));
-      setStatus("idle");
-      // Generate text preview for non-PDF files
-      if (selected.type !== "application/pdf") {
-        if (selected.name.toLowerCase().endsWith('.odt')) {
-          // Use the extractText logic for .odt preview
-          (async () => {
-            try {
-              const arrayBuffer = await selected.arrayBuffer();
-              const zip = await JSZip.loadAsync(arrayBuffer);
-              const contentXml = await zip.file("content.xml")?.async("string");
-              if (!contentXml) {
-                setTextPreview("Could not extract content from ODT file.");
-                return;
-              }
-              const text = contentXml.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
-              setTextPreview(text);
-            } catch (err) {
-              setTextPreview("Could not preview ODT file.");
-            }
-          })();
-        } else if (selected.name.toLowerCase().endsWith('.docx')) {
-          // Use mammoth to extract text for .docx preview
-          (async () => {
-            try {
-              const buffer = await selected.arrayBuffer();
-              const result = await mammoth.extractRawText({ arrayBuffer: buffer });
-              setTextPreview(result.value);
-            } catch (err) {
-              setTextPreview("Could not preview DOCX file.");
-            }
-          })();
-        } else {
-          const reader = new FileReader();
-          reader.onload = () => {
-            const text = reader.result as string;
-            setTextPreview(text ? text : "");
-          };
-          reader.onerror = () => setTextPreview("Could not preview file.");
-          reader.readAsText(selected);
-        }
-      } else {
-        setTextPreview(null);
-      }
-    } else {
-      alert("Unsupported file type.");
-      setFile(null);
-      setFileUrl(null);
-      setTextPreview(null);
-      setStatus("idle");
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
-    }
-  };
-
-  const extractText = async (file: File): Promise<string> => {
-    const ext = file.name.toLowerCase();
-
-    if (ext.endsWith(".pdf")) {
-      const pdfData = await file.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
-      let text = "";
-
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const content = await page.getTextContent();
-        text += content.items.map((item: any) => item.str).join(" ") + "\n";
-      }
-
-      return text;
-    } else if (ext.endsWith(".docx")) {
-      const buffer = await file.arrayBuffer();
-      const result = await mammoth.extractRawText({ arrayBuffer: buffer });
-      return result.value;
-    } else if (ext.endsWith(".odt")) {
-      // Use JSZip to extract content.xml and parse text
-      const arrayBuffer = await file.arrayBuffer();
-      const zip = await JSZip.loadAsync(arrayBuffer);
-      const contentXml = await zip.file("content.xml")?.async("string");
-      if (!contentXml) return "";
-      // Extract text from XML (very basic, strips tags)
-      const text = contentXml.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
-      return text;
-    } else {
-      // For .txt, .md — use readAsText
-      return await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = () => reject("Error reading file");
-        reader.readAsText(file);
-      });
-    }
+    setSelectedFile(file);
+    setPreviewUrl(null); // Do not auto-preview on select
   };
 
   const handleUpload = async () => {
-    if (!file) {
-      setStatus("nofile");
-      return;
-    }
-
-    setStatus("uploading");
-
+    if (!selectedFile) return;
+    setUploading(true);
+    setError(null);
     try {
-      const rawText = await extractText(file);
-
-      const res = await fetch("/api/parse", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: rawText }),
-      });
-
-      if (!res.ok) throw new Error("API error");
-
-      const parsed = await res.json();
-
-      onParsed(parsed); // send parsed data upstream
-
-      setStatus("success");
-    } catch (error) {
-      console.error("Upload failed:", error);
-      setStatus("error");
+      // Read file as base64
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64 = reader.result;
+        const newDoc = {
+          id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          name: selectedFile.name,
+          type: selectedFile.type,
+          size: selectedFile.size,
+          lastModified: selectedFile.lastModified,
+          base64,
+          uploadedAt: new Date().toISOString(),
+        };
+        const updatedDocs = [newDoc, ...documents];
+        setDocuments(updatedDocs);
+        localStorage.setItem("localDocuments", JSON.stringify(updatedDocs));
+        setSelectedFile(null);
+        setPreviewUrl(null);
+        if (onParsed) {
+          onParsed({ fileName: selectedFile.name });
+        }
+        setUploading(false);
+      };
+      reader.onerror = () => {
+        setError("Failed to read file.");
+        setUploading(false);
+      };
+      reader.readAsDataURL(selectedFile);
+    } catch (err) {
+      setError("Upload failed. Try again.");
+      setUploading(false);
     }
   };
 
+  const handleChooseFile = () => {
+    fileInputRef.current?.click();
+  };
+
+  // Optionally, add a delete handler for local files
+  const handleDelete = (name: string) => {
+    const updatedDocs = documents.filter((doc: any) => doc.name !== name);
+    setDocuments(updatedDocs);
+    localStorage.setItem("localDocuments", JSON.stringify(updatedDocs));
+  };
+
+  // Preview handler for local files and selected file
+  const handlePreview = (doc: any) => {
+    setPreviewUrl(doc.base64 || previewUrl);
+    setPreviewName(doc.name || null);
+  };
+
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col md:flex-row md:items-center md:space-y-0 md:space-x-4">
-        <div className="flex flex-row items-center space-x-2">
-          <label className="px-4 py-2 bg-gray-200 text-black rounded cursor-pointer inline-block">
-            Choose File
-            <input
-              type="file"
-              accept=".pdf,.docx,.txt,.md,.odt"
-              onChange={handleFileChange}
-              ref={fileInputRef}
-              className="hidden"
-            />
-          </label>
-          <button
-            onClick={handleUpload}
-            className="px-4 py-2 bg-blue-600 text-white rounded"
-            disabled={status === "uploading" || !file}
-          >
-            {status === "uploading" ? (
-              <>
-                <svg
-                  className="animate-spin h-4 w-4 mr-2 text-white inline"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                  />
-                </svg>
-                Uploading...
-              </>
-            ) : (
-              "Upload File"
-            )}
-          </button>
-        </div>
+    <div className="w-full max-w-4xl mx-auto flex flex-col items-center gap-4">
+      <div className="w-full flex flex-col items-center gap-2">
+        <button
+          type="button"
+          onClick={handleChooseFile}
+          disabled={uploading}
+          className="w-48 px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600 disabled:opacity-50 font-semibold"
+        >
+          Choose File
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept={allowedExtensions.join(",")}
+          onChange={handleFileChange}
+          className="hidden"
+          disabled={uploading}
+        />
       </div>
-      {file && (
-        <div className="flex items-center gap-2 mt-2">
-          <span className="block text-sm text-indigo-700 dark:text-indigo-300 font-semibold bg-indigo-50 dark:bg-gray-800 px-3 py-1 rounded shadow">
-            Selected file: {file.name}
-          </span>
-          <button
-            type="button"
-            className="px-3 py-1 text-sm bg-indigo-600 text-white rounded shadow hover:bg-indigo-700 focus:outline-none"
-            onClick={() => setShowPreview((prev) => !prev)}
-          >
-            {showPreview ? "Hide Preview" : "Preview"}
-          </button>
-        </div>
-      )}
-      {showPreview && fileUrl && file && file.type === "application/pdf" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30 backdrop-blur-md">
-          <div className="relative flex flex-col items-center justify-center w-full h-full">
-            <div className="flex-1 flex items-center justify-center">
-              <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden flex items-center justify-center transition-all duration-300" style={{ minHeight: '80vh', minWidth: '60vw', maxHeight: '92vh', maxWidth: '92vw', boxShadow: '0 8px 40px rgba(0,0,0,0.35)' }}>
-                <iframe
-                  src={fileUrl}
-                  title="PDF Preview"
-                  className="w-full h-full"
-                  style={{ minHeight: '80vh', minWidth: '60vw', border: 0, background: 'white' }}
-                  allowFullScreen
-                />
-              </div>
-            </div>
+      {selectedFile && (
+        <div className="w-full flex flex-col items-center gap-2">
+          <span className="text-sm text-gray-800 dark:text-gray-200">Selected: {selectedFile.name}</span>
+          <div className="flex gap-2">
             <button
-              type="button"
-              className="absolute top-6 right-8 px-5 py-2 bg-white text-gray-800 rounded-full shadow-lg border border-gray-300 hover:bg-gray-100 focus:outline-none z-50 text-lg font-bold transition-all duration-200"
-              onClick={() => setShowPreview(false)}
-              aria-label="Close Preview"
+              onClick={handleUpload}
+              disabled={uploading || !selectedFile}
+              className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-50"
             >
-              ✕
+              {uploading ? "Uploading..." : "Upload"}
+            </button>
+            <button
+              onClick={() => { setSelectedFile(null); setPreviewUrl(null); setError(null); }}
+              disabled={uploading}
+              className="px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500 disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => {
+                // Preview the selected file before upload
+                if (selectedFile) {
+                  const reader = new FileReader();
+                  reader.onload = () => {
+                    setPreviewUrl(reader.result as string);
+                    setPreviewName(selectedFile.name);
+                  };
+                  reader.readAsDataURL(selectedFile);
+                }
+              }}
+              disabled={uploading || !selectedFile}
+              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+            >
+              Preview
             </button>
           </div>
         </div>
       )}
-      {showPreview && fileUrl && file && file.type !== "application/pdf" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30 backdrop-blur-md">
-          <div className="relative flex flex-col items-center justify-center w-full h-full">
-            <div className="flex-1 flex items-center justify-center">
-              <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-auto flex items-center justify-center transition-all duration-300" style={{ minHeight: '60vh', minWidth: '40vw', maxHeight: '80vh', maxWidth: '80vw', boxShadow: '0 8px 40px rgba(0,0,0,0.35)' }}>
-                <pre className="w-full h-full p-6 text-gray-800 text-sm whitespace-pre-wrap" style={{ background: 'white', maxHeight: '70vh', minWidth: '30vw', overflow: 'auto' }}>{textPreview || 'No preview available.'}</pre>
-              </div>
-            </div>
+      {error && <div className="text-red-500 dark:text-red-400">{error}</div>}
+      <div className="w-full mt-4">
+        <DocumentList
+          documents={documents.map((doc: any) => ({
+            ...doc,
+            type: getFileTypeLabel(doc),
+            createdAt: doc.uploadedAt,
+            onPreview: () => handlePreview(doc),
+          }))}
+        />
+      </div>
+      {/* Preview Modal */}
+      {previewUrl && (
+        <div className="fixed inset-0 bg-black/70 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-6 max-w-2xl w-full relative">
             <button
-              type="button"
-              className="absolute top-6 right-8 px-5 py-2 bg-white text-gray-800 rounded-full shadow-lg border border-gray-300 hover:bg-gray-100 focus:outline-none z-50 text-lg font-bold transition-all duration-200"
-              onClick={() => setShowPreview(false)}
-              aria-label="Close Preview"
+              onClick={() => { setPreviewUrl(null); setPreviewName(null); }}
+              className="absolute top-2 right-2 text-gray-600 dark:text-gray-300 hover:text-red-500 dark:hover:text-red-400 text-2xl font-bold"
+              aria-label="Close preview"
             >
-              ✕
+              ×
             </button>
+            <div className="overflow-auto max-h-[70vh]">
+              {previewUrl.startsWith('data:application/pdf') ? (
+                <iframe src={previewUrl} title="PDF Preview" className="w-full h-[60vh] bg-white dark:bg-gray-900" />
+              ) : previewUrl.startsWith('data:image') ? (
+                <img src={previewUrl} alt="Preview" className="max-w-full max-h-[60vh] mx-auto bg-white dark:bg-gray-900" />
+              ) : previewUrl.startsWith('data:application/vnd.openxmlformats-officedocument.wordprocessingml.document') ? (
+                <DocxPreview base64={previewUrl} />
+              ) : previewUrl.startsWith('data:application/vnd.oasis.opendocument.text') ? (
+                <OdtPreview base64={previewUrl} />
+              ) : previewUrl.startsWith('data:text/markdown') || (previewName && previewName.toLowerCase().endsWith('.md') && previewUrl.startsWith('data:text/plain')) ? (
+                <MarkdownPreview base64={previewUrl} />
+              ) : previewUrl.startsWith('data:text') ? (
+                <div className="whitespace-pre-wrap text-gray-800 dark:text-gray-200 text-sm">
+                  {(() => {
+                    try {
+                      const base64 = previewUrl.split(',')[1];
+                      const text = atob(base64);
+                      return text;
+                    } catch {
+                      return 'Unable to preview this file type.';
+                    }
+                  })()}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center">
+                  <span className="text-gray-600 dark:text-gray-300 mb-2">Unable to preview this file type.</span>
+                  <a href={previewUrl} download className="text-blue-600 dark:text-blue-400 underline">Download file</a>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
-      {status === "success" && (
-        <p className="text-green-700 bg-green-100 dark:bg-green-900 dark:text-green-300 font-semibold px-3 py-1 rounded shadow mt-2">
-          File uploaded and parsed successfully!
-        </p>
-      )}
-      {/* Status messages can be added here if needed */}
     </div>
   );
 }
+
+// Helper component for DOCX preview
+function DocxPreview({ base64 }: { base64: string }) {
+  const [text, setText] = useState<string>("Loading preview...");
+  useEffect(() => {
+    async function extractDocx() {
+      try {
+        const arr = base64.split(",")[1];
+        const byteArray = Uint8Array.from(atob(arr), c => c.charCodeAt(0));
+        const result = await mammoth.extractRawText({ arrayBuffer: byteArray.buffer });
+        setText(result.value || "No text found in DOCX.");
+      } catch {
+        setText("Unable to preview this DOCX file.");
+      }
+    }
+    extractDocx();
+  }, [base64]);
+  return <div className="whitespace-pre-wrap text-gray-800 dark:text-gray-200 text-sm">{text}</div>;
+}
+
+// Helper component for ODT preview
+function OdtPreview({ base64 }: { base64: string }) {
+  const [text, setText] = useState<string>("Loading preview...");
+  useEffect(() => {
+    async function extractOdt() {
+      try {
+        const arr = base64.split(",")[1];
+        const byteArray = Uint8Array.from(atob(arr), c => c.charCodeAt(0));
+        const zip = await JSZip.loadAsync(byteArray.buffer);
+        const contentXml = await zip.file("content.xml")?.async("string");
+        if (!contentXml) throw new Error("No content.xml found");
+        // Extract text from XML (very basic, not perfect)
+        const matches = contentXml.match(/<text:p[^>]*>(.*?)<\/text:p>/g);
+        const paragraphs = matches ? matches.map(p => p.replace(/<[^>]+>/g, "").trim()) : [];
+        setText(paragraphs.join("\n\n") || "No text found in ODT.");
+      } catch {
+        setText("Unable to preview this ODT file.");
+      }
+    }
+    extractOdt();
+  }, [base64]);
+  return <div className="whitespace-pre-wrap text-gray-800 dark:text-gray-200 text-sm">{text}</div>;
+}
+
+// Markdown preview helper
+function MarkdownPreview({ base64 }: { base64: string }) {
+  const [html, setHtml] = useState<string>("Loading preview...");
+  useEffect(() => {
+    async function renderMarkdown() {
+      try {
+        const arr = base64.split(",")[1];
+        const text = atob(arr);
+        const result = await marked.parse(text);
+        setHtml(result as string);
+      } catch {
+        setHtml("Unable to preview this Markdown file.");
+      }
+    }
+    renderMarkdown();
+  }, [base64]);
+  return <div className="prose max-w-none text-gray-800 dark:text-gray-200" dangerouslySetInnerHTML={{ __html: html }} />;
+}
+
+// Helper to get a friendly file type label
+function getFileTypeLabel(doc: any) {
+  const ext = doc.name?.split('.').pop()?.toLowerCase();
+  if (ext === 'pdf') return 'PDF';
+  if (ext === 'docx') return 'DOCX';
+  if (ext === 'txt') return 'TXT';
+  if (ext === 'md') return 'MD';
+  if (ext === 'odt') return 'ODT';
+  return doc.type?.toUpperCase() || 'FILE';
+}
+
