@@ -6,6 +6,30 @@ import { ref, list, ListResult, StorageReference, getDownloadURL } from "firebas
 import { storage } from "@/lib/firebase";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@radix-ui/react-accordion";
 
+type PreviewFileProps = {
+    url: string;
+}
+
+function PreviewFile({url}: PreviewFileProps) {
+    if (!url) {
+        console.log("Empty string");
+        return (<p>No preview</p>);
+    }
+    // Parse the file's extension from the url
+    const newUrl = url.split(".").pop();
+    if (!newUrl) {
+        console.log("Empty");
+        return;
+    }
+    // console.log(newUrl);
+    const ext = newUrl.split("?")[0];
+    if (!ext) {
+        console.log("No extension");
+        return;
+    }
+    console.log(ext);
+}
+
 export default function ViewPastUploadsPage() {
     // For checking whether the user is logged in and redirecting them accordingly
     const { user, loading } = useAuth();
@@ -54,6 +78,7 @@ export default function ViewPastUploadsPage() {
         try {
             const url = await getDownloadURL(item);
             // console.log(`URL to ${item.name}: ${url}`);
+            PreviewFile({url});
             return url;
         } catch (error) {
             console.log(`Error retrieving URL for ${item.name}: ${error}`);
