@@ -24,7 +24,6 @@
     "docx-preview": "^0.3.5",
     "firebase": "^11.9.0",
     "firebase-admin": "^13.4.0",
-    "html-react-parser": "^5.2.5",
     "html2canvas": "^1.4.1",
     "identity-obj-proxy": "^3.0.0",
     "lucide-react": "^0.488.0",
