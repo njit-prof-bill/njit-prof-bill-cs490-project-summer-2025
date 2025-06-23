@@ -202,7 +202,7 @@ export default function UploadResumePage() {
       const arrayBuffer = await file.arrayBuffer();
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
       const page = await pdf.getPage(1);
-      const viewport = page.getViewport({ scale: 1.5 });
+      const viewport = page.getViewport({ scale: 1 });
 
       const canvas = document.createElement("canvas");
       const context = canvas.getContext("2d");
