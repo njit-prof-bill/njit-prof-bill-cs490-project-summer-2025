@@ -7,20 +7,16 @@ import { getAIResponse, saveAIResponse, AIPrompt } from "@/components/ai/aiPromp
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/authContext";
 import { useRouter } from "next/navigation";
-import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { ref, uploadBytesResumable } from "firebase/storage";
 import { storage } from "@/lib/firebase";
 import { getAuth } from "firebase/auth";
 // For DOCX previews
-import * as mammoth from "mammoth";
 import { renderAsync } from "docx-preview";
 import html2canvas from "html2canvas";
 
 // For PDF previews
 import * as pdfjsLib from 'pdfjs-dist/build/pdf.mjs';
 pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.mjs';
-import parse from "html-react-parser";
-import { render } from "@testing-library/react";
 
 export default function UploadResumePage() {
   // For checking whether the user is logged in and redirecting them accordingly
@@ -61,8 +57,6 @@ export default function UploadResumePage() {
     const filePath = `users/${user.uid}/${file.name}`;
     const fileRef = ref(storage, filePath);
     const uploadTask = uploadBytesResumable(fileRef, file);
-    // const formData = new FormData();
-    // formData.append("file", file);
 
     // Reset states and start progress
     setIsUploading(true);
@@ -222,7 +216,7 @@ export default function UploadResumePage() {
 
       const dataUrl = canvas.toDataURL();
       setPdfPreviewUrl(dataUrl);
-      // setDocxPreviewHtml(null); // If user switches to PDF file
+      // If user switches to PDF file
       if (docxContainerRef.current) {
         docxContainerRef.current.innerHTML = "";
       }
@@ -281,7 +275,6 @@ export default function UploadResumePage() {
       setUploadMessage("❌ This file type is not supported.");
       fileUploadRef.current?.clear();
       setPdfPreviewUrl(null);
-      // setDocxPreviewHtml(null);
       if (docxContainerRef.current) {
         docxContainerRef.current.innerHTML = "";
       }
@@ -298,7 +291,6 @@ export default function UploadResumePage() {
       generateDocxPreview(docxFile);
     } else {
       setPdfPreviewUrl(null);
-      // setDocxPreviewHtml(null);
       if (docxContainerRef.current) {
         docxContainerRef.current.innerHTML = "";
       }
@@ -311,7 +303,6 @@ export default function UploadResumePage() {
     setIsUploading(false);
     setUploadProgress(0);
     setPdfPreviewUrl(null);
-    // setDocxPreviewHtml(null);
     setExtractedText(null);
     if (docxContainerRef.current) {
       docxContainerRef.current.innerHTML = "";
@@ -359,7 +350,6 @@ export default function UploadResumePage() {
       <FileUpload
         ref={fileUploadRef}
         name="file"
-        //url="/api/upload"
         accept=".pdf,.PDF,.docx,.DOCX,.txt,.md,.odt,.TXT,.MD,.ODT"
         customUpload
         uploadHandler={onUpload} // <--- This wires default upload button to your handler
@@ -410,15 +400,6 @@ export default function UploadResumePage() {
         </div>
       )}
 
-      {/* {docxPreviewHTML && (
-        <div className="mt-6 p-4 bg-gray-100 rounded-md text-sm text-black max-h-96 overflow-y-auto">
-          <h3 className="font-semibold mb-2">DOCX Preview:</h3>
-          <div className="prose max-w-none">
-            {parse(docxPreviewHTML)}
-          </div>
-        </div>
-      )} */}
-
       <div className="mt-6 p-4 bg-gray-100 rounded-md text-sm text-black max-h-96 overflow-y-auto">
         <h3 className="font-semibold mb-2">DOCX Preview:</h3>
         <div className="docx-preview-reset">
@@ -437,298 +418,3 @@ export default function UploadResumePage() {
     </div>
   );
 }
-
-// "use client";
-
-// import React, { useRef } from "react";
-// import { Toast } from "primereact/toast";
-// import { FileUpload } from "primereact/fileupload";
-// import { Button } from "primereact/button";
-
-// export default function UploadResumePage() {
-//   const toast = useRef(null);
-//   const fileUploadRef = useRef(null);
-
-//   const onUpload = async () => {
-//     const files = fileUploadRef.current?.getFiles();
-//     if (!files || files.length === 0) return;
-
-//     const file = files[0];
-//     const formData = new FormData();
-//     formData.append("file", file);
-
-//     try {
-//       const res = await fetch("/api/upload", {
-//         method: "POST",
-//         body: formData,
-//       });
-
-//       const result = await res.json();
-
-//       if (res.ok) {
-//         console.log("Extracted raw text:", result.rawText); // ✅ Log to console
-//         toast.current.show({
-//           severity: "success",
-//           summary: "File Uploaded",
-//           detail: "Raw text extracted. Check console.",
-//           life: 5000,
-//         });
-//       } else {
-//         toast.current.show({
-//           severity: "error",
-//           summary: "Upload failed",
-//           detail: result.error || "Something went wrong",
-//           life: 5000,
-//         });
-//       }
-//     } catch (error) {
-//       console.error("Upload error:", error);
-//       toast.current.show({
-//         severity: "error",
-//         summary: "Upload Error",
-//         detail: "Network or server error.",
-//         life: 5000,
-//       });
-//     }
-//   };
-
-
-//   const onRemove = (file, callback) => {
-//     callback();
-//   };
-
-//   const onSelect = (e) => {
-//     const allowedExtensions = ['pdf', 'PDF', 'docx', 'DOCX', 'txt', 'TXT', 'md', 'MD', 'odt', 'ODT'];
-
-//     const isValid = e.files.every((file) => {
-//       const ext = file.name.split('.').pop();
-//       return allowedExtensions.includes(ext);
-//     });
-
-//     if (!isValid) {
-//       toast.current.show({
-//         severity: 'error',
-//         summary: 'Unsupported File',
-//         detail: 'This file type is not supported.',
-//       });
-
-//       fileUploadRef.current?.clear();
-//     }
-//   };
-
-//   const onClear = () => {
-//     // Optional: could show a toast or log
-//   };
-
-//   const itemTemplate = (file, props) => (
-//     <div className="flex items-center justify-between p-3 border rounded-md w-full bg-white dark:bg-stone-800 mt-2">
-//       <div className="flex items-center gap-3">
-//         <i className="pi pi-file" style={{ fontSize: "1.5rem" }}></i>
-//         <div className="flex flex-col">
-//           <span className="font-medium text-gray-800 dark:text-gray-100 truncate max-w-xs">
-//             {file.name}
-//           </span>
-//           <small className="text-gray-500 dark:text-gray-400">
-//             {new Date().toLocaleDateString()}
-//           </small>
-//         </div>
-//       </div>
-
-//       <div className="flex gap-2">
-//         <Button
-//           icon="pi pi-upload"
-//           className="p-button-sm p-button-success p-button-text"
-//           onClick={() => props.onUpload?.()}
-//         />
-//         <Button
-//           icon="pi pi-times"
-//           className="p-button-sm p-button-danger p-button-text"
-//           onClick={() => onRemove(file, props.onRemove)}
-//         />
-//       </div>
-//     </div>
-//   );
-
-//   const emptyTemplate = () => (
-//     <div className="flex flex-col items-center text-gray-500 dark:text-gray-400 py-10">
-//       <i className="pi pi-upload text-5xl mb-4" />
-//       <span>Drag and drop your resume here</span>
-//     </div>
-//   );
-
-//   return (
-//     <div className="p-4">
-//       <Toast ref={toast} />
-//       <FileUpload
-//         ref={fileUploadRef}
-//         name="file"
-//         url="/api/upload"
-//         accept=".pdf,.PDF,.docx,.DOCX,.txt,.md,.odt,TXT,.MD,.ODT"
-//         customUpload
-//         onUpload={onUpload}
-//         onSelect={onSelect}
-//         onError={onClear}
-//         onClear={onClear}
-//         itemTemplate={itemTemplate}
-//         emptyTemplate={emptyTemplate}
-//       />
-//     </div>
-//   );
-// }
-// "use client";
-
-// import React, { useRef, useState } from "react";
-// import { Toast } from "primereact/toast";
-// import { FileUpload } from "primereact/fileupload";
-// import { Button } from "primereact/button";
-
-// export default function UploadResumePage() {
-//   const toast = useRef(null);
-//   const fileUploadRef = useRef(null);
-
-//   const [uploadMessage, setUploadMessage] = useState<string | null>(null);
-//   const [uploadSuccess, setUploadSuccess] = useState<boolean | null>(null);
-
-//   const onUpload = async () => {
-//     const files = fileUploadRef.current?.getFiles();
-//     if (!files || files.length === 0) return;
-
-//     const file = files[0];
-//     const formData = new FormData();
-//     formData.append("file", file);
-
-//     try {
-//       const res = await fetch("/api/upload", {
-//         method: "POST",
-//         body: formData,
-//       });
-
-//       const result = await res.json();
-
-//       if (res.ok) {
-//         console.log("Extracted raw text:", result.rawText);
-//         setUploadSuccess(true);
-//         setUploadMessage("✅ File uploaded and text extracted successfully!");
-//         toast.current.show({
-//           severity: "success",
-//           summary: "Success",
-//           detail: "Raw text extracted. Check console.",
-//           life: 5000,
-//         });
-//       } else {
-//         setUploadSuccess(false);
-//         setUploadMessage(`❌ Upload failed: ${result.error || "Something went wrong"}`);
-//         toast.current.show({
-//           severity: "error",
-//           summary: "Upload failed",
-//           detail: result.error || "Something went wrong",
-//           life: 5000,
-//         });
-//       }
-//     } catch (error) {
-//       console.error("Upload error:", error);
-//       setUploadSuccess(false);
-//       setUploadMessage("❌ Network or server error.");
-//       toast.current.show({
-//         severity: "error",
-//         summary: "Upload Error",
-//         detail: "Network or server error.",
-//         life: 5000,
-//       });
-//     }
-//   };
-
-//   const onRemove = (file, callback) => {
-//     callback();
-//   };
-
-//   const onSelect = (e) => {
-//     const allowedExtensions = ["pdf", "docx", "txt", "md", "odt"];
-
-//     const isValid = e.files.every((file) => {
-//       const ext = file.name.split(".").pop()?.toLowerCase();
-//       return allowedExtensions.includes(ext);
-//     });
-
-//     if (!isValid) {
-//       toast.current.show({
-//         severity: "error",
-//         summary: "Unsupported File",
-//         detail: "This file type is not supported.",
-//       });
-
-//       fileUploadRef.current?.clear();
-//     }
-//   };
-
-//   const onClear = () => {
-//     setUploadMessage(null);
-//     setUploadSuccess(null);
-//   };
-
-//   const itemTemplate = (file, props) => (
-//     <div className="flex items-center justify-between p-3 border rounded-md w-full bg-white dark:bg-stone-800 mt-2">
-//       <div className="flex items-center gap-3">
-//         <i className="pi pi-file" style={{ fontSize: "1.5rem" }}></i>
-//         <div className="flex flex-col">
-//           <span className="font-medium text-gray-800 dark:text-gray-100 truncate max-w-xs">
-//             {file.name}
-//           </span>
-//           <small className="text-gray-500 dark:text-gray-400">
-//             {new Date().toLocaleDateString()}
-//           </small>
-//         </div>
-//       </div>
-
-//       <div className="flex gap-2">
-//         <Button
-//           icon="pi pi-upload"
-//           className="p-button-sm p-button-success p-button-text"
-//           onClick={onUpload}
-
-//         />
-//         <Button
-//           icon="pi pi-times"
-//           className="p-button-sm p-button-danger p-button-text"
-//           onClick={() => onRemove(file, props.onRemove)}
-//         />
-//       </div>
-//     </div>
-//   );
-
-//   const emptyTemplate = () => (
-//     <div className="flex flex-col items-center text-gray-500 dark:text-gray-400 py-10">
-//       <i className="pi pi-upload text-5xl mb-4" />
-//       <span>Drag and drop your resume here</span>
-//     </div>
-//   );
-
-//   return (
-//     <div className="p-4">
-//       <Toast ref={toast} />
-//       <FileUpload
-//         ref={fileUploadRef}
-//         name="file"
-//         url="/api/upload"
-//         accept=".pdf,.docx,.txt,.md,.odt"
-//         customUpload
-//         onUpload={onUpload}
-//         onSelect={onSelect}
-//         onError={onClear}
-//         onClear={onClear}
-//         itemTemplate={itemTemplate}
-//         emptyTemplate={emptyTemplate}
-//       />
-
-//       {uploadMessage && (
-//         <div
-//           className={`mt-4 p-3 rounded-md text-white ${
-//             uploadSuccess ? "bg-green-600" : "bg-red-600"
-//           }`}
-//         >
-//           {uploadMessage}
-//         </div>
-//       )}
-//     </div>
-//   );
-// }
