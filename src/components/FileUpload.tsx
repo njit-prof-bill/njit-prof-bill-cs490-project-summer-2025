@@ -29,6 +29,10 @@ export default function FileUpload({ onParsed }: { onParsed: (data: any) => void
   const [status, setStatus] = useState<
     "idle" | "uploading" | "success" | "error" | "nofile"
   >("idle");
+  const [fileUrl, setFileUrl] = useState<string | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
+  const [fullscreen, setFullscreen] = useState(true);
+  const [textPreview, setTextPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const isValidFile = (file: File) => {
@@ -43,16 +47,63 @@ export default function FileUpload({ onParsed }: { onParsed: (data: any) => void
     const selected = e.target.files?.[0];
     if (!selected) {
       setFile(null);
+      setFileUrl(null);
+      setTextPreview(null);
       setStatus("idle");
       return;
     }
 
     if (isValidFile(selected)) {
       setFile(selected);
+      setFileUrl(URL.createObjectURL(selected));
       setStatus("idle");
+      // Generate text preview for non-PDF files
+      if (selected.type !== "application/pdf") {
+        if (selected.name.toLowerCase().endsWith('.odt')) {
+          // Use the extractText logic for .odt preview
+          (async () => {
+            try {
+              const arrayBuffer = await selected.arrayBuffer();
+              const zip = await JSZip.loadAsync(arrayBuffer);
+              const contentXml = await zip.file("content.xml")?.async("string");
+              if (!contentXml) {
+                setTextPreview("Could not extract content from ODT file.");
+                return;
+              }
+              const text = contentXml.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+              setTextPreview(text);
+            } catch (err) {
+              setTextPreview("Could not preview ODT file.");
+            }
+          })();
+        } else if (selected.name.toLowerCase().endsWith('.docx')) {
+          // Use mammoth to extract text for .docx preview
+          (async () => {
+            try {
+              const buffer = await selected.arrayBuffer();
+              const result = await mammoth.extractRawText({ arrayBuffer: buffer });
+              setTextPreview(result.value);
+            } catch (err) {
+              setTextPreview("Could not preview DOCX file.");
+            }
+          })();
+        } else {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const text = reader.result as string;
+            setTextPreview(text ? text : "");
+          };
+          reader.onerror = () => setTextPreview("Could not preview file.");
+          reader.readAsText(selected);
+        }
+      } else {
+        setTextPreview(null);
+      }
     } else {
       alert("Unsupported file type.");
       setFile(null);
+      setFileUrl(null);
+      setTextPreview(null);
       setStatus("idle");
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
@@ -179,9 +230,62 @@ export default function FileUpload({ onParsed }: { onParsed: (data: any) => void
         </div>
       </div>
       {file && (
-        <span className="block text-sm text-indigo-700 dark:text-indigo-300 font-semibold bg-indigo-50 dark:bg-gray-800 px-3 py-1 rounded shadow mt-2">
-          Selected file: {file.name}
-        </span>
+        <div className="flex items-center gap-2 mt-2">
+          <span className="block text-sm text-indigo-700 dark:text-indigo-300 font-semibold bg-indigo-50 dark:bg-gray-800 px-3 py-1 rounded shadow">
+            Selected file: {file.name}
+          </span>
+          <button
+            type="button"
+            className="px-3 py-1 text-sm bg-indigo-600 text-white rounded shadow hover:bg-indigo-700 focus:outline-none"
+            onClick={() => setShowPreview((prev) => !prev)}
+          >
+            {showPreview ? "Hide Preview" : "Preview"}
+          </button>
+        </div>
+      )}
+      {showPreview && fileUrl && file && file.type === "application/pdf" && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30 backdrop-blur-md">
+          <div className="relative flex flex-col items-center justify-center w-full h-full">
+            <div className="flex-1 flex items-center justify-center">
+              <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden flex items-center justify-center transition-all duration-300" style={{ minHeight: '80vh', minWidth: '60vw', maxHeight: '92vh', maxWidth: '92vw', boxShadow: '0 8px 40px rgba(0,0,0,0.35)' }}>
+                <iframe
+                  src={fileUrl}
+                  title="PDF Preview"
+                  className="w-full h-full"
+                  style={{ minHeight: '80vh', minWidth: '60vw', border: 0, background: 'white' }}
+                  allowFullScreen
+                />
+              </div>
+            </div>
+            <button
+              type="button"
+              className="absolute top-6 right-8 px-5 py-2 bg-white text-gray-800 rounded-full shadow-lg border border-gray-300 hover:bg-gray-100 focus:outline-none z-50 text-lg font-bold transition-all duration-200"
+              onClick={() => setShowPreview(false)}
+              aria-label="Close Preview"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+      {showPreview && fileUrl && file && file.type !== "application/pdf" && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30 backdrop-blur-md">
+          <div className="relative flex flex-col items-center justify-center w-full h-full">
+            <div className="flex-1 flex items-center justify-center">
+              <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-auto flex items-center justify-center transition-all duration-300" style={{ minHeight: '60vh', minWidth: '40vw', maxHeight: '80vh', maxWidth: '80vw', boxShadow: '0 8px 40px rgba(0,0,0,0.35)' }}>
+                <pre className="w-full h-full p-6 text-gray-800 text-sm whitespace-pre-wrap" style={{ background: 'white', maxHeight: '70vh', minWidth: '30vw', overflow: 'auto' }}>{textPreview || 'No preview available.'}</pre>
+              </div>
+            </div>
+            <button
+              type="button"
+              className="absolute top-6 right-8 px-5 py-2 bg-white text-gray-800 rounded-full shadow-lg border border-gray-300 hover:bg-gray-100 focus:outline-none z-50 text-lg font-bold transition-all duration-200"
+              onClick={() => setShowPreview(false)}
+              aria-label="Close Preview"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
       )}
       {status === "success" && (
         <p className="text-green-700 bg-green-100 dark:bg-green-900 dark:text-green-300 font-semibold px-3 py-1 rounded shadow mt-2">

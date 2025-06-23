@@ -3,7 +3,7 @@ interface Education {
   degree?: string;
   certificateOrDiploma?: string;
   datesAttended?: string;
-  GPA?: string;
+  gpa?: string;
 }
 
 interface EducationListProps {
@@ -18,7 +18,7 @@ export default function EducationList({
   const addEducation = () =>
     onChange([
       ...education,
-      { school: "", degree: "", certificateOrDiploma: "", datesAttended: "", GPA: "" },
+      { school: "", degree: "", certificateOrDiploma: "", datesAttended: "", gpa: "" },
     ]);
 
   const updateEducation = (
@@ -113,8 +113,8 @@ export default function EducationList({
             GPA:
             <input
               type="text"
-              value={edu.GPA || ""}
-              onChange={(e) => updateEducation(idx, "GPA", e.target.value)}
+              value={edu.gpa || ""}
+              onChange={(e) => updateEducation(idx, "gpa", e.target.value)}
               className="mt-1 block w-full border border-gray-600 rounded bg-gray-600 text-white px-3 py-2"
               placeholder="GPA (optional)"
             />
