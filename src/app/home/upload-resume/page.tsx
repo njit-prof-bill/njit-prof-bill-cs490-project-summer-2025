@@ -14,6 +14,7 @@ import { getAuth } from "firebase/auth";
 // For DOCX previews
 import * as mammoth from "mammoth";
 import { renderAsync } from "docx-preview";
+import html2canvas from "html2canvas";
 
 // For PDF previews
 import * as pdfjsLib from 'pdfjs-dist/build/pdf.mjs';
@@ -37,7 +38,6 @@ export default function UploadResumePage() {
   // For controlling PDF previews
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
   // For controlling DOCX previews
-  // const [docxPreviewHTML, setDocxPreviewHtml] = useState<string | null>(null);
   const docxContainerRef = useRef<HTMLDivElement>(null);
   // For controlling extracted text
   const [extractedText, setExtractedText] = useState<string | null>(null);
@@ -75,7 +75,7 @@ export default function UploadResumePage() {
       "state_changed",
       (snapshot) => {
         // Update the progress of the upload operation
-        const percent = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 80);
+        const percent = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 70);
         setUploadProgress(percent);
       },
       (error) => {
@@ -86,6 +86,8 @@ export default function UploadResumePage() {
       },
       async () => {
         try {
+          let previewUploaded = false;
+
           // If the PDF preview image exists, upload it
           if (pdfPreviewUrl) {
             const previewBlob = dataURLtoBlob(pdfPreviewUrl);
@@ -97,14 +99,41 @@ export default function UploadResumePage() {
               previewUploadTask.on(
                 "state_changed",
                 (snapshot) => {
-                  const percent = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 5);
+                  const percent = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 10);
                   setUploadProgress((prev) => Math.min(prev + percent, 90));
                 },
                 reject,
                 resolve
               );
             });
+
+            previewUploaded = true;
           }
+
+          if (!previewUploaded) {
+            // Generate a preview of a DOCX file
+            const docxImageBlob = await generateDocxPreviewImage();
+            if (docxImageBlob) {
+              const previewPath = `users/${user.uid}/${file.name}_preview.png`;
+              const previewRef = ref(storage, previewPath);
+              const previewUploadTask = uploadBytesResumable(previewRef, docxImageBlob);
+
+              await new Promise<void>((resolve, reject) => {
+                previewUploadTask.on(
+                  "state_changed",
+                  (snapshot) => {
+                    const percent = Math.round(
+                      (snapshot.bytesTransferred / snapshot.totalBytes) * 10
+                    );
+                    setUploadProgress((prev) => Math.min(prev + percent, 90));
+                  },
+                  reject,
+                  resolve
+                );
+              });
+            }
+          }
+
           // Simulate progress while processing
           for (let i = 91; i <= 95; i++) {
             await new Promise((r) => setTimeout(r,20));
@@ -206,8 +235,6 @@ export default function UploadResumePage() {
   const generateDocxPreview = async (file: File) => {
     try {
       const arrayBuffer = await file.arrayBuffer();
-      // const { value } = await mammoth.convertToHtml({ arrayBuffer });
-      // setDocxPreviewHtml(value);
       if (docxContainerRef.current) {
         docxContainerRef.current.innerHTML = "";
         await renderAsync(arrayBuffer, docxContainerRef.current, undefined, {
@@ -217,12 +244,28 @@ export default function UploadResumePage() {
       }
     } catch (err) {
       console.error("DOCX preview error: ", err);
-      // setDocxPreviewHtml("❌ Failed to generate DOCX preview");
       if (docxContainerRef.current) {
         docxContainerRef.current.innerHTML = "<p>❌ Failed to generate DOCX preview</p>"
       }
     }
   };
+
+  const generateDocxPreviewImage = async (): Promise<Blob | null> => {
+    if (!docxContainerRef.current) return null;
+
+    try {
+      const canvas = await html2canvas(docxContainerRef.current, {
+        backgroundColor: "#fff" // White
+      });
+      const blob: Blob | null = await new Promise((resolve) => 
+        canvas.toBlob((b) => resolve(b), "image/png")
+      );
+      return blob;
+    } catch (err) {
+      console.error("Failed to generate PNG of DOCX preview: ", err);
+      return null;
+    }
+  }
 
   const onSelect = (e: FileUploadSelectEvent) => {
     const allowedExtensions = ["pdf", "docx", "txt", "md", "odt"];
@@ -248,6 +291,7 @@ export default function UploadResumePage() {
     // Determine the file type
     const pdfFile = e.files.find((file) => file.name.toLowerCase().endsWith(".pdf"));
     const docxFile = e.files.find((file) => file.name.toLowerCase().endsWith(".docx"));
+
     if (pdfFile) {
       generatePdfPreview(pdfFile);
     } else if (docxFile) {
@@ -377,7 +421,11 @@ export default function UploadResumePage() {
 
       <div className="mt-6 p-4 bg-gray-100 rounded-md text-sm text-black max-h-96 overflow-y-auto">
         <h3 className="font-semibold mb-2">DOCX Preview:</h3>
-        <div ref={docxContainerRef} className="prose max-w-none"></div>
+        <div className="docx-preview-reset">
+          <div
+          ref={docxContainerRef}
+          className="prose max-w-none"></div>
+        </div>
       </div>
 
       {extractedText && (
