@@ -1,16 +1,20 @@
-// next.config.ts
 import withPWA from "next-pwa";
-import type { NextConfig } from "next";
 
-const nextConfig: NextConfig = {
-  // Add any other Next.js config options here
-  // For example:
-  // reactStrictMode: true,
+const nextConfig = {
+  async rewrites() {
+    return [
+      {
+        source: "/resume/:path*",
+        destination: "http://localhost:5000/resume/:path*",
+      },
+    ];
+  },
+
 };
 
 export default withPWA({
   dest: "public",
   register: true,
   skipWaiting: true,
-  disable: process.env.NODE_ENV === "development", // Add this line
+  disable: process.env.NODE_ENV === "development",
 })(nextConfig);

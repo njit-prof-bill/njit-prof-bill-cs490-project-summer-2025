@@ -57,7 +57,7 @@ def upload():
     except Exception as e:
         return jsonify({"error": f"Database error: {str(e)}"}), 500
 
-    # Prepare corpuss for parsing
+    # Prepare corpus for parsing
     corpus = []
 
     # Extract text from file if present
@@ -84,6 +84,12 @@ def upload():
 
     # Combine all parts into one string
     full_text = "\n\n".join(corpus)
+
+    # ---- Minimal change: store raw_text in DB ----
+    biography_collection.update_one(
+        {"_id": result.inserted_id},
+        {"$set": {"raw_text": full_text}}
+    )
 
     # 2. Parse with LLM
     parser = ResumeParser()
