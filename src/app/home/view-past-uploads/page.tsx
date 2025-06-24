@@ -7,6 +7,72 @@ import { storage } from "@/lib/firebase";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@radix-ui/react-accordion";
 import { text } from "stream/consumers";
 
+type ProxyFileResult = 
+    | { type: "text", content: string, contentType: string, fileName: string } 
+    | { type: "blob", blobUrl: string, contentType: string, fileName: string };
+
+async function fetchAndHandleFileProxy(userId: string, fileName: string): Promise<ProxyFileResult> {
+    // This function was made to address the following error 
+    // when the client attempts to fetch files directly from Firebase Storage:
+    // 
+    // "Access to fetch at 'https://firebasestorage.googleapis.com/...' 
+    // from origin 'http://localhost:3000' has been blocked by CORS policy: 
+    // No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    try {
+        const res = await fetch(`/api/file-proxy?userId=${encodeURIComponent(userId)}&file=${encodeURIComponent(fileName)}`);
+
+        if (!res.ok) {
+            throw new Error(`Proxy fetch failed: ${res.status}`);
+        }
+
+        const contentType = res.headers.get("Content-Type") || "";
+        const returnedFileName = res.headers.get("X-File-Name") || fileName;
+
+        if (
+            contentType.startsWith("text/plain") ||
+            contentType === "text/markdown" ||
+            fileName.endsWith(".md") ||
+            fileName.endsWith(".txt")
+        ) {
+            const text = await res.text();
+            return {
+                type: "text",
+                content: text,
+                contentType,
+                fileName: returnedFileName
+            };
+        }
+
+        if (
+            contentType === "application/pdf" ||
+            contentType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+            contentType === "application/vnd.oasis.opendocument.text"
+        ) {
+            const blob = await res.blob();
+            const blobUrl = URL.createObjectURL(blob);
+            return {
+                type: "blob",
+                blobUrl,
+                contentType,
+                fileName: returnedFileName
+            };
+        }
+
+        // Fallback: treat the file as a blob
+        const blob = await res.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        return {
+            type: "blob",
+            blobUrl,
+            contentType,
+            fileName: returnedFileName
+        };
+    } catch (error) {
+        console.error("fetchAndHandleFileProxy error: ", error);
+        throw error;
+    }
+}
+
 type PreviewFileMenuProps = {
     fileURLList: string[];
     setFileURLList: React.Dispatch<React.SetStateAction<string[]>>;
@@ -42,39 +108,129 @@ type PreviewFileProps = {
 };
 
 function PreviewFile({ref}: PreviewFileProps) {
-    const [contentType, setContentType] = useState<string | null>("");
+    const { user } = useAuth();
+    const [fileData, setFileData] = useState<ProxyFileResult | null>(null);
+    const [error, setError] = useState<string | null>(null);
 
-    useEffect(
-        () => {
-            getContentType().then((value) => {
-                if (value) setContentType(value);
-            });
-        }, [ref]);
-
-    // Determine the type of the file
-    async function getContentType() {
-        try {
-            const metadata = await getMetadata(ref);
-            if (metadata?.contentType) {
-                console.log(`Content type for ${ref.name}: ${metadata.contentType}`);
-                return metadata.contentType;
-            } else {
-                console.log("No metadata");
-                return null;
-            }
-        } catch (error) {
-            console.log(`Error retrieving metadata for ${ref.name}: ${error}`);
-            return null;
+    useEffect(() => {
+        if (!user) {
+            setError("User is not authenticated.");
+            return;
         }
+
+        let isMounted = true;
+        (async () => {
+            try {
+                const data = await fetchAndHandleFileProxy(user.uid, ref.name);
+                if (isMounted) {
+                    setFileData(data);
+                }
+            } catch (error) {
+                if (isMounted) {
+                    setError((error as Error).message);
+                }
+            }
+        })();
+
+        return () => {
+            isMounted = false;
+            if (fileData && fileData.type === "blob") {
+                URL.revokeObjectURL(fileData.blobUrl);
+            }
+        };
+    }, [ref, user]);
+
+    if (error) {
+        return <div>Error: {error}</div>
     }
 
-    // Check if the file is a .txt file
-    if (contentType === "text/plain") {
-        return <PreviewTxtFile ref={ref} charLimit={100} />;
-    } else {
-        return (<div>Preview goes here</div>);
+    if (!fileData) {
+        return <div>Loading preview...</div>
     }
+
+    if (fileData.type === "text") {
+        const charLimit = 100;
+        const displayedText = fileData.content.substring(0, charLimit) + 
+            (fileData.content.length > charLimit ? "...(truncated)" : "");
+        return (
+            <div>
+                <h3>Preview: {fileData.fileName}</h3>
+                <pre>{displayedText}</pre>
+            </div>
+        );
+    }
+
+    if (fileData.type === "blob") {
+        if (fileData.contentType === "application/pdf") {
+            return (
+                <div>
+                    <h3>PDF Preview: {fileData.fileName}</h3>
+                    <iframe src={fileData.blobUrl} width="100%" height="600px"></iframe>
+                </div>
+            );
+        }
+        if (
+            fileData.contentType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+            fileData.contentType === "application/vnd.oasis.opendocument.text"
+        ) {
+            return (
+                <div>
+                    <h3>{fileData.fileName}</h3>
+                    <a href={fileData.blobUrl} download={fileData.fileName}>
+                        Download {fileData.fileName}
+                    </a>
+                </div>
+            );
+        }
+
+        // Fallback for unknown blob types
+        return (
+            <div>
+                <h3>{fileData.fileName}</h3>
+                <a href={fileData.blobUrl} download={fileData.fileName}>
+                    Download file
+                </a>
+            </div>
+        );
+    }
+
+    return (<div>Unknown file type</div>);
 }
+
+// function PreviewFile({ref}: PreviewFileProps) {
+//     const [contentType, setContentType] = useState<string | null>("");
+
+//     useEffect(
+//         () => {
+//             getContentType().then((value) => {
+//                 if (value) setContentType(value);
+//             });
+//         }, [ref]);
+
+//     // Determine the type of the file
+//     async function getContentType() {
+//         try {
+//             const metadata = await getMetadata(ref);
+//             if (metadata?.contentType) {
+//                 console.log(`Content type for ${ref.name}: ${metadata.contentType}`);
+//                 return metadata.contentType;
+//             } else {
+//                 console.log("No metadata");
+//                 return null;
+//             }
+//         } catch (error) {
+//             console.log(`Error retrieving metadata for ${ref.name}: ${error}`);
+//             return null;
+//         }
+//     }
+
+//     // Check if the file is a .txt file
+//     if (contentType === "text/plain") {
+//         return <PreviewTxtFile ref={ref} charLimit={100} />;
+//     } else {
+//         return (<div>Preview goes here</div>);
+//     }
+// }
 
 // To be reused by different functions
 async function GetFileURL(ref: StorageReference) {
