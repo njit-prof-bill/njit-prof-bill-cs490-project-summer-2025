@@ -73,6 +73,22 @@ async function fetchAndHandleFileProxy(userId: string, fileName: string): Promis
     }
 }
 
+type PreviewPDFFileProps = {
+    fileData: ProxyFileResult;
+};
+
+function PreviewPDFFile({fileData}: PreviewPDFFileProps) {
+    if ((fileData.type === "blob") && (fileData.contentType === "application/pdf")) {
+        return (
+            <div>
+                <h3>PDF Preview: {fileData.fileName}</h3>
+                <iframe src={fileData.blobUrl} width="100%" height="600px"></iframe>
+            </div>
+        );
+    }
+    return (<pre>{fileData.fileName} is not a PDF file.</pre>);
+}
+
 type PreviewTxtFileProps = {
     fileData: ProxyFileResult;
     charLimit: number;
@@ -89,7 +105,7 @@ function PreviewTxtFile({fileData, charLimit}: PreviewTxtFileProps) {
             </div>
         );
     }
-    return (<pre>{fileData.fileName} is not a plain text file</pre>);
+    return (<pre>{fileData.fileName} is not a plain text file.</pre>);
 }
 
 type PreviewFileMenuProps = {
@@ -182,12 +198,13 @@ function PreviewFile({ref}: PreviewFileProps) {
 
     if (fileData.type === "blob") {
         if (fileData.contentType === "application/pdf") {
-            return (
-                <div>
-                    <h3>PDF Preview: {fileData.fileName}</h3>
-                    <iframe src={fileData.blobUrl} width="100%" height="600px"></iframe>
-                </div>
-            );
+            return <PreviewPDFFile fileData={fileData} />
+            // return (
+            //     <div>
+            //         <h3>PDF Preview: {fileData.fileName}</h3>
+            //         <iframe src={fileData.blobUrl} width="100%" height="600px"></iframe>
+            //     </div>
+            // );
         }
         if (
             fileData.contentType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
@@ -233,68 +250,6 @@ async function GetFileURL(ref: StorageReference) {
         return "";
     }
 }
-
-// Using a StorageReference to a file
-// type PreviewTxtFileProps = {
-//     ref: StorageReference;
-//     charLimit: number;
-// };
-
-// function PreviewTxtFile({ref, charLimit}: PreviewTxtFileProps) {
-//     const [url, setURL] = useState("");
-//     const [textContent, setTextContent] = useState("");
-//     const [loading, setLoading] = useState(true);
-//     const [error, setError] = useState<Error | string | null>(null);
-
-//     useEffect(() => {
-//         (async () => {
-//             const url = await GetFileURL(ref);
-//             setURL(url);
-//             const text = await getTxtFile(url);
-//             setTextContent(text);
-//         })();
-//     }, [ref]);
-
-//     async function getTxtFile(url: string) {
-//         let text = "";
-//         try {
-//             if (!url) {
-//                 throw new Error("Error: file URL is empty.");
-//             }
-//             const response = await fetch(url);
-//             if (!response.ok) {
-//                 throw new Error(`HTTP Error - Status Code ${response.status}`);
-//             }
-//             console.log(response);
-//             text = await response.text();
-//         } catch (error) {
-//             setError(error instanceof Error ? error : String(error));
-//             text = "";
-//         } finally {
-//             setLoading(false);
-//         }
-//         return text;
-//     }
-
-//     if (loading) {
-//         return (<div>Loading preview...</div>);
-//     }
-
-//     if (error) {
-//         return (<div>
-//             Error: {error instanceof Error ? error.message : String(error)}
-//         </div>);
-//     }
-
-//     const displayedText = textContent.substring(0, charLimit) + (textContent.length > charLimit ? "...(truncated)" : "");
-
-//     return (
-//         <div>
-//             <h3>Preview:</h3>
-//             <pre>{displayedText}</pre>
-//         </div>
-//     );
-// }
 
 function GetFileExt(url: string) {
     if (!url) {
@@ -375,6 +330,68 @@ export default function ViewPastUploadsPage() {
         </div>
     );
 }
+
+// Using a StorageReference to a file
+// type PreviewTxtFileProps = {
+//     ref: StorageReference;
+//     charLimit: number;
+// };
+
+// function PreviewTxtFile({ref, charLimit}: PreviewTxtFileProps) {
+//     const [url, setURL] = useState("");
+//     const [textContent, setTextContent] = useState("");
+//     const [loading, setLoading] = useState(true);
+//     const [error, setError] = useState<Error | string | null>(null);
+
+//     useEffect(() => {
+//         (async () => {
+//             const url = await GetFileURL(ref);
+//             setURL(url);
+//             const text = await getTxtFile(url);
+//             setTextContent(text);
+//         })();
+//     }, [ref]);
+
+//     async function getTxtFile(url: string) {
+//         let text = "";
+//         try {
+//             if (!url) {
+//                 throw new Error("Error: file URL is empty.");
+//             }
+//             const response = await fetch(url);
+//             if (!response.ok) {
+//                 throw new Error(`HTTP Error - Status Code ${response.status}`);
+//             }
+//             console.log(response);
+//             text = await response.text();
+//         } catch (error) {
+//             setError(error instanceof Error ? error : String(error));
+//             text = "";
+//         } finally {
+//             setLoading(false);
+//         }
+//         return text;
+//     }
+
+//     if (loading) {
+//         return (<div>Loading preview...</div>);
+//     }
+
+//     if (error) {
+//         return (<div>
+//             Error: {error instanceof Error ? error.message : String(error)}
+//         </div>);
+//     }
+
+//     const displayedText = textContent.substring(0, charLimit) + (textContent.length > charLimit ? "...(truncated)" : "");
+
+//     return (
+//         <div>
+//             <h3>Preview:</h3>
+//             <pre>{displayedText}</pre>
+//         </div>
+//     );
+// }
 
 // function PreviewFile({ref}: PreviewFileProps) {
 //     const [contentType, setContentType] = useState<string | null>("");
