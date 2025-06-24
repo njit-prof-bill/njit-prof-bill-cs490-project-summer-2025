@@ -8,6 +8,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@r
 import { text } from "stream/consumers";
 import { renderAsync } from "docx-preview";
 import { array } from "zod";
+import DocViewer, { DocViewerRenderers } from "@cyntler/react-doc-viewer"
 
 type ProxyFileResult = 
     | { type: "text", content: string, contentType: string, fileName: string } 
@@ -79,7 +80,22 @@ type PreviewOdtFileProps = {
     fileData: ProxyFileResult;
 };
 
-function PreviewOdtFile({fileData}: PreviewOdtFileProps) {}
+function PreviewOdtFile({fileData}: PreviewOdtFileProps) {
+    if ((fileData.type == "blob") && (fileData.contentType === "application/vnd.oasis.opendocument.text")) {
+        const docs = [
+            {uri: fileData.blobUrl},
+        ];
+        return (
+            <div>
+                <DocViewer 
+                    documents={docs}
+                    pluginRenderers={DocViewerRenderers}
+                />
+            </div>
+        );
+    }
+    return (<pre>{fileData.fileName} is not an ODT file.</pre>);
+}
 
 type PreviewDocxFileProps = {
     fileData: ProxyFileResult;
@@ -248,14 +264,15 @@ function PreviewFile({ref}: PreviewFileProps) {
             return <PreviewDocxFile fileData={fileData}/>
         }
         if (fileData.contentType === "application/vnd.oasis.opendocument.text") {
-            return (
-                <div>
-                    <h3>{fileData.fileName}</h3>
-                    <a href={fileData.blobUrl} download={fileData.fileName}>
-                        Download {fileData.fileName}
-                    </a>
-                </div>
-            );
+            return <PreviewOdtFile fileData={fileData} />
+            // return (
+            //     <div>
+            //         <h3>{fileData.fileName}</h3>
+            //         <a href={fileData.blobUrl} download={fileData.fileName}>
+            //             Download {fileData.fileName}
+            //         </a>
+            //     </div>
+            // );
         }
 
         // Fallback for unknown blob types
@@ -287,27 +304,6 @@ async function GetFileURL(ref: StorageReference) {
         console.log(`Error retrieving URL for ${ref.name}: ${error}`);
         return "";
     }
-}
-
-function GetFileExt(url: string) {
-    if (!url) {
-        console.log("Empty string");
-        return "";
-    }
-    // Parse the file's extension from the url
-    const newUrl = url.split(".").pop();
-    if (!newUrl) {
-        console.log("Empty");
-        return "";
-    }
-    // console.log(newUrl);
-    const ext = newUrl.split("?")[0];
-    if (!ext) {
-        console.log("No extension");
-        return "";
-    }
-    console.log(ext);
-    return ext;
 }
 
 export default function ViewPastUploadsPage() {
@@ -368,6 +364,27 @@ export default function ViewPastUploadsPage() {
         </div>
     );
 }
+
+// function GetFileExt(url: string) {
+//     if (!url) {
+//         console.log("Empty string");
+//         return "";
+//     }
+//     // Parse the file's extension from the url
+//     const newUrl = url.split(".").pop();
+//     if (!newUrl) {
+//         console.log("Empty");
+//         return "";
+//     }
+//     // console.log(newUrl);
+//     const ext = newUrl.split("?")[0];
+//     if (!ext) {
+//         console.log("No extension");
+//         return "";
+//     }
+//     console.log(ext);
+//     return ext;
+// }
 
 // Using a StorageReference to a file
 // type PreviewTxtFileProps = {
