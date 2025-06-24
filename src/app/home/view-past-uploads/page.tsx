@@ -2,7 +2,7 @@
 import { useAuth } from "@/context/authContext";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { ref, list, ListResult, StorageReference, getDownloadURL } from "firebase/storage";
+import { ref, list, ListResult, StorageReference, getDownloadURL, getMetadata, FullMetadata } from "firebase/storage";
 import { storage } from "@/lib/firebase";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@radix-ui/react-accordion";
 import { text } from "stream/consumers";
@@ -29,6 +29,7 @@ function PreviewFileMenu({fileURLList, setFileURLList, fileRefList, setFileRefLi
                         {/* Use the file reference to:
                             1. Determine what type of file it is (DOCX, PDF, TXT, etc.)
                             2. Use a different function to generate a preview of the file */}
+                        <PreviewFile ref={ref} />
                     </AccordionContent>
                 </AccordionItem>
             ))}
@@ -36,10 +37,46 @@ function PreviewFileMenu({fileURLList, setFileURLList, fileRefList, setFileRefLi
     );
 }
 
-// type GetFileURLProps = {
-//     ref: StorageReference;
-// };
+type PreviewFileProps = {
+    ref: StorageReference;
+};
 
+function PreviewFile({ref}: PreviewFileProps) {
+    const [contentType, setContentType] = useState<string | null>("");
+
+    useEffect(
+        () => {
+            getContentType().then((value) => {
+                if (value) setContentType(value);
+            });
+        }, [ref]);
+
+    // Determine the type of the file
+    async function getContentType() {
+        try {
+            const metadata = await getMetadata(ref);
+            if (metadata?.contentType) {
+                console.log(`Content type for ${ref.name}: ${metadata.contentType}`);
+                return metadata.contentType;
+            } else {
+                console.log("No metadata");
+                return null;
+            }
+        } catch (error) {
+            console.log(`Error retrieving metadata for ${ref.name}: ${error}`);
+            return null;
+        }
+    }
+
+    // Check if the file is a .txt file
+    if (contentType === "text/plain") {
+        return <PreviewTxtFile ref={ref} charLimit={100} />;
+    } else {
+        return (<div>Preview goes here</div>);
+    }
+}
+
+// To be reused by different functions
 async function GetFileURL(ref: StorageReference) {
     if (!ref) {
         console.log("Null ref...?");
@@ -57,7 +94,6 @@ async function GetFileURL(ref: StorageReference) {
 }
 
 // Using a StorageReference to a file
-
 type PreviewTxtFileProps = {
     ref: StorageReference;
     charLimit: number;
@@ -78,22 +114,6 @@ function PreviewTxtFile({ref, charLimit}: PreviewTxtFileProps) {
         })();
     }, [ref]);
 
-    // async function getFileURL(item: StorageReference) {
-    //     if (!item) {
-    //         console.log("Null item");
-    //         return "";
-    //     }
-    //     try {
-    //         const url = await getDownloadURL(item);
-    //         // console.log(`URL to ${item.name}: ${url}`);
-    //         // GetFileExt({url});
-    //         return url;
-    //     } catch (error) {
-    //         console.log(`Error retrieving URL for ${item.name}: ${error}`);
-    //         return "";
-    //     }
-    // }
-
     async function getTxtFile(url: string) {
         let text = "";
         try {
@@ -104,6 +124,7 @@ function PreviewTxtFile({ref, charLimit}: PreviewTxtFileProps) {
             if (!response.ok) {
                 throw new Error(`HTTP Error - Status Code ${response.status}`);
             }
+            console.log(response);
             text = await response.text();
         } catch (error) {
             setError(error instanceof Error ? error : String(error));
@@ -130,6 +151,86 @@ function PreviewTxtFile({ref, charLimit}: PreviewTxtFileProps) {
         <div>
             <h3>Preview:</h3>
             <pre>{displayedText}</pre>
+        </div>
+    );
+}
+
+function GetFileExt(url: string) {
+    if (!url) {
+        console.log("Empty string");
+        return "";
+    }
+    // Parse the file's extension from the url
+    const newUrl = url.split(".").pop();
+    if (!newUrl) {
+        console.log("Empty");
+        return "";
+    }
+    // console.log(newUrl);
+    const ext = newUrl.split("?")[0];
+    if (!ext) {
+        console.log("No extension");
+        return "";
+    }
+    console.log(ext);
+    return ext;
+}
+
+export default function ViewPastUploadsPage() {
+    // For checking whether the user is logged in and redirecting them accordingly
+    const { user, loading } = useAuth();
+    const router = useRouter();
+    const [ fileRefList, setFileRefList ] = useState<StorageReference[]>([]);
+    const [ fileURLList, setFileURLList ] = useState<string[]>([]);
+
+    useEffect(() => {
+        if (!loading && user) {
+            (async () => {
+                const refs = await getFileList(10);
+                setFileRefList(refs);
+                const urls = await getFileURLList(refs);
+                setFileURLList(urls);
+            })();
+        }
+        if (!loading && !user) {
+            router.push("/"); // Redirect to landing page if not authenticated
+        }
+    }, [user, loading, router]);
+
+    async function getFileList(maxFiles: number) {
+        if (!user) return [];
+        try {
+            const listRef = ref(storage, `users/${user.uid}`);
+            const firstPage = await list(listRef, { maxResults: maxFiles });
+            return firstPage.items;
+        } catch (error) {
+            console.error("Error retrieving list of files: ", error);
+            return [];
+        }
+    }
+
+    async function getFileURLList(itemList: StorageReference[]) {
+        if (!user) return [];
+        if (!itemList) {
+            console.log("Empty item list");
+            return [];
+        }
+        try {
+            const urlList = await Promise.all(
+                itemList.map(async (item) => await GetFileURL(item))
+            );
+            console.log(urlList);
+            return urlList;
+        } catch (error) {
+            console.log("Error making list of file URLs: ", error);
+            return [];
+        }
+    }
+
+    return (
+        <div>
+            <h1>View Past Uploads</h1>
+            <PreviewFileMenu fileURLList={fileURLList} setFileURLList={setFileURLList} fileRefList={fileRefList} setFileRefList={setFileRefList} />
         </div>
     );
 }
@@ -190,102 +291,6 @@ function PreviewTxtFile({ref, charLimit}: PreviewTxtFileProps) {
 // type GetFileExtProps = {
 //     url: string;
 // }
-
-function GetFileExt(url: string) {
-    if (!url) {
-        console.log("Empty string");
-        return "";
-    }
-    // Parse the file's extension from the url
-    const newUrl = url.split(".").pop();
-    if (!newUrl) {
-        console.log("Empty");
-        return "";
-    }
-    // console.log(newUrl);
-    const ext = newUrl.split("?")[0];
-    if (!ext) {
-        console.log("No extension");
-        return "";
-    }
-    console.log(ext);
-    return ext;
-}
-
-export default function ViewPastUploadsPage() {
-    // For checking whether the user is logged in and redirecting them accordingly
-    const { user, loading } = useAuth();
-    const router = useRouter();
-    const [ fileRefList, setFileRefList ] = useState<StorageReference[]>([]);
-    const [ fileURLList, setFileURLList ] = useState<string[]>([]);
-
-    useEffect(() => {
-        if (!loading && user) {
-            (async () => {
-                const refs = await getFileList(10);
-                setFileRefList(refs);
-                const urls = await getFileURLList(refs);
-                setFileURLList(urls);
-            })();
-        }
-        if (!loading && !user) {
-            router.push("/"); // Redirect to landing page if not authenticated
-        }
-    }, [user, loading, router]);
-
-    async function getFileList(maxFiles: number) {
-        if (!user) return [];
-        try {
-            const listRef = ref(storage, `users/${user.uid}`);
-            const firstPage = await list(listRef, { maxResults: maxFiles });
-            return firstPage.items;
-        } catch (error) {
-            console.error("Error retrieving list of files: ", error);
-            return [];
-        }
-    }
-
-    // async function getFileURL(item: StorageReference) {
-    //     if (!user) return "";
-    //     if (!item) {
-    //         console.log("Null item");
-    //         return "";
-    //     }
-    //     try {
-    //         const url = await getDownloadURL(item);
-    //         // console.log(`URL to ${item.name}: ${url}`);
-    //         // GetFileExt({url});
-    //         return url;
-    //     } catch (error) {
-    //         console.log(`Error retrieving URL for ${item.name}: ${error}`);
-    //         return "";
-    //     }
-    // }
-
-    async function getFileURLList(itemList: StorageReference[]) {
-        if (!user) return [];
-        if (!itemList) {
-            console.log("Empty item list");
-            return [];
-        }
-        try {
-            const urlList = await Promise.all(
-                itemList.map(async (item) => await GetFileURL(item))
-            );
-            console.log(urlList);
-            return urlList;
-        } catch (error) {
-            console.log("Error making list of file URLs: ", error);
-            return [];
-        }
-    }
-
-    return (
-        <div>
-            <h1>View Past Uploads</h1>
-        </div>
-    );
-}
 
 // type getFileURLProps = {
 //     item: StorageReference;
