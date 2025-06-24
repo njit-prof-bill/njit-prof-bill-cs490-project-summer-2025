@@ -75,6 +75,12 @@ async function fetchAndHandleFileProxy(userId: string, fileName: string): Promis
     }
 }
 
+type PreviewOdtFileProps = {
+    fileData: ProxyFileResult;
+};
+
+function PreviewOdtFile({fileData}: PreviewOdtFileProps) {}
+
 type PreviewDocxFileProps = {
     fileData: ProxyFileResult;
 };
