@@ -34,7 +34,12 @@ export default function SidePanel({ isSidePanelOpen }: SidePanelProps) {
                         <Link href="/home/upload-job-ad" className="hover:underline">
                             Upload Job Ad
                         </Link>
-                    </li>                    
+                    </li>  
+                    <li>
+                        <Link href="/home/view-job-ad" className="hover:underline">
+                            View Job Ads
+                        </Link>
+                    </li>
                     <li>
                         <Link href="/home/free-form" className="hover:underline">
                             Write Free-form
