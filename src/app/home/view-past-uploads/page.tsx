@@ -73,6 +73,25 @@ async function fetchAndHandleFileProxy(userId: string, fileName: string): Promis
     }
 }
 
+type PreviewTxtFileProps = {
+    fileData: ProxyFileResult;
+    charLimit: number;
+};
+
+function PreviewTxtFile({fileData, charLimit}: PreviewTxtFileProps) {
+    if (fileData.type === "text") {
+        const displayedText = fileData.content.substring(0, charLimit) + 
+            (fileData.content.length > charLimit ? "...(truncated)" : "");
+        return (
+            <div>
+                <h3>Preview: {fileData.fileName}</h3>
+                <pre>{displayedText}</pre>
+            </div>
+        );
+    }
+    return (<pre>{fileData.fileName} is not a plain text file</pre>);
+}
+
 type PreviewFileMenuProps = {
     fileURLList: string[];
     setFileURLList: React.Dispatch<React.SetStateAction<string[]>>;
@@ -149,15 +168,16 @@ function PreviewFile({ref}: PreviewFileProps) {
     }
 
     if (fileData.type === "text") {
-        const charLimit = 100;
-        const displayedText = fileData.content.substring(0, charLimit) + 
-            (fileData.content.length > charLimit ? "...(truncated)" : "");
-        return (
-            <div>
-                <h3>Preview: {fileData.fileName}</h3>
-                <pre>{displayedText}</pre>
-            </div>
-        );
+        return <PreviewTxtFile fileData={fileData} charLimit={300} />
+        // const charLimit = 100;
+        // const displayedText = fileData.content.substring(0, charLimit) + 
+        //     (fileData.content.length > charLimit ? "...(truncated)" : "");
+        // return (
+        //     <div>
+        //         <h3>Preview: {fileData.fileName}</h3>
+        //         <pre>{displayedText}</pre>
+        //     </div>
+        // );
     }
 
     if (fileData.type === "blob") {
@@ -197,41 +217,6 @@ function PreviewFile({ref}: PreviewFileProps) {
     return (<div>Unknown file type</div>);
 }
 
-// function PreviewFile({ref}: PreviewFileProps) {
-//     const [contentType, setContentType] = useState<string | null>("");
-
-//     useEffect(
-//         () => {
-//             getContentType().then((value) => {
-//                 if (value) setContentType(value);
-//             });
-//         }, [ref]);
-
-//     // Determine the type of the file
-//     async function getContentType() {
-//         try {
-//             const metadata = await getMetadata(ref);
-//             if (metadata?.contentType) {
-//                 console.log(`Content type for ${ref.name}: ${metadata.contentType}`);
-//                 return metadata.contentType;
-//             } else {
-//                 console.log("No metadata");
-//                 return null;
-//             }
-//         } catch (error) {
-//             console.log(`Error retrieving metadata for ${ref.name}: ${error}`);
-//             return null;
-//         }
-//     }
-
-//     // Check if the file is a .txt file
-//     if (contentType === "text/plain") {
-//         return <PreviewTxtFile ref={ref} charLimit={100} />;
-//     } else {
-//         return (<div>Preview goes here</div>);
-//     }
-// }
-
 // To be reused by different functions
 async function GetFileURL(ref: StorageReference) {
     if (!ref) {
@@ -250,66 +235,66 @@ async function GetFileURL(ref: StorageReference) {
 }
 
 // Using a StorageReference to a file
-type PreviewTxtFileProps = {
-    ref: StorageReference;
-    charLimit: number;
-};
+// type PreviewTxtFileProps = {
+//     ref: StorageReference;
+//     charLimit: number;
+// };
 
-function PreviewTxtFile({ref, charLimit}: PreviewTxtFileProps) {
-    const [url, setURL] = useState("");
-    const [textContent, setTextContent] = useState("");
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<Error | string | null>(null);
+// function PreviewTxtFile({ref, charLimit}: PreviewTxtFileProps) {
+//     const [url, setURL] = useState("");
+//     const [textContent, setTextContent] = useState("");
+//     const [loading, setLoading] = useState(true);
+//     const [error, setError] = useState<Error | string | null>(null);
 
-    useEffect(() => {
-        (async () => {
-            const url = await GetFileURL(ref);
-            setURL(url);
-            const text = await getTxtFile(url);
-            setTextContent(text);
-        })();
-    }, [ref]);
+//     useEffect(() => {
+//         (async () => {
+//             const url = await GetFileURL(ref);
+//             setURL(url);
+//             const text = await getTxtFile(url);
+//             setTextContent(text);
+//         })();
+//     }, [ref]);
 
-    async function getTxtFile(url: string) {
-        let text = "";
-        try {
-            if (!url) {
-                throw new Error("Error: file URL is empty.");
-            }
-            const response = await fetch(url);
-            if (!response.ok) {
-                throw new Error(`HTTP Error - Status Code ${response.status}`);
-            }
-            console.log(response);
-            text = await response.text();
-        } catch (error) {
-            setError(error instanceof Error ? error : String(error));
-            text = "";
-        } finally {
-            setLoading(false);
-        }
-        return text;
-    }
+//     async function getTxtFile(url: string) {
+//         let text = "";
+//         try {
+//             if (!url) {
+//                 throw new Error("Error: file URL is empty.");
+//             }
+//             const response = await fetch(url);
+//             if (!response.ok) {
+//                 throw new Error(`HTTP Error - Status Code ${response.status}`);
+//             }
+//             console.log(response);
+//             text = await response.text();
+//         } catch (error) {
+//             setError(error instanceof Error ? error : String(error));
+//             text = "";
+//         } finally {
+//             setLoading(false);
+//         }
+//         return text;
+//     }
 
-    if (loading) {
-        return (<div>Loading preview...</div>);
-    }
+//     if (loading) {
+//         return (<div>Loading preview...</div>);
+//     }
 
-    if (error) {
-        return (<div>
-            Error: {error instanceof Error ? error.message : String(error)}
-        </div>);
-    }
+//     if (error) {
+//         return (<div>
+//             Error: {error instanceof Error ? error.message : String(error)}
+//         </div>);
+//     }
 
-    const displayedText = textContent.substring(0, charLimit) + (textContent.length > charLimit ? "...(truncated)" : "");
+//     const displayedText = textContent.substring(0, charLimit) + (textContent.length > charLimit ? "...(truncated)" : "");
 
-    return (
-        <div>
-            <h3>Preview:</h3>
-            <pre>{displayedText}</pre>
-        </div>
-    );
-}
+//     return (
+//         <div>
+//             <h3>Preview:</h3>
+//             <pre>{displayedText}</pre>
+//         </div>
+//     );
+// }
 
 function GetFileExt(url: string) {
     if (!url) {
@@ -390,6 +375,41 @@ export default function ViewPastUploadsPage() {
         </div>
     );
 }
+
+// function PreviewFile({ref}: PreviewFileProps) {
+//     const [contentType, setContentType] = useState<string | null>("");
+
+//     useEffect(
+//         () => {
+//             getContentType().then((value) => {
+//                 if (value) setContentType(value);
+//             });
+//         }, [ref]);
+
+//     // Determine the type of the file
+//     async function getContentType() {
+//         try {
+//             const metadata = await getMetadata(ref);
+//             if (metadata?.contentType) {
+//                 console.log(`Content type for ${ref.name}: ${metadata.contentType}`);
+//                 return metadata.contentType;
+//             } else {
+//                 console.log("No metadata");
+//                 return null;
+//             }
+//         } catch (error) {
+//             console.log(`Error retrieving metadata for ${ref.name}: ${error}`);
+//             return null;
+//         }
+//     }
+
+//     // Check if the file is a .txt file
+//     if (contentType === "text/plain") {
+//         return <PreviewTxtFile ref={ref} charLimit={100} />;
+//     } else {
+//         return (<div>Preview goes here</div>);
+//     }
+// }
 
 // Using URLs of files
 
