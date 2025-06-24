@@ -39,7 +39,7 @@ export default function RootLayout({
         <meta name="twitter:title" content="Marcus" />
         <meta name="twitter:description" content="A modern SaaS application template" />
         <meta name="twitter:image" content="/logo.png" />
-        <link rel="icon" href="/favicon.png" type="image/png" />
+        <link rel="icon" href="/favicon.ico" type="image/x-icon" />
         <link rel="apple-touch-icon" href="/logo.png" />
         <link rel="manifest" href="/site.webmanifest" />
         <meta name="theme-color" content="#ffffff" />
