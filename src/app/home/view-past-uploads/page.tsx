@@ -1,11 +1,13 @@
 "use client";
 import { useAuth } from "@/context/authContext";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ref, list, ListResult, StorageReference, getDownloadURL, getMetadata, FullMetadata } from "firebase/storage";
 import { storage } from "@/lib/firebase";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@radix-ui/react-accordion";
 import { text } from "stream/consumers";
+import { renderAsync } from "docx-preview";
+import { array } from "zod";
 
 type ProxyFileResult = 
     | { type: "text", content: string, contentType: string, fileName: string } 
@@ -71,6 +73,51 @@ async function fetchAndHandleFileProxy(userId: string, fileName: string): Promis
         console.error("fetchAndHandleFileProxy error: ", error);
         throw error;
     }
+}
+
+type PreviewDocxFileProps = {
+    fileData: ProxyFileResult;
+};
+
+function PreviewDocxFile({fileData}: PreviewDocxFileProps) {
+    const docxContainerRef = useRef<HTMLDivElement>(null);
+    // const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        getDocxFile();
+    }, [fileData]);
+
+    async function getDocxFile() {
+        try {
+            if (!fileData) {
+                throw new Error("No file data provided.");
+            }
+            if (!(fileData.type === "blob")) {
+                throw new Error(`${fileData.fileName} is not a blob.`);
+            }
+            if (!(fileData.contentType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document")) {
+                throw new Error(`${fileData.fileName} is not a DOCX file.`);
+            }
+            if (docxContainerRef.current) {
+                docxContainerRef.current.innerHTML = "";
+                const response = await fetch(fileData.blobUrl);
+                if (!response.ok) {
+                    throw new Error(`HTTP Error - Status Code ${response.status}`);
+                }
+                const arrayBuffer = await response.arrayBuffer();
+                await renderAsync(arrayBuffer, docxContainerRef.current);
+            }
+        } catch (error) {
+            setError((error as Error).message);
+        }
+    }
+
+    if (error) {
+        return (<div>Error: {error}</div>);
+    }
+
+    return <div ref={docxContainerRef}></div>
 }
 
 type PreviewPDFFileProps = {
@@ -191,10 +238,10 @@ function PreviewFile({ref}: PreviewFileProps) {
         if (fileData.contentType === "application/pdf") {
             return <PreviewPDFFile fileData={fileData} />
         }
-        if (
-            fileData.contentType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
-            fileData.contentType === "application/vnd.oasis.opendocument.text"
-        ) {
+        if (fileData.contentType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+            return <PreviewDocxFile fileData={fileData}/>
+        }
+        if (fileData.contentType === "application/vnd.oasis.opendocument.text") {
             return (
                 <div>
                     <h3>{fileData.fileName}</h3>
