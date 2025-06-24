@@ -77,6 +77,55 @@ async function fetchAndHandleFileProxy(userId: string, fileName: string): Promis
     }
 }
 
+function odtNodeToReact(node: Element, key: number): React.ReactNode {
+    switch(node.tagName) {
+        case "text:p":
+            return (<p key={key}>{node.textContent}</p>);
+        case "text:h":
+            const level = Number(node.getAttribute("text:outline-level"));
+            const HeadingTag = (`h${level}` as keyof React.JSX.IntrinsicElements);
+            return (<HeadingTag key={key}>{node.textContent}</HeadingTag>);
+        case "text:list":
+            const listItems = Array.from(node.getElementsByTagName("text:list-item"));
+            return (
+                <ul key={key}>
+                    {listItems.map((li, idx) => (
+                        <li key={idx}>{li.textContent}</li>
+                    ))}
+                </ul>
+            );
+        default:
+            return null // Skip unsupported nodes
+    }
+}
+
+function renderOdtToReact(xmlDoc: Document): React.ReactNode[] {
+    const body = xmlDoc.getElementsByTagName("office:body")[0];
+    if (!body) return [];
+    const textEl = body.getElementsByTagName("office:text")[0];
+    if (!textEl) return [];
+    const children = Array.from(textEl.children);
+    // Using flatMap() because we want to produce an array 
+    // of React nodes without any null items.
+    return children.flatMap((node, idx) => {
+        const result = odtNodeToReact(node, idx);
+        if (Array.isArray(result)) {
+            return result.filter(Boolean);
+        }
+        return result ? [result] : [];
+    });
+}
+
+async function parseOdtBlobToXml(blob: Blob): Promise<Document> {
+    const zip = await JSZip.loadAsync(blob);
+    const contentXml = await zip.file("content.xml")?.async("text");
+    if (!contentXml) throw new Error("content.xml not found in ODT");
+
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(contentXml, "application/xml");
+    return xmlDoc;
+}
+
 async function parseOdtBlob(blob: Blob): Promise<string> {
     const zip = await JSZip.loadAsync(blob);
     const contentXml = await zip.file("content.xml")?.async("text");
@@ -94,7 +143,7 @@ type PreviewOdtFileProps = {
 };
 
 function PreviewOdtFile({fileData}: PreviewOdtFileProps) {
-    const [text, setText] = useState<string | null>(null);
+    const [elements, setElements] = useState<React.ReactNode[] | null>(null);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
@@ -103,25 +152,61 @@ function PreviewOdtFile({fileData}: PreviewOdtFileProps) {
                 try {
                     const response = await fetch(fileData.blobUrl);
                     const blob = await response.blob();
-                    const content = await parseOdtBlob(blob);
-                    setText(content);
+                    const xmlDoc = await parseOdtBlobToXml(blob);
+                    const reactElements = renderOdtToReact(xmlDoc);
+                    setElements(reactElements);
                 } catch (error) {
                     console.error(error);
                     setError((error as Error).message);
                 }
             })();
+        } else {
+            setError("Unsupported file type for ODT preview");
         }
     }, [fileData]);
 
     if (error) return (<div>Error: {error}</div>);
-    if (!text) return (<div>Loading ODT preview...</div>);
+    if (!elements) return (<div>Loading ODT preview...</div>);
+
     return (
-        <div>
+        <div className="odt-preview">
             <h3>ODT Preview: {fileData.fileName}</h3>
-            <pre>{text}</pre>
+            <div>
+                {elements}
+            </div>
         </div>
     );
 }
+
+// function PreviewOdtFile({fileData}: PreviewOdtFileProps) {
+//     const [text, setText] = useState<string | null>(null);
+//     const [error, setError] = useState<string | null>(null);
+
+//     useEffect(() => {
+//         if ((fileData.type === "blob") && (fileData.contentType === "application/vnd.oasis.opendocument.text")) {
+//             (async () => {
+//                 try {
+//                     const response = await fetch(fileData.blobUrl);
+//                     const blob = await response.blob();
+//                     const content = await parseOdtBlob(blob);
+//                     setText(content);
+//                 } catch (error) {
+//                     console.error(error);
+//                     setError((error as Error).message);
+//                 }
+//             })();
+//         }
+//     }, [fileData]);
+
+//     if (error) return (<div>Error: {error}</div>);
+//     if (!text) return (<div>Loading ODT preview...</div>);
+//     return (
+//         <div>
+//             <h3>ODT Preview: {fileData.fileName}</h3>
+//             <pre>{text}</pre>
+//         </div>
+//     );
+// }
 
 type PreviewDocxFileProps = {
     fileData: ProxyFileResult;
@@ -192,7 +277,7 @@ type PreviewTxtFileProps = {
 function PreviewTxtFile({fileData, charLimit}: PreviewTxtFileProps) {
     if (fileData.type === "text") {
         const displayedText = fileData.content.substring(0, charLimit) + 
-            (fileData.content.length > charLimit ? "...(truncated)" : "");
+            (fileData.content.length > charLimit ? "...\n...(truncated)" : "");
         return (
             <div>
                 <h3>Preview: {fileData.fileName}</h3>
