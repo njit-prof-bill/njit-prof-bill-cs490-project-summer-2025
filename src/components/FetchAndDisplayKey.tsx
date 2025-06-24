@@ -437,7 +437,9 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
   };
 
   if (loading) return <p>Loading...</p>;
-  if (error) return <p>Error: {error}</p>;
+  if (error && value === null) {
+    return null;
+  } else if (error) return <p>Error: {error}</p>;
 
   // Main render
   return (
