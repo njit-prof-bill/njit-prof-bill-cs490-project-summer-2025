@@ -78,7 +78,10 @@ const ResumeUserText: React.FC = () => {
     return <div>Loading...</div>;
   }
 
-  if (error) {
+  
+  if (error === 'Document not found' && jsonObject === null) {
+    return null; 
+  } else if (error) {
     return <div>Error: {error}</div>;
   }
 
