@@ -185,26 +185,11 @@ function PreviewFile({ref}: PreviewFileProps) {
 
     if (fileData.type === "text") {
         return <PreviewTxtFile fileData={fileData} charLimit={300} />
-        // const charLimit = 100;
-        // const displayedText = fileData.content.substring(0, charLimit) + 
-        //     (fileData.content.length > charLimit ? "...(truncated)" : "");
-        // return (
-        //     <div>
-        //         <h3>Preview: {fileData.fileName}</h3>
-        //         <pre>{displayedText}</pre>
-        //     </div>
-        // );
     }
 
     if (fileData.type === "blob") {
         if (fileData.contentType === "application/pdf") {
             return <PreviewPDFFile fileData={fileData} />
-            // return (
-            //     <div>
-            //         <h3>PDF Preview: {fileData.fileName}</h3>
-            //         <iframe src={fileData.blobUrl} width="100%" height="600px"></iframe>
-            //     </div>
-            // );
         }
         if (
             fileData.contentType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
