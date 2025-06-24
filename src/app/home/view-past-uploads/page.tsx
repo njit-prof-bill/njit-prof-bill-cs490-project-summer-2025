@@ -9,6 +9,7 @@ import { text } from "stream/consumers";
 import { renderAsync } from "docx-preview";
 import { array } from "zod";
 import DocViewer, { DocViewerRenderers } from "@cyntler/react-doc-viewer"
+import JSZip from "jszip";
 
 type ProxyFileResult = 
     | { type: "text", content: string, contentType: string, fileName: string } 
@@ -76,25 +77,50 @@ async function fetchAndHandleFileProxy(userId: string, fileName: string): Promis
     }
 }
 
+async function parseOdtBlob(blob: Blob): Promise<string> {
+    const zip = await JSZip.loadAsync(blob);
+    const contentXml = await zip.file("content.xml")?.async("text");
+    if (!contentXml) throw new Error("content.xml not found in ODT");
+
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(contentXml, "application/xml");
+    const paragraphs = Array.from(xmlDoc.getElementsByTagName("text:p"));
+    const textContent = paragraphs.map(p => p.textContent).join("\n");
+    return textContent;
+}
+
 type PreviewOdtFileProps = {
     fileData: ProxyFileResult;
 };
 
 function PreviewOdtFile({fileData}: PreviewOdtFileProps) {
-    if ((fileData.type == "blob") && (fileData.contentType === "application/vnd.oasis.opendocument.text")) {
-        const docs = [
-            {uri: fileData.blobUrl},
-        ];
-        return (
-            <div>
-                <DocViewer 
-                    documents={docs}
-                    pluginRenderers={DocViewerRenderers}
-                />
-            </div>
-        );
-    }
-    return (<pre>{fileData.fileName} is not an ODT file.</pre>);
+    const [text, setText] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        if ((fileData.type === "blob") && (fileData.contentType === "application/vnd.oasis.opendocument.text")) {
+            (async () => {
+                try {
+                    const response = await fetch(fileData.blobUrl);
+                    const blob = await response.blob();
+                    const content = await parseOdtBlob(blob);
+                    setText(content);
+                } catch (error) {
+                    console.error(error);
+                    setError((error as Error).message);
+                }
+            })();
+        }
+    }, [fileData]);
+
+    if (error) return (<div>Error: {error}</div>);
+    if (!text) return (<div>Loading ODT preview...</div>);
+    return (
+        <div>
+            <h3>ODT Preview: {fileData.fileName}</h3>
+            <pre>{text}</pre>
+        </div>
+    );
 }
 
 type PreviewDocxFileProps = {
