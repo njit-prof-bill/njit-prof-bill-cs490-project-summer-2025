@@ -1,13 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { auth, firestore } from '../lib/firebase'; // Adjust the import
 import { onAuthStateChanged, User } from 'firebase/auth';
-
-
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
-
-
-
-
+import JobDescriptionUpload from '../components/JobDescriptionUpload'; // adjust the path if needed
 
 const ResumeLeftTop: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -46,19 +41,12 @@ const ResumeLeftTop: React.FC = () => {
         <Card className="w-full max-w shadow-lg">
 
                 <CardHeader>
-                    <CardTitle>Placeholder: For Job Description Input </CardTitle>
+                  <CardTitle>Paste Job Description</CardTitle>
                 </CardHeader>
 
                 <CardContent>
-                    <CardDescription>
-                   
-                    <img src="/resume-page-example-2.jpg" alt="Fetched Image" />  
-                        <br />
-                    </CardDescription>
-
-
+                  <JobDescriptionUpload />
                 </CardContent>
-
 
                 <CardFooter>
                     <CardDescription></CardDescription>
