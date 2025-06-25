@@ -2,7 +2,7 @@
 import { useAuth } from "@/context/authContext";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
-import { ref, list, getDownloadURL, StorageReference } from "firebase/storage";
+import { ref, list, getDownloadURL, StorageReference, deleteObject } from "firebase/storage";
 import { storage } from "@/lib/firebase";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@radix-ui/react-accordion";
 import { renderAsync } from "docx-preview";
@@ -228,6 +228,41 @@ function PreviewFile({ fileRef }: { fileRef: StorageReference }) {
   return <div>Unknown file type</div>;
 }
 
+type DeleteFileButtonProps = {
+    fileRef: StorageReference;
+    fileRefs: StorageReference[];
+    setFileRefs: React.Dispatch<React.SetStateAction<StorageReference[]>>;
+}
+
+function DeleteFileButton({fileRef, fileRefs, setFileRefs}: DeleteFileButtonProps) {
+    const [deleting, setDeleting] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    async function handleDelete() {
+        setDeleting(true);
+        setError(null);
+        try {
+            await deleteObject(fileRef);
+            setFileRefs((oldRefs) => oldRefs.filter((r) => r !== fileRef));
+            console.log("File successfully deleted.");
+        } catch (error) {
+            console.error("Error deleting file: ", error);
+            setError("Failed to delete file.");
+        } finally {
+            setDeleting(false);
+        }
+    }
+
+    return (
+        <div>
+            <button type="button" onClick={handleDelete} disabled={deleting}>
+                {deleting ? "Deleting..." : "Delete"}
+            </button>
+            {error && <div style={{ color: "red" }}>{error}</div>}
+        </div>
+    );
+}
+
 export default function ViewPastUploadsPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -254,6 +289,7 @@ export default function ViewPastUploadsPage() {
             <AccordionTrigger>{f.name}</AccordionTrigger>
             <AccordionContent>
               <PreviewFile fileRef={f} />
+              <DeleteFileButton fileRef={f} fileRefs={fileRefs} setFileRefs={setFileRefs} />
             </AccordionContent>
           </AccordionItem>
         ))}
