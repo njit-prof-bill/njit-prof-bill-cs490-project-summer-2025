@@ -10,10 +10,15 @@ import { renderAsync } from "docx-preview";
 import { array } from "zod";
 import DocViewer, { DocViewerRenderers } from "@cyntler/react-doc-viewer"
 import JSZip from "jszip";
+import { content } from "html2canvas/dist/types/css/property-descriptors/content";
 
+// Used when fetching file proxies
 type ProxyFileResult = 
     | { type: "text", content: string, contentType: string, fileName: string } 
     | { type: "blob", blobUrl: string, contentType: string, fileName: string };
+
+// Used when parsing styles from ODT documents
+type OdtStyleMap = Record<string, React.CSSProperties>;
 
 async function fetchAndHandleFileProxy(userId: string, fileName: string): Promise<ProxyFileResult> {
     // This function was made to address the following error 
@@ -77,44 +82,122 @@ async function fetchAndHandleFileProxy(userId: string, fileName: string): Promis
     }
 }
 
-function odtNodeToReact(node: Element, key: number): React.ReactNode {
-    switch(node.tagName) {
+async function parseOdtWithStyles(blob: Blob): Promise <{ contentDoc: Document, styleMap: OdtStyleMap }> {
+    const zip = await JSZip.loadAsync(blob);
+    const contentXml = await zip.file("content.xml")?.async("text");
+    if (!contentXml) throw new Error("content.xml not found in ODT");
+
+    const stylesXml = await zip.file("styles.xml")?.async("text") || null;
+    const parser = new DOMParser();
+    const contentDoc = parser.parseFromString(contentXml, "application/xml");
+    const stylesDoc = stylesXml ? parser.parseFromString(stylesXml, "application/xml") : null;
+    const styleMap = buildStyleMap(stylesDoc);
+
+    return { contentDoc, styleMap };
+}
+
+function buildStyleMap(stylesDoc: Document | null): OdtStyleMap {
+    if (!stylesDoc) return {};
+    const map: OdtStyleMap = {};
+    const styleNodes = stylesDoc.getElementsByTagName("style:style");
+
+    Array.from(styleNodes).forEach(el => {
+        const name = el.getAttribute("style:name");
+        if (!name) return;
+        const textProps = el.getElementsByTagName("style:text-properties")[0];
+        const css: React.CSSProperties = {};
+
+        if (textProps) {
+            const fontSize = textProps.getAttribute("fo:font-size");
+            if (fontSize) css.fontSize = fontSize;
+            const fontWeight = textProps.getAttribute("fo:font-weight");
+            if (fontWeight) css.fontWeight = fontWeight;
+            const color = textProps.getAttribute("fo:color");
+            if (color) css.color = color;
+            // if (textProps.getAttribute("fo:font-size")) css.fontSize = textProps.getAttribute("fo:font-size");
+            // if (textProps.getAttribute("fo:font-weight")) css.fontWeight = textProps.getAttribute("fo:font-weight");
+            // if (textProps.getAttribute("fo:color")) css.color = textProps.getAttribute("fo:color");
+        }
+        map[name] = css;
+    });
+
+    return map;
+}
+
+function odtNodeToReact(node: Element, key: number, styleMap: OdtStyleMap): React.ReactNode {
+    const styleName = node.getAttribute("text:style-name");
+    const style = styleName ? styleMap[styleName] || {} : {};
+
+    switch (node.tagName) {
         case "text:p":
-            return (<p key={key}>{node.textContent}</p>);
+            return (<p key={key} style={style}>{node.textContent}</p>);
         case "text:h":
             const level = Number(node.getAttribute("text:outline-level"));
             const HeadingTag = (`h${level}` as keyof React.JSX.IntrinsicElements);
-            return (<HeadingTag key={key}>{node.textContent}</HeadingTag>);
+            return <HeadingTag key={key} style={style}>{node.textContent}</HeadingTag>
         case "text:list":
-            const listItems = Array.from(node.getElementsByTagName("text:list-item"));
+            const items = Array.from(node.getElementsByTagName("text:list-item"));
             return (
-                <ul key={key}>
-                    {listItems.map((li, idx) => (
+                <ul key={key} style={style}>
+                    {items.map((li, idx) => (
                         <li key={idx}>{li.textContent}</li>
                     ))}
                 </ul>
             );
         default:
-            return null // Skip unsupported nodes
+            return null;
     }
 }
 
-function renderOdtToReact(xmlDoc: Document): React.ReactNode[] {
-    const body = xmlDoc.getElementsByTagName("office:body")[0];
+// function odtNodeToReact(node: Element, key: number): React.ReactNode {
+//     switch(node.tagName) {
+//         case "text:p":
+//             return (<p key={key}>{node.textContent}</p>);
+//         case "text:h":
+//             const level = Number(node.getAttribute("text:outline-level"));
+//             const HeadingTag = (`h${level}` as keyof React.JSX.IntrinsicElements);
+//             return (<HeadingTag key={key}>{node.textContent}</HeadingTag>);
+//         case "text:list":
+//             const listItems = Array.from(node.getElementsByTagName("text:list-item"));
+//             return (
+//                 <ul key={key}>
+//                     {listItems.map((li, idx) => (
+//                         <li key={idx}>{li.textContent}</li>
+//                     ))}
+//                 </ul>
+//             );
+//         default:
+//             return null // Skip unsupported nodes
+//     }
+// }
+
+function renderOdtToReact(doc: Document, styleMap: OdtStyleMap): React.ReactNode[] {
+    const body = doc.getElementsByTagName("office:body")[0];
     if (!body) return [];
     const textEl = body.getElementsByTagName("office:text")[0];
     if (!textEl) return [];
-    const children = Array.from(textEl.children);
-    // Using flatMap() because we want to produce an array 
-    // of React nodes without any null items.
-    return children.flatMap((node, idx) => {
-        const result = odtNodeToReact(node, idx);
-        if (Array.isArray(result)) {
-            return result.filter(Boolean);
-        }
-        return result ? [result] : [];
+    return Array.from(textEl.children).flatMap((node, idx) => {
+        const el = odtNodeToReact(node, idx, styleMap);
+        return el ? [el] : [];
     });
 }
+
+// function renderOdtToReact(xmlDoc: Document): React.ReactNode[] {
+//     const body = xmlDoc.getElementsByTagName("office:body")[0];
+//     if (!body) return [];
+//     const textEl = body.getElementsByTagName("office:text")[0];
+//     if (!textEl) return [];
+//     const children = Array.from(textEl.children);
+//     // Using flatMap() because we want to produce an array 
+//     // of React nodes without any null items.
+//     return children.flatMap((node, idx) => {
+//         const result = odtNodeToReact(node, idx);
+//         if (Array.isArray(result)) {
+//             return result.filter(Boolean);
+//         }
+//         return result ? [result] : [];
+//     });
+// }
 
 async function parseOdtBlobToXml(blob: Blob): Promise<Document> {
     const zip = await JSZip.loadAsync(blob);
@@ -142,7 +225,7 @@ type PreviewOdtFileProps = {
     fileData: ProxyFileResult;
 };
 
-function PreviewOdtFile({fileData}: PreviewOdtFileProps) {
+function PreviewOdtFile({ fileData }: PreviewOdtFileProps) {
     const [elements, setElements] = useState<React.ReactNode[] | null>(null);
     const [error, setError] = useState<string | null>(null);
 
@@ -152,11 +235,9 @@ function PreviewOdtFile({fileData}: PreviewOdtFileProps) {
                 try {
                     const response = await fetch(fileData.blobUrl);
                     const blob = await response.blob();
-                    const xmlDoc = await parseOdtBlobToXml(blob);
-                    const reactElements = renderOdtToReact(xmlDoc);
-                    setElements(reactElements);
+                    const { contentDoc, styleMap } = await parseOdtWithStyles(blob);
+                    setElements(renderOdtToReact(contentDoc, styleMap));
                 } catch (error) {
-                    console.error(error);
                     setError((error as Error).message);
                 }
             })();
@@ -166,17 +247,45 @@ function PreviewOdtFile({fileData}: PreviewOdtFileProps) {
     }, [fileData]);
 
     if (error) return (<div>Error: {error}</div>);
-    if (!elements) return (<div>Loading ODT preview...</div>);
-
-    return (
-        <div className="odt-preview">
-            <h3>ODT Preview: {fileData.fileName}</h3>
-            <div>
-                {elements}
-            </div>
-        </div>
-    );
+    if (!elements) return (<div>Loading ODT Preview...</div>);
+    return (<div>{elements}</div>);
 }
+
+// function PreviewOdtFile({fileData}: PreviewOdtFileProps) {
+//     const [elements, setElements] = useState<React.ReactNode[] | null>(null);
+//     const [error, setError] = useState<string | null>(null);
+
+//     useEffect(() => {
+//         if ((fileData.type === "blob") && (fileData.contentType === "application/vnd.oasis.opendocument.text")) {
+//             (async () => {
+//                 try {
+//                     const response = await fetch(fileData.blobUrl);
+//                     const blob = await response.blob();
+//                     const xmlDoc = await parseOdtBlobToXml(blob);
+//                     const reactElements = renderOdtToReact(xmlDoc);
+//                     setElements(reactElements);
+//                 } catch (error) {
+//                     console.error(error);
+//                     setError((error as Error).message);
+//                 }
+//             })();
+//         } else {
+//             setError("Unsupported file type for ODT preview");
+//         }
+//     }, [fileData]);
+
+//     if (error) return (<div>Error: {error}</div>);
+//     if (!elements) return (<div>Loading ODT preview...</div>);
+
+//     return (
+//         <div className="odt-preview">
+//             <h3>ODT Preview: {fileData.fileName}</h3>
+//             <div>
+//                 {elements}
+//             </div>
+//         </div>
+//     );
+// }
 
 type PreviewDocxFileProps = {
     fileData: ProxyFileResult;
