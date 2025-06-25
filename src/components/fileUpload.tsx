@@ -29,7 +29,7 @@ interface FileUploadItem {
 const FileUpload: React.FC = () => {
   const [uploadedFiles, setUploadedFiles] = useState<FileUploadItem[]>([]);
   const { user } = useAuth();
-  const { parseAndUpdate } = useProfile();
+  const { parseAndUpdateProfile } = useProfile();
   const toast = useToast();
 
   const onDrop = async (acceptedFiles: File[]) => {
@@ -53,7 +53,7 @@ const FileUpload: React.FC = () => {
 
         // parse via API
         const parsedData = await parseDocument(file);
-        parseAndUpdate(parsedData);
+        parseAndUpdateProfile(parsedData);
 
         // save to Firestore
         if (user) {
@@ -73,7 +73,7 @@ const FileUpload: React.FC = () => {
             j === idx ? { ...f, status: "completed" } : f
           )
         );
-        toast(`${file.name} processed & saved!`, "success");
+        toast.success(`${file.name} processed & saved!`);
       } catch (error) {
         setUploadedFiles((prev) =>
           prev.map((f, j) =>
@@ -89,7 +89,7 @@ const FileUpload: React.FC = () => {
               : f
           )
         );
-        toast(`Failed to process ${file.name}`, "error");
+        toast.error(`Failed to process ${file.name}`);
       }
     }
   };
