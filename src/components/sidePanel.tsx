@@ -6,12 +6,6 @@ interface SidePanelProps {
     isSidePanelOpen: boolean;
 }
 
-
-
-
-
-
-
 export default function SidePanel({ isSidePanelOpen }: SidePanelProps) {
     return (
         <aside
