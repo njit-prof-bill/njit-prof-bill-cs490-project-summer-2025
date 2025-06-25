@@ -1,6 +1,9 @@
 "use client";
 import { useState } from "react";
 import { useAuth } from "@/context/authContext";
+import { doc, setDoc } from "firebase/firestore";
+import { firestore } from "@/lib/firebase";
+
 
 export default function JobDescriptionUpload() {
   const [jobText, setJobText] = useState("");
@@ -21,17 +24,10 @@ export default function JobDescriptionUpload() {
 
     setIsSubmitting(true);
     try {
-      const res = await fetch("/api/submitJobDescription", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          uid: user.uid,
-          text: jobText,
-        }),
-      });
+      const docRef = doc(firestore, "users", user.uid, "userDocuments", "jobDescriptionText");
+      await setDoc(docRef, { text: jobText });
 
-      const result = await res.json();
-      setStatus(result.message);
+      setStatus("Job description saved successfully.");
     } catch (err) {
       console.error(err);
       setStatus("Error submitting.");
@@ -47,7 +43,6 @@ export default function JobDescriptionUpload() {
         value={jobText}
         onChange={(e) => setJobText(e.target.value)}
         placeholder="Paste or type the job ad here..."
-        // className="w-full p-2 rounded-md bg-zinc-900 text-white border border-zinc-700 resize-none h-40"
         className="w-full p-3 rounded-md bg-zinc-900 text-white border border-zinc-700 resize-none h-72"
 
       />
