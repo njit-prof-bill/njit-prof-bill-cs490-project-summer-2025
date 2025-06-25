@@ -178,43 +178,12 @@ function PreviewOdtFile({fileData}: PreviewOdtFileProps) {
     );
 }
 
-// function PreviewOdtFile({fileData}: PreviewOdtFileProps) {
-//     const [text, setText] = useState<string | null>(null);
-//     const [error, setError] = useState<string | null>(null);
-
-//     useEffect(() => {
-//         if ((fileData.type === "blob") && (fileData.contentType === "application/vnd.oasis.opendocument.text")) {
-//             (async () => {
-//                 try {
-//                     const response = await fetch(fileData.blobUrl);
-//                     const blob = await response.blob();
-//                     const content = await parseOdtBlob(blob);
-//                     setText(content);
-//                 } catch (error) {
-//                     console.error(error);
-//                     setError((error as Error).message);
-//                 }
-//             })();
-//         }
-//     }, [fileData]);
-
-//     if (error) return (<div>Error: {error}</div>);
-//     if (!text) return (<div>Loading ODT preview...</div>);
-//     return (
-//         <div>
-//             <h3>ODT Preview: {fileData.fileName}</h3>
-//             <pre>{text}</pre>
-//         </div>
-//     );
-// }
-
 type PreviewDocxFileProps = {
     fileData: ProxyFileResult;
 };
 
 function PreviewDocxFile({fileData}: PreviewDocxFileProps) {
     const docxContainerRef = useRef<HTMLDivElement>(null);
-    // const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
@@ -376,14 +345,6 @@ function PreviewFile({ref}: PreviewFileProps) {
         }
         if (fileData.contentType === "application/vnd.oasis.opendocument.text") {
             return <PreviewOdtFile fileData={fileData} />
-            // return (
-            //     <div>
-            //         <h3>{fileData.fileName}</h3>
-            //         <a href={fileData.blobUrl} download={fileData.fileName}>
-            //             Download {fileData.fileName}
-            //         </a>
-            //     </div>
-            // );
         }
 
         // Fallback for unknown blob types
@@ -408,8 +369,6 @@ async function GetFileURL(ref: StorageReference) {
     }
     try {
         const url = await getDownloadURL(ref);
-        // console.log(`URL to ${item.name}: ${url}`);
-        // GetFileExt({url});
         return url;
     } catch (error) {
         console.log(`Error retrieving URL for ${ref.name}: ${error}`);
