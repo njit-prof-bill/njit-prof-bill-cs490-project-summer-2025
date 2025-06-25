@@ -8,7 +8,6 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@r
 import { text } from "stream/consumers";
 import { renderAsync } from "docx-preview";
 import { array } from "zod";
-import DocViewer, { DocViewerRenderers } from "@cyntler/react-doc-viewer"
 import JSZip from "jszip";
 import { content } from "html2canvas/dist/types/css/property-descriptors/content";
 
