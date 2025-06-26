@@ -372,7 +372,7 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
                     : String(addrOrPhone)}
                 </span>
 
-                <button
+                {/* <button
                   onClick={() => removeItem(label)}
                   style={{
                     marginLeft: '0.5rem',
@@ -386,7 +386,7 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
                   }}
                 >
                   Remove
-                </button>
+                </button> */}
               </div>
             ))}
           </div>
@@ -514,7 +514,103 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
                 handleEditValueChange(Array.isArray(editValue) ? denorm : denorm[0]);
               }}
             />
-          ) : (
+          ) : keyPath === 'contact.email' || keyPath === 'contact.phone' ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
+                {(() => {
+                  if (typeof editValue === 'string') {
+                    // Convert string into editable object format
+                    const converted = { primary: editValue };
+                    handleEditValueChange(converted);
+                    return null; // let component re-render with new object
+                  }
+                  
+                  if (
+                    typeof editValue !== 'object' ||
+                    editValue === null ||
+                    Array.isArray(editValue)
+                  ) {
+                    return <p>Invalid format: expected an object with string values.</p>;
+                  }
+                  
+        
+                  const entries = Object.entries(editValue).filter(
+                    ([_, val]) => typeof val === 'string'
+                  ) as [string, string][];
+        
+                  return entries.map(([label, val], idx) => (
+                    <div key={label} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      <input
+                        type="text"
+                        value={label}
+                        onChange={(e) => {
+                          const newLabel = e.target.value.trim();
+                          if (!newLabel || newLabel === label) return;
+                  
+                          const updated = { ...editValue };
+                          // Avoid overwriting an existing label
+                          if (updated[newLabel] !== undefined) return alert("Label already exists");
+                  
+                          updated[newLabel] = updated[label];
+                          delete updated[label];
+                          handleEditValueChange(updated);
+                        }}
+                        style={{ flex: 1, padding: '0.5rem', border: '1px solid #ccc', borderRadius: '4px' }}
+                      />
+                      <input
+                        type="text"
+                        value={val}
+                        onChange={(e) => {
+                          const updated = { ...editValue, [label]: e.target.value };
+                          handleEditValueChange(updated);
+                        }}
+                        style={{ flex: 3, padding: '0.5rem', border: '1px solid #ccc', borderRadius: '4px' }}
+                      />
+                      <button
+                        onClick={() => {
+                          const updated = { ...editValue };
+                          delete updated[label];
+                          handleEditValueChange(updated);
+                        }}
+                        style={{ background: '#dc3545', color: '#fff', border: 'none', borderRadius: '4px', padding: '0.25rem 0.5rem' }}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  ));                  
+                })()}
+        
+                {/* Add new label/value */}
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <input
+                    type="text"
+                    placeholder="Label (e.g. personal)"
+                    value={newLabel}
+                    onChange={(e) => setNewLabel(e.target.value)}
+                    style={{ flex: 1, padding: '0.5rem', border: '1px solid #ccc', borderRadius: '4px' }}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Value (e.g. someone@email.com)"
+                    value={newItem}
+                    onChange={(e) => setNewItem(e.target.value)}
+                    style={{ flex: 3, padding: '0.5rem', border: '1px solid #ccc', borderRadius: '4px' }}
+                  />
+                  <button
+                    onClick={() => {
+                      if (!newLabel.trim() || !newItem.trim()) return;
+                      const updated = { ...editValue, [newLabel.trim()]: newItem.trim() };
+                      handleEditValueChange(updated);
+                      setNewLabel('');
+                      setNewItem('');
+                    }}
+                    style={{ background: '#28a745', color: '#fff', border: 'none', borderRadius: '4px', padding: '0.5rem' }}
+                  >
+                    Add
+                  </button>
+                </div>
+              </div>
+            )
+          : (
             // For other keys, show textarea for JSON or string
             typeof editValue === 'string' ? (
               <textarea
