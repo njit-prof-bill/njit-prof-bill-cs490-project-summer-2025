@@ -1,7 +1,7 @@
 "use client";
 
 import { model } from "@/lib/firebase";
-import { doc, getDoc, updateDoc, arrayUnion } from "firebase/firestore";
+import { doc, getDoc, updateDoc, writeBatch, arrayUnion } from "firebase/firestore";
 
 export const AIPrompt = `Please take this text corpus submitted by a user and parse the following information from it:
 
@@ -82,83 +82,149 @@ export async function getAIResponse(prompt: string, corpus: string) {
     
 }
 
+// Version of saveAIResponse() using a batch write.
+// If any of the writes fail, none of them should succeed.
 export async function saveAIResponse(responseObj: any, user: any, db: any) {
-    if (user) {
-        const documentRef = doc(db, "users", user.uid);
-        try {
-            const document = await getDoc(documentRef);
-            if (!document.exists()) {
-                console.error("Document does not exist for user: ", user.uid);
-                return;
-            }
-            // Update the non-array fields first
-            try {
-                await updateDoc(documentRef, {
-                    "resumeFields.fullName": responseObj.fullName,
-                    "resumeFields.summary": responseObj.summary,
-                    "resumeFields.contact.location": responseObj.contact.location,
-                });
-            } catch (error) {
-                console.error("Error updating non-array fields: ", error);
-            }
-
-            // Extract email(s) and append them to resumeFields.contact.email
-            if (Array.isArray(responseObj.contact.email) && responseObj.contact.email.length > 0) {
-                ;
-                try {
-                    await updateDoc(documentRef, {
-                        "resumeFields.contact.email": arrayUnion(...responseObj.contact.email)
-                    })
-                } catch (error) {
-                    console.error("Error appending contact email(s): ", error);
-                }
-            }
-            // Extract phone number(s) and append to resumeFields.contact.phone
-            if (Array.isArray(responseObj.contact.phone) && responseObj.contact.phone.length > 0) {
-                try {
-                    await updateDoc(documentRef, {
-                        "resumeFields.contact.phone": arrayUnion(...responseObj.contact.phone)
-                    });
-                } catch (error) {
-                    console.error("Error appending phone number(s) from corpus: ", error);
-                }
-            }
-
-            // Extract skill(s) and append to resumeFields.skills
-            if (Array.isArray(responseObj.skills) && responseObj.skills.length > 0) {
-                try {
-                    await updateDoc(documentRef, {
-                        "resumeFields.skills": arrayUnion(...responseObj.skills)
-                    });
-                } catch (error) {
-                    console.error("Error fetching list of skills from corpus: ", error);
-                }
-            }
-            // Extract work experience(s) and append to resumeFields.workExperience
-            if (Array.isArray(responseObj.workExperience) && responseObj.workExperience.length > 0) {
-                try {
-                    await updateDoc(documentRef, { 
-                        "resumeFields.workExperience": arrayUnion(...responseObj.workExperience) 
-                    });
-                } catch (error) {
-                    console.error("Error fetching list of work experiences from corpus: ", error);
-                }
-            }
-            // Extract education credential(s) and append to resumeFields.education
-            if (Array.isArray(responseObj.education) && responseObj.education.length > 0) {
-                try {
-                    await updateDoc(documentRef, { 
-                        "resumeFields.education": arrayUnion(...responseObj.education) 
-                    });
-                } catch (error) {
-                    console.error("Error fetching list of educational credentials from corpus: ", error);
-                }
-            }
-        } catch (error) {
-            console.error("Error: could not retrieve document;", error);
+    if (!user) return;
+    const documentRef = doc(db, "users", user.uid);
+    try {
+        const document = await getDoc(documentRef);
+        if (!document.exists()) {
+            console.error("Document does not exist for user: ", user.uid);
+            return;
         }
+
+        // Using a batch write here instead of individual updates because individual updates:
+        // 1. Cause Firestore rate limits to be hit quicker (my primary concern 
+        // because I'd like to keep the app's resource usage under the free-tier).
+        // 2. Increase network latency by opening multiple connections.
+        const batch = writeBatch(db);
+
+        // Update the non-array fields first
+        batch.update(documentRef, {
+            "resumeFields.fullName": responseObj.fullName,
+            "resumeFields.summary": responseObj.summary,
+            "resumeFields.contact.location": responseObj.contact.location,
+        });
+
+        // Extract email(s) and append them to resumeFields.contact.email
+        if (Array.isArray(responseObj.contact.email) && responseObj.contact.email.length > 0) {
+            batch.update(documentRef, {
+                "resumeFields.contact.email": arrayUnion(...responseObj.contact.email)
+            });
+        }
+        // Extract phone number(s) and append to resumeFields.contact.phone
+        if (Array.isArray(responseObj.contact.phone) && responseObj.contact.phone.length > 0) {
+            batch.update(documentRef, {
+                "resumeFields.contact.phone": arrayUnion(...responseObj.contact.phone)
+            });
+        }
+        // Extract skill(s) and append to resumeFields.skills
+        if (Array.isArray(responseObj.skills) && responseObj.skills.length > 0) {
+            batch.update(documentRef, {
+                "resumeFields.skills": arrayUnion(...responseObj.skills)
+            });
+        }
+        // Extract work experience(s) and append to resumeFields.workExperience
+        if (Array.isArray(responseObj.workExperience) && responseObj.workExperience.length > 0) {
+            batch.update(documentRef, {
+                "resumeFields.workExperience": arrayUnion(...responseObj.workExperience) 
+            });
+        }
+        // Extract education credential(s) and append to resumeFields.education
+        if (Array.isArray(responseObj.education) && responseObj.education.length > 0) {
+            batch.update(documentRef, {
+                "resumeFields.education": arrayUnion(...responseObj.education)
+            });
+        }
+
+        // Commit all the updates
+        await batch.commit();
+        console.log("All updates committed in a single batch.");
+    } catch (error) {
+        console.error("Error during saveAIResponse batch update: ", error);
     }
 }
+
+// Version of saveAIResponse() using individual writes.
+// If at least one write fails, other writes can continue.
+// export async function saveAIResponse(responseObj: any, user: any, db: any) {
+//     if (user) {
+//         const documentRef = doc(db, "users", user.uid);
+//         try {
+//             const document = await getDoc(documentRef);
+//             if (!document.exists()) {
+//                 console.error("Document does not exist for user: ", user.uid);
+//                 return;
+//             }
+//             // Update the non-array fields first
+//             try {
+//                 await updateDoc(documentRef, {
+//                     "resumeFields.fullName": responseObj.fullName,
+//                     "resumeFields.summary": responseObj.summary,
+//                     "resumeFields.contact.location": responseObj.contact.location,
+//                 });
+//             } catch (error) {
+//                 console.error("Error updating non-array fields: ", error);
+//             }
+
+//             // Extract email(s) and append them to resumeFields.contact.email
+//             if (Array.isArray(responseObj.contact.email) && responseObj.contact.email.length > 0) {
+//                 ;
+//                 try {
+//                     await updateDoc(documentRef, {
+//                         "resumeFields.contact.email": arrayUnion(...responseObj.contact.email)
+//                     })
+//                 } catch (error) {
+//                     console.error("Error appending contact email(s): ", error);
+//                 }
+//             }
+//             // Extract phone number(s) and append to resumeFields.contact.phone
+//             if (Array.isArray(responseObj.contact.phone) && responseObj.contact.phone.length > 0) {
+//                 try {
+//                     await updateDoc(documentRef, {
+//                         "resumeFields.contact.phone": arrayUnion(...responseObj.contact.phone)
+//                     });
+//                 } catch (error) {
+//                     console.error("Error appending phone number(s) from corpus: ", error);
+//                 }
+//             }
+
+//             // Extract skill(s) and append to resumeFields.skills
+//             if (Array.isArray(responseObj.skills) && responseObj.skills.length > 0) {
+//                 try {
+//                     await updateDoc(documentRef, {
+//                         "resumeFields.skills": arrayUnion(...responseObj.skills)
+//                     });
+//                 } catch (error) {
+//                     console.error("Error fetching list of skills from corpus: ", error);
+//                 }
+//             }
+//             // Extract work experience(s) and append to resumeFields.workExperience
+//             if (Array.isArray(responseObj.workExperience) && responseObj.workExperience.length > 0) {
+//                 try {
+//                     await updateDoc(documentRef, { 
+//                         "resumeFields.workExperience": arrayUnion(...responseObj.workExperience) 
+//                     });
+//                 } catch (error) {
+//                     console.error("Error fetching list of work experiences from corpus: ", error);
+//                 }
+//             }
+//             // Extract education credential(s) and append to resumeFields.education
+//             if (Array.isArray(responseObj.education) && responseObj.education.length > 0) {
+//                 try {
+//                     await updateDoc(documentRef, { 
+//                         "resumeFields.education": arrayUnion(...responseObj.education) 
+//                     });
+//                 } catch (error) {
+//                     console.error("Error fetching list of educational credentials from corpus: ", error);
+//                 }
+//             }
+//         } catch (error) {
+//             console.error("Error: could not retrieve document;", error);
+//         }
+//     }
+// }
 
 export const jobAdAIPrompt = `
 Extract the following information from the text of a job ad:
