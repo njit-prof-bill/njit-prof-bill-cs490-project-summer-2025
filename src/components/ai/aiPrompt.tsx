@@ -1,7 +1,7 @@
 "use client";
 
 import { model } from "@/lib/firebase";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc, arrayUnion } from "firebase/firestore";
 
 export const AIPrompt = `Please take this text corpus submitted by a user and parse the following information from it:
 
@@ -104,9 +104,12 @@ export async function saveAIResponse(responseObj: any, user: any, db: any) {
             }
             // Extract email and save to userProfile
             try {
-                await updateDoc(documentRef, { "resumeFields.contact.email": responseObj.contact.email });
+                // await updateDoc(documentRef, { "resumeFields.contact.email": responseObj.contact.email });
+                await updateDoc(documentRef, {
+                    "resumeFields.contact.email": arrayUnion(...responseObj.contact.email)
+                })
             } catch (error) {
-                console.error("Error fetching contact email from corpus: ", error);
+                console.error("Error appending contact email from corpus: ", error);
             }
             // Extract location and save to userProfile
             try {
