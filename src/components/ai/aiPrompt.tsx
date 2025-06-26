@@ -128,7 +128,10 @@ export async function saveAIResponse(responseObj: any, user: any, db: any) {
             }
             // Extract list of skills and save to userProfile
             try {
-                await updateDoc(documentRef, { "resumeFields.skills": responseObj.skills });
+                // await updateDoc(documentRef, { "resumeFields.skills": responseObj.skills });
+                await updateDoc(documentRef, {
+                    "resumeFields.skills": arrayUnion(...responseObj.skills)
+                });
             } catch (error) {
                 console.error("Error fetching list of skills from corpus: ", error);
             }
