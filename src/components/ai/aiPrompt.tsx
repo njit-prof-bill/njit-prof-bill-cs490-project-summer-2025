@@ -109,7 +109,7 @@ export async function saveAIResponse(responseObj: any, user: any, db: any) {
                     "resumeFields.contact.email": arrayUnion(...responseObj.contact.email)
                 })
             } catch (error) {
-                console.error("Error appending contact email from corpus: ", error);
+                console.error("Error appending contact email(s) from corpus: ", error);
             }
             // Extract location and save to userProfile
             try {
@@ -119,9 +119,12 @@ export async function saveAIResponse(responseObj: any, user: any, db: any) {
             }
             // Extract phone and save to userProfile
             try {
-                await updateDoc(documentRef, { "resumeFields.contact.phone": responseObj.contact.phone });
+                // await updateDoc(documentRef, { "resumeFields.contact.phone": responseObj.contact.phone });
+                await updateDoc(documentRef, {
+                    "resumeFields.contact.phone": arrayUnion(...responseObj.contact.phone)
+                });
             } catch (error) {
-                console.error("Error fetching phone number from corpus: ", error);
+                console.error("Error appending phone number(s) from corpus: ", error);
             }
             // Extract list of skills and save to userProfile
             try {
