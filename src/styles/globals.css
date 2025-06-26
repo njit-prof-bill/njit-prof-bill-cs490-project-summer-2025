@@ -135,6 +135,25 @@
   background-color: #fff;
 }
 
+.odt-preview {
+  padding: 1em;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+.odt-preview p {
+  margin-bottom: 0.5em;
+}
+
+.odt-preview ul {
+  margin-left: 1em;
+  list-style-type: disc;
+}
+
+.odt-preview h1, .odt-preview h2, .odt-preview h3 {
+  margin: 0.5em 0;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

@@ -70,6 +70,11 @@ export default function SidePanel({ isSidePanelOpen }: SidePanelProps) {
                             Edit Work Experience
                         </Link>
                     </li>
+                    <li>
+                        <Link href="/home/view-past-uploads" className="hover:underline">
+                            View Past Uploads
+                        </Link>
+                    </li>
                 </ul>
             </nav>
         </aside>
