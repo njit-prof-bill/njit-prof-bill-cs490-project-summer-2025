@@ -88,64 +88,71 @@ export async function saveAIResponse(responseObj: any, user: any, db: any) {
         try {
             const document = await getDoc(documentRef);
             if (!document.exists()) {
+                console.error("Document does not exist for user: ", user.uid);
                 return;
             }
-            // Extract full name and save to userProfile
+            // Update the non-array fields first
             try {
-                await updateDoc(documentRef, { "resumeFields.fullName": responseObj.fullName });
-            } catch (error) {
-                console.error("Error fetching full name from corpus: ", error);
-            }
-            // Extract summary and save to userProfile
-            try {
-                await updateDoc(documentRef, { "resumeFields.summary": responseObj.summary });
-            } catch (error) {
-                console.error("Error fetching summary from corpus: ", error);
-            }
-            // Extract email and save to userProfile
-            try {
-                // await updateDoc(documentRef, { "resumeFields.contact.email": responseObj.contact.email });
                 await updateDoc(documentRef, {
-                    "resumeFields.contact.email": arrayUnion(...responseObj.contact.email)
-                })
-            } catch (error) {
-                console.error("Error appending contact email(s) from corpus: ", error);
-            }
-            // Extract location and save to userProfile
-            try {
-                await updateDoc(documentRef, { "resumeFields.contact.location": responseObj.contact.location });
-            } catch (error) {
-                console.error("Error fetching contact location from corpus: ", error);
-            }
-            // Extract phone and save to userProfile
-            try {
-                // await updateDoc(documentRef, { "resumeFields.contact.phone": responseObj.contact.phone });
-                await updateDoc(documentRef, {
-                    "resumeFields.contact.phone": arrayUnion(...responseObj.contact.phone)
+                    "resumeFields.fullName": responseObj.fullName,
+                    "resumeFields.summary": responseObj.summary,
+                    "resumeFields.contact.location": responseObj.contact.location,
                 });
             } catch (error) {
-                console.error("Error appending phone number(s) from corpus: ", error);
+                console.error("Error updating non-array fields: ", error);
             }
-            // Extract list of skills and save to userProfile
-            try {
-                // await updateDoc(documentRef, { "resumeFields.skills": responseObj.skills });
-                await updateDoc(documentRef, {
-                    "resumeFields.skills": arrayUnion(...responseObj.skills)
-                });
-            } catch (error) {
-                console.error("Error fetching list of skills from corpus: ", error);
+
+            // Extract email(s) and append them to resumeFields.contact.email
+            if (Array.isArray(responseObj.contact.email) && responseObj.contact.email.length > 0) {
+                ;
+                try {
+                    await updateDoc(documentRef, {
+                        "resumeFields.contact.email": arrayUnion(...responseObj.contact.email)
+                    })
+                } catch (error) {
+                    console.error("Error appending contact email(s): ", error);
+                }
             }
-            // Extract list of work experiences and save to userProfile
-            try {
-                await updateDoc(documentRef, { "resumeFields.workExperience": responseObj.workExperience });
-            } catch (error) {
-                console.error("Error fetching list of work experiences from corpus: ", error);
+            // Extract phone number(s) and append to resumeFields.contact.phone
+            if (Array.isArray(responseObj.contact.phone) && responseObj.contact.phone.length > 0) {
+                try {
+                    await updateDoc(documentRef, {
+                        "resumeFields.contact.phone": arrayUnion(...responseObj.contact.phone)
+                    });
+                } catch (error) {
+                    console.error("Error appending phone number(s) from corpus: ", error);
+                }
             }
-            // Extract list of education credentials and save to userProfile
-            try {
-                await updateDoc(documentRef, { "resumeFields.education": responseObj.education });
-            } catch (error) {
-                console.error("Error fetching list of educational credentials from corpus: ", error);
+
+            // Extract skill(s) and append to resumeFields.skills
+            if (Array.isArray(responseObj.skills) && responseObj.skills.length > 0) {
+                try {
+                    await updateDoc(documentRef, {
+                        "resumeFields.skills": arrayUnion(...responseObj.skills)
+                    });
+                } catch (error) {
+                    console.error("Error fetching list of skills from corpus: ", error);
+                }
+            }
+            // Extract work experience(s) and append to resumeFields.workExperience
+            if (Array.isArray(responseObj.workExperience) && responseObj.workExperience.length > 0) {
+                try {
+                    await updateDoc(documentRef, { 
+                        "resumeFields.workExperience": arrayUnion(...responseObj.workExperience) 
+                    });
+                } catch (error) {
+                    console.error("Error fetching list of work experiences from corpus: ", error);
+                }
+            }
+            // Extract education credential(s) and append to resumeFields.education
+            if (Array.isArray(responseObj.education) && responseObj.education.length > 0) {
+                try {
+                    await updateDoc(documentRef, { 
+                        "resumeFields.education": arrayUnion(...responseObj.education) 
+                    });
+                } catch (error) {
+                    console.error("Error fetching list of educational credentials from corpus: ", error);
+                }
             }
         } catch (error) {
             console.error("Error: could not retrieve document;", error);
