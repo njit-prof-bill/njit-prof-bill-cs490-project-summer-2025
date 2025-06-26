@@ -5,7 +5,7 @@ import { AuthProvider } from "@/context/authContext";
 import { Toaster } from "sonner";
 import "@/styles/globals.css";
 import { ThemeProvider as AppThemeProvider } from "@/context/themeContext";
-
+import { ProfileProvider } from "@/context/profileContext"; // ✅ import this
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -49,8 +49,10 @@ export default function RootLayout({
       >
         <AuthProvider>
           <AppThemeProvider>
-            <Toaster position="top-right" />
-            {children}
+            <ProfileProvider>
+              <Toaster position="top-right" />
+              {children}
+            </ProfileProvider>
           </AppThemeProvider>
         </AuthProvider>
       </body>

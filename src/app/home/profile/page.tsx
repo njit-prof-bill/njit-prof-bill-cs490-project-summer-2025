@@ -14,8 +14,10 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from "@/context/toastContext";
 import { usePathname } from 'next/navigation';
+import JobHistory from '@/components/profile/jobHistory';
+import EducationHistory from '@/components/profile/educationSection';
 
-const VALID_SECTIONS = ["contact","objective","skills","jobs","education"] as const;
+const VALID_SECTIONS = ["contact", "objective", "skills", "jobs", "education"] as const;
 type SectionKey = typeof VALID_SECTIONS[number];
 
 /** 
@@ -104,9 +106,8 @@ export default function ProfilePage() {
                 disabled={isReParsing}
               >
                 <RefreshCw
-                  className={`h-4 w-4 mr-2 ${
-                    isReParsing ? 'animate-spin' : ''
-                  }`}
+                  className={`h-4 w-4 mr-2 ${isReParsing ? 'animate-spin' : ''
+                    }`}
                 />
                 Re-parse History
               </Button>
@@ -157,6 +158,12 @@ export default function ProfilePage() {
                 </TabsContent>
                 <TabsContent value="objective" className="mt-6">
                   <CareerObjectiveSection />
+                </TabsContent>
+                <TabsContent value="jobs" className="mt-6">
+                  <JobHistory />
+                </TabsContent>
+                <TabsContent value="education" className="mt-6">
+                  <EducationHistory />
                 </TabsContent>
               </Tabs>
             </CardContent>
