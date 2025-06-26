@@ -7,6 +7,7 @@ import { storage } from "@/lib/firebase";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@radix-ui/react-accordion";
 import { renderAsync } from "docx-preview";
 import JSZip from "jszip";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogOverlay, DialogPortal, DialogTitle, DialogTrigger } from "@radix-ui/react-dialog";
 
 // Types
 
@@ -229,38 +230,64 @@ function PreviewFile({ fileRef }: { fileRef: StorageReference }) {
 }
 
 type DeleteFileButtonProps = {
-    fileRef: StorageReference;
-    fileRefs: StorageReference[];
-    setFileRefs: React.Dispatch<React.SetStateAction<StorageReference[]>>;
+  fileRef: StorageReference;
+  fileRefs: StorageReference[];
+  setFileRefs: React.Dispatch<React.SetStateAction<StorageReference[]>>;
 }
 
 function DeleteFileButton({fileRef, fileRefs, setFileRefs}: DeleteFileButtonProps) {
-    const [deleting, setDeleting] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  // Controls whether the confirmation dialog is open
+  const [open, setOpen] = useState(false);
 
-    async function handleDelete() {
-        setDeleting(true);
-        setError(null);
-        try {
-            await deleteObject(fileRef);
-            setFileRefs((oldRefs) => oldRefs.filter((r) => r !== fileRef));
-            console.log("File successfully deleted.");
-        } catch (error) {
-            console.error("Error deleting file: ", error);
-            setError("Failed to delete file.");
-        } finally {
-            setDeleting(false);
-        }
+  async function confirmDelete() {
+    setDeleting(true);
+    setError(null);
+    try {
+      await deleteObject(fileRef);
+      setFileRefs((oldRefs) => oldRefs.filter((r) => r !== fileRef));
+      console.log("File successfully deleted.");
+      setOpen(false);
+    } catch (error) {
+      console.error("Error deleting file: ", error);
+      setError("Failed to delete file.");
+    } finally {
+      setDeleting(false);
     }
+  }
 
-    return (
-        <div>
-            <button type="button" onClick={handleDelete} disabled={deleting}>
-                {deleting ? "Deleting..." : "Delete"}
-            </button>
-            {error && <div style={{ color: "red" }}>{error}</div>}
-        </div>
-    );
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <button type="button" disabled={deleting}>
+          {deleting ? "Deleting..." : "Delete"}
+        </button>
+      </DialogTrigger>
+      <DialogPortal>
+          <DialogOverlay className="fixed inset-0 bg-black bg-opacity-50"></DialogOverlay>
+            <DialogContent className="fixed top-1/2 left-1/2 bg-white p-4 rounded shadow transform -translate-x-1/2 -translate-y-1/2">
+              <DialogTitle>Confirm Delete</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete <strong>{fileRef.name}</strong>?
+              </DialogDescription>
+              <div className="mt-4 flex gap-2">
+                <button
+                  onClick={confirmDelete}
+                  disabled={deleting}
+                  className="bg-red-500 text-white px-2 py-1 rounded"
+                >
+                  {deleting ? "Deleting..." : "Yes, Delete"}
+                </button>
+                <DialogClose asChild>
+                  <button className="bg-gray-300 px-2 py-1 rounded" disabled={deleting}>Cancel</button>
+                </DialogClose>
+              </div>
+              {error && <div className="mt-2 text-red-500">{error}</div>}
+            </DialogContent>
+      </DialogPortal>
+    </Dialog>
+  );
 }
 
 export default function ViewPastUploadsPage() {
