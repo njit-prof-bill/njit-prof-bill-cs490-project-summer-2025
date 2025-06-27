@@ -45,20 +45,20 @@ export default function UserProfile({ deduplicateSkills }: ProfileCardProps) {
         {activeTab === "contact" && (
           <div className="animate-fade-in space-y-6 max-w-4xl mx-auto mt-2">
             {/* Full Name */}
+            <h2 className="text-2xl font-bold mb-4 text-white">Full Name</h2>
             <div className="p-6 bg-[#1B1917] border border-gray-700 rounded-lg shadow-sm">
-              <h2 className="text-2xl font-bold mb-4 text-white">Full Name</h2>
               <FetchAndDisplayKey keyPath="fullName" />
             </div>
 
             {/* Email */}
+            <h2 className="text-2xl font-bold mb-4 text-white">Email</h2>
             <div className="p-6 bg-[#1B1917] border border-gray-700 rounded-lg shadow-sm">
-              <h2 className="text-2xl font-bold mb-4 text-white">Email</h2>
               <FetchAndDisplayKey keyPath="contact.email" />
             </div>
 
             {/* Phone */}
+            <h2 className="text-2xl font-bold mb-4 text-white">Phone</h2>
             <div className="p-6 bg-[#1B1917] border border-gray-700 rounded-lg shadow-sm">
-              <h2 className="text-2xl font-bold mb-4 text-white">Phone</h2>
               <FetchAndDisplayKey keyPath="contact.phone" />
             </div>
           </div>
