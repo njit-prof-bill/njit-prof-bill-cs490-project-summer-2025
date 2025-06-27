@@ -7,6 +7,7 @@ import { Save, RefreshCw, AlertCircle } from 'lucide-react';
 import { useProfile } from "@/context/profileContext";
 import ContactInfoSection from '@/components/profile/contactInfoSection';
 import CareerObjectiveSection from '@/components/profile/careerObjectiveSection';
+import SkillsSection from '@/components/profile/skillsSection';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -157,6 +158,9 @@ export default function ProfilePage() {
                 </TabsContent>
                 <TabsContent value="objective" className="mt-6">
                   <CareerObjectiveSection />
+                </TabsContent>
+                <TabsContent value="skills" className="mt-6">
+                  <SkillsSection />
                 </TabsContent>
               </Tabs>
             </CardContent>
