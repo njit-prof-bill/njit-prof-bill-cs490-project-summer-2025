@@ -1,6 +1,42 @@
 "use client";
 import { Timestamp } from "firebase/firestore";
 
+// Represents info about a single job ad submitted by a user
+class jobAdObj {
+    private companyName: string = "";
+    private dateSubmitted: Timestamp = new Timestamp(0,0);
+    private jobDescription: string = "";
+    private jobTitle: string = "";
+
+    // Setter functions
+    public updateCompany(newCompany: string) {
+        this.companyName = newCompany;
+    }
+    public updateDate(newDate: Timestamp) {
+        this.dateSubmitted = newDate;
+    }
+    public updateJobDescription(newDes: string) {
+        this.jobDescription = newDes;
+    }
+    public updateJobTitle(newJob: string) {
+        this.jobTitle = newJob;
+    }
+
+    // Getter functions
+    public getJobTitle() {
+        return this.jobTitle;
+    }
+    public getCompany() {
+        return this.companyName;
+    }
+    public getDate() {
+        return this.dateSubmitted;
+    }
+    public getJobDescription() {
+        return this.jobDescription;
+    }
+};
+
 // Represents info about a single job on the user's resume
 class jobObj {
     private jobTitle: string = "";
@@ -315,5 +351,6 @@ export class userProfile {
     // theme property is used by src/context/themeContext.tsx
     theme: string = "system";
     freeFormText: freeFormSubmission[] = [];
+    jobAds: jobAdObj[] = [];
     resumeFields: resume = new resume;
 }
