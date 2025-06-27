@@ -1,10 +1,10 @@
-import { useState } from 'react';
-import Reorder from '../components/Reorder';
-import ReorderEducation from '../components/ReorderEducation';
-import ReorderWorkExperience from '@/components/ReorderWorkExperience';
+import { useState } from "react";
+import Reorder from "../components/Reorder";
+import ReorderEducation from "../components/ReorderEducation";
+import ReorderWorkExperience from "@/components/ReorderWorkExperience";
 import FetchAndDisplayKey from "../components/FetchAndDisplayKey";
-import SummaryDisplay from '@/components/SummaryDisplay';
-import SummaryEditor from '@/components/SummaryEditor';
+import SummaryDisplay from "@/components/SummaryDisplay";
+import SummaryEditor from "@/components/SummaryEditor";
 
 interface ProfileCardProps {
   deduplicateSkills: (skills: string[]) => string[];
@@ -43,16 +43,32 @@ export default function UserProfile({ deduplicateSkills }: ProfileCardProps) {
       {/* Tab Panel Container */}
       <div className="relative min-h-[300px] bg-[#2A2A2E] rounded-b-xl p-6 transition-all duration-300">
         {activeTab === "contact" && (
-          <div className="animate-fade-in space-y-4">
-            <FetchAndDisplayKey keyPath="fullName" />
-            <FetchAndDisplayKey keyPath="contact.email" />
-            <FetchAndDisplayKey keyPath="contact.phone" />
+          <div className="animate-fade-in space-y-6 max-w-4xl mx-auto mt-2">
+            {/* Full Name */}
+            <h2 className="text-2xl font-bold mb-4 text-white">Full Name</h2>
+            <div className="p-6 bg-[#1B1917] border border-gray-700 rounded-lg shadow-sm">
+              <FetchAndDisplayKey keyPath="fullName" />
+            </div>
+
+            {/* Email */}
+            <h2 className="text-2xl font-bold mb-4 text-white">Email</h2>
+            <div className="p-6 bg-[#1B1917] border border-gray-700 rounded-lg shadow-sm">
+              <FetchAndDisplayKey keyPath="contact.email" />
+            </div>
+
+            {/* Phone */}
+            <h2 className="text-2xl font-bold mb-4 text-white">Phone</h2>
+            <div className="p-6 bg-[#1B1917] border border-gray-700 rounded-lg shadow-sm">
+              <FetchAndDisplayKey keyPath="contact.phone" />
+            </div>
           </div>
         )}
 
         {activeTab === "summary" && (
           <div className="animate-fade-in w-full max-w-4xl mx-auto mt-2">
-            <h2 className="text-2xl font-bold mb-4 text-white">Summary/Career Objective</h2>
+            <h2 className="text-2xl font-bold mb-4 text-white">
+              Summary/Career Objective
+            </h2>
             <SummaryDisplay className="p-6 bg-[#1B1917] border border-gray-700 rounded-lg shadow-sm" />
             <div className="mt-4">
               <SummaryEditor />
