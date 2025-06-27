@@ -496,7 +496,7 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
           gap: "0.5rem",
         }}
       >
-        <h3
+        {/* <h3
           style={{
             margin: 0,
             fontSize: "1.1rem",
@@ -506,7 +506,7 @@ const FetchAndDisplayKey: React.FC<Props> = ({ keyPath }) => {
           }}
         >
           {keyPath}
-        </h3>
+        </h3> */}
         {hasUnsavedChanges && (
           <span
             style={{
