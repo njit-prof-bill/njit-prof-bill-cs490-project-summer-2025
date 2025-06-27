@@ -5,6 +5,8 @@ import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
 import { collection, doc, setDoc, addDoc, getDoc, updateDoc, serverTimestamp, Timestamp } from "firebase/firestore";
 import { getAIResponse, saveAIResponse, AIPrompt } from "@/components/ai/aiPrompt";
+import { User } from "firebase/auth";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogOverlay, DialogPortal, DialogTitle, DialogTrigger } from "@radix-ui/react-dialog";
 
 type freeFormEntry = {
     text: string;
@@ -12,15 +14,85 @@ type freeFormEntry = {
     dateSubmitted: Timestamp;
 };
 
+type DeleteButtonProps = {
+    index: number;
+    freeFormList: freeFormEntry[];
+    setFreeFormList: React.Dispatch<React.SetStateAction<freeFormEntry[]>>;
+    user: User | null;
+};
+
+function DeleteButton({index, freeFormList, setFreeFormList, user}: DeleteButtonProps) {
+    const [deleting, setDeleting] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    // Controls whether the confirmation dialog is open
+    const [open, setOpen] = useState(false);
+
+    async function confirmDelete(event: React.MouseEvent<HTMLButtonElement>) {
+        if (!user) return;
+        event.preventDefault(); // Prevent the browser from reloading the page
+        setDeleting(true);
+        setError(null);
+        try {
+            const newList = freeFormList.filter((_, i) => i !== index);
+            setFreeFormList(newList);
+            const newListRef = doc(db, "users", user.uid);
+            await updateDoc(newListRef, {freeFormText: newList});
+            console.log("Free-form text successfully deleted.");
+            setOpen(false);
+        } catch (error) {
+            console.error("Error deleting free-form text: ", error);
+            setError("Failed to delete free-form text.");
+        } finally {
+            setDeleting(false);
+        }
+    }
+
+    return (
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+                <button type="button" disabled={deleting}>
+                    {deleting ? "Deleting..." : "Delete"}
+                </button>
+            </DialogTrigger>
+            <DialogPortal>
+                <DialogOverlay className="fixed inset-0 bg-black bg-opacity-50"></DialogOverlay>
+                <DialogContent className="fixed top-1/2 left-1/2 bg-white p-4 rounded shadow transform -translate-x-1/2 -translate-y-1/2">
+                    <DialogTitle>Confirm Delete</DialogTitle>
+                    <DialogDescription>
+                        Are you sure you want to delete <strong>{freeFormList[index].label}</strong>?;
+                    </DialogDescription>
+                    <div className="mt-4 flex gap-2">
+                        <button
+                            onClick={confirmDelete}
+                            disabled={deleting}
+                            className="bg-red-500 text-white px-2 py-1 rounded"
+                        >
+                            {deleting ? "Deleting..." : "Yes, Delete"}
+                        </button>
+                        <DialogClose asChild>
+                            <button className="bg-gray-300 px-2 py-1 rounded" disabled={deleting}>
+                                Cancel
+                            </button>
+                        </DialogClose>
+                    </div>
+                    {error && <div className="mt-2 text-red-500">{error}</div>}
+                </DialogContent>
+            </DialogPortal>
+        </Dialog>
+    );
+}
+
 type LabelMenuProps = {
     freeFormList: freeFormEntry[];
+    setFreeFormList: React.Dispatch<React.SetStateAction<freeFormEntry[]>>;
     text: string;
     setText: React.Dispatch<React.SetStateAction<string>>;
     label: string;
     setLabel: React.Dispatch<React.SetStateAction<string>>;
+    user: User | null;
 };
 
-function LabelMenu({freeFormList, text, setText, label, setLabel}: LabelMenuProps) {
+function LabelMenu({freeFormList, setFreeFormList, text, setText, label, setLabel, user}: LabelMenuProps) {
     // Show a menu of the user's past free-form text submissions by their labels.
     // Clicking on a single label populates the free-form text field with that submission.
     async function handleClick(event: React.MouseEvent<HTMLButtonElement>, index: number) {
@@ -41,6 +113,7 @@ function LabelMenu({freeFormList, text, setText, label, setLabel}: LabelMenuProp
                         {submission.label}
                     </button>
                     <SubmissionDate dateSubmitted={submission.dateSubmitted} />
+                    <DeleteButton index={index} freeFormList={freeFormList} setFreeFormList={setFreeFormList} user={user} />
                 </div>
             ))}
         </div>
@@ -194,7 +267,7 @@ export default function FreeFormPage() {
     return (
         <div className="flex items-center justify-center min-h-screen text-gray-900 dark:text-gray-100">
             <div className="w-full max-w-md">
-                <LabelMenu freeFormList={freeFormList} text={text} setText={setText} label={label} setLabel={setLabel}/>
+                <LabelMenu freeFormList={freeFormList} setFreeFormList={setFreeFormList} text={text} setText={setText} label={label} setLabel={setLabel} user={user}/>
                 <h1 className="text-2xl font-bold mb-6">Free-form Text</h1>
                 <form method="post" onSubmit={handleSubmit}>
                     <p>Enter some text in the box below. <br></br>When you are done, hit 'Submit'.</p>

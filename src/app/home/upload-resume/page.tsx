@@ -80,53 +80,53 @@ export default function UploadResumePage() {
       },
       async () => {
         try {
-          let previewUploaded = false;
+          // let previewUploaded = false;
 
-          // If the PDF preview image exists, upload it
-          if (pdfPreviewUrl) {
-            const previewBlob = dataURLtoBlob(pdfPreviewUrl);
-            const previewPath = `users/${user.uid}/${file.name}_preview.png`;
-            const previewRef = ref(storage, previewPath);
-            const previewUploadTask = uploadBytesResumable(previewRef, previewBlob);
+          // // If the PDF preview image exists, upload it
+          // if (pdfPreviewUrl) {
+          //   const previewBlob = dataURLtoBlob(pdfPreviewUrl);
+          //   const previewPath = `users/${user.uid}/${file.name}_preview.png`;
+          //   const previewRef = ref(storage, previewPath);
+          //   const previewUploadTask = uploadBytesResumable(previewRef, previewBlob);
 
-            await new Promise<void>((resolve, reject) => {
-              previewUploadTask.on(
-                "state_changed",
-                (snapshot) => {
-                  const percent = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 10);
-                  setUploadProgress((prev) => Math.min(prev + percent, 90));
-                },
-                reject,
-                resolve
-              );
-            });
+          //   await new Promise<void>((resolve, reject) => {
+          //     previewUploadTask.on(
+          //       "state_changed",
+          //       (snapshot) => {
+          //         const percent = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 10);
+          //         setUploadProgress((prev) => Math.min(prev + percent, 90));
+          //       },
+          //       reject,
+          //       resolve
+          //     );
+          //   });
 
-            previewUploaded = true;
-          }
+          //   previewUploaded = true;
+          // }
 
-          if (!previewUploaded) {
-            // Generate a preview of a DOCX file
-            const docxImageBlob = await generateDocxPreviewImage();
-            if (docxImageBlob) {
-              const previewPath = `users/${user.uid}/${file.name}_preview.png`;
-              const previewRef = ref(storage, previewPath);
-              const previewUploadTask = uploadBytesResumable(previewRef, docxImageBlob);
+          // if (!previewUploaded) {
+          //   // Generate a preview of a DOCX file
+          //   const docxImageBlob = await generateDocxPreviewImage();
+          //   if (docxImageBlob) {
+          //     const previewPath = `users/${user.uid}/${file.name}_preview.png`;
+          //     const previewRef = ref(storage, previewPath);
+          //     const previewUploadTask = uploadBytesResumable(previewRef, docxImageBlob);
 
-              await new Promise<void>((resolve, reject) => {
-                previewUploadTask.on(
-                  "state_changed",
-                  (snapshot) => {
-                    const percent = Math.round(
-                      (snapshot.bytesTransferred / snapshot.totalBytes) * 10
-                    );
-                    setUploadProgress((prev) => Math.min(prev + percent, 90));
-                  },
-                  reject,
-                  resolve
-                );
-              });
-            }
-          }
+          //     await new Promise<void>((resolve, reject) => {
+          //       previewUploadTask.on(
+          //         "state_changed",
+          //         (snapshot) => {
+          //           const percent = Math.round(
+          //             (snapshot.bytesTransferred / snapshot.totalBytes) * 10
+          //           );
+          //           setUploadProgress((prev) => Math.min(prev + percent, 90));
+          //         },
+          //         reject,
+          //         resolve
+          //       );
+          //     });
+          //   }
+          // }
 
           // Simulate progress while processing
           for (let i = 91; i <= 95; i++) {
