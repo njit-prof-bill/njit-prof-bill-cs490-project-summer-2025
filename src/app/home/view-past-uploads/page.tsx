@@ -2,12 +2,13 @@
 import { useAuth } from "@/context/authContext";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
-import { ref, list, getDownloadURL, StorageReference, deleteObject } from "firebase/storage";
+import { ref, list, getDownloadURL, StorageReference, deleteObject, getMetadata, FullMetadata } from "firebase/storage";
 import { storage } from "@/lib/firebase";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@radix-ui/react-accordion";
 import { renderAsync } from "docx-preview";
 import JSZip from "jszip";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogOverlay, DialogPortal, DialogTitle, DialogTrigger } from "@radix-ui/react-dialog";
+import { metadata } from "@/app/server-layout";
 
 // Types
 
@@ -290,6 +291,64 @@ function DeleteFileButton({fileRef, fileRefs, setFileRefs}: DeleteFileButtonProp
   );
 }
 
+function formatDateTime(isoString: string): string {
+  const date = new Date(isoString);
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  }).format(date);
+
+  // const monthName = date.toLocaleString("default", {month: "long"});
+  // const day = date.getDate();
+  // const year = date.getFullYear();
+
+  // const hours = String(date.getHours()).padStart(2, "0");
+  // const minutes = String(date.getMinutes()).padStart(2, "0");
+
+  // return `${monthName} ${day}, ${year} at ${hours}:${minutes}`;
+}
+
+function GetFileDate({fileRef}: {fileRef: StorageReference}) {
+  const [date, setDate] = useState<string>("");
+
+  useEffect(() => {
+    getMetadata(fileRef).then((metadata: FullMetadata) => {
+      if (metadata && metadata.timeCreated) {
+        const formatted = formatDateTime(metadata.timeCreated);
+        setDate(formatted);
+      }
+    }).catch((error) => {
+      console.error("Could not retrieve upload date: ", error);
+      setDate("");
+    });
+  }, [fileRef]);
+
+  return (
+    <div>
+      {date ? `Uploaded on: ${date}` : "Date unavailable"}
+    </div>
+  );
+  // return (date ? `Uploaded on: ${date}` : "Date unavailable");
+
+  // useEffect(() => {
+  //   getMetadata(fileRef).then((metadata) => {
+  //     if (metadata) setDate(metadata.timeCreated);
+  //   }).catch((error) => {
+  //     console.error("Could not retrieve upload date: ", error);
+  //     setDate("");
+  //   });
+  // }, [fileRef]);
+
+  // return (
+  //   <div>Uploaded on: {date}</div>
+  // );
+}
+
 export default function ViewPastUploadsPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -313,7 +372,11 @@ export default function ViewPastUploadsPage() {
       <Accordion type="single" collapsible className="w-full">
         {fileRefs.map((f, i) => (
           <AccordionItem key={i} value={`item-${i}`}>
-            <AccordionTrigger>{f.name}</AccordionTrigger>
+            {/* <AccordionTrigger>{f.name} <GetFileDate fileRef={f}></GetFileDate></AccordionTrigger> */}
+            <AccordionTrigger>
+              <div>{f.name}</div>
+              <GetFileDate fileRef={f}></GetFileDate>
+            </AccordionTrigger>
             <AccordionContent>
               <PreviewFile fileRef={f} />
               <DeleteFileButton fileRef={f} fileRefs={fileRefs} setFileRefs={setFileRefs} />
