@@ -302,15 +302,6 @@ function formatDateTime(isoString: string): string {
     minute: "2-digit",
     hour12: true,
   }).format(date);
-
-  // const monthName = date.toLocaleString("default", {month: "long"});
-  // const day = date.getDate();
-  // const year = date.getFullYear();
-
-  // const hours = String(date.getHours()).padStart(2, "0");
-  // const minutes = String(date.getMinutes()).padStart(2, "0");
-
-  // return `${monthName} ${day}, ${year} at ${hours}:${minutes}`;
 }
 
 function GetFileDate({fileRef}: {fileRef: StorageReference}) {
@@ -333,20 +324,6 @@ function GetFileDate({fileRef}: {fileRef: StorageReference}) {
       {date ? `Uploaded on: ${date}` : "Date unavailable"}
     </div>
   );
-  // return (date ? `Uploaded on: ${date}` : "Date unavailable");
-
-  // useEffect(() => {
-  //   getMetadata(fileRef).then((metadata) => {
-  //     if (metadata) setDate(metadata.timeCreated);
-  //   }).catch((error) => {
-  //     console.error("Could not retrieve upload date: ", error);
-  //     setDate("");
-  //   });
-  // }, [fileRef]);
-
-  // return (
-  //   <div>Uploaded on: {date}</div>
-  // );
 }
 
 export default function ViewPastUploadsPage() {

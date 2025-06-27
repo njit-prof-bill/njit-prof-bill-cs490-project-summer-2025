@@ -7,6 +7,7 @@ import { collection, doc, setDoc, addDoc, getDoc, updateDoc, serverTimestamp, Ti
 import { getAIResponse, saveAIResponse, AIPrompt } from "@/components/ai/aiPrompt";
 import { User } from "firebase/auth";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogOverlay, DialogPortal, DialogTitle, DialogTrigger } from "@radix-ui/react-dialog";
+import { date } from "zod";
 
 type freeFormEntry = {
     text: string;
@@ -120,38 +121,59 @@ function LabelMenu({freeFormList, setFreeFormList, text, setText, label, setLabe
     );
 }
 
+function formatDateTime(isoString: string): string {
+    console.log(isoString);
+    const date = new Date(isoString);
+
+    return new Intl.DateTimeFormat("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+    }).format(date);
+}
+
 type SubmissionDateProps = {
     dateSubmitted: Timestamp;
 };
 
 function SubmissionDate({dateSubmitted}: SubmissionDateProps) {
-    const date = dateSubmitted.toDate();
-    const month = date.getMonth();
-    const day = date.getDate();
-    const year = date.getFullYear();
-    const hours = date.getHours();
-    const minutes = date.getMinutes();
-    const seconds = date.getSeconds();
-    const monthNames = [
-        "January",
-        "February",
-        "March",
-        "April",
-        "May",
-        "June",
-        "July",
-        "August",
-        "September",
-        "October",
-        "November",
-        "December"
-    ];
-    const monthWord = monthNames[month];
+    const date = formatDateTime(dateSubmitted.toDate().toISOString());
+
     return (
         <div>
-            <p>Modified: {monthWord} {day}, {year} at {hours}:{minutes}:{seconds}</p>
+            <p>Modified: {date}</p>
         </div>
     );
+    // const date = dateSubmitted.toDate();
+    // const month = date.getMonth();
+    // const day = date.getDate();
+    // const year = date.getFullYear();
+    // const hours = date.getHours();
+    // const minutes = date.getMinutes();
+    // const seconds = date.getSeconds();
+    // const monthNames = [
+    //     "January",
+    //     "February",
+    //     "March",
+    //     "April",
+    //     "May",
+    //     "June",
+    //     "July",
+    //     "August",
+    //     "September",
+    //     "October",
+    //     "November",
+    //     "December"
+    // ];
+    // const monthWord = monthNames[month];
+    // return (
+    //     <div>
+    //         <p>Modified: {monthWord} {day}, {year} at {hours}:{minutes}:{seconds}</p>
+    //     </div>
+    // );
 }
 
 export default function FreeFormPage() {
