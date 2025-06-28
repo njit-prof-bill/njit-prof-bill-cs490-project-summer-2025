@@ -192,11 +192,24 @@ export default function FreeFormPage() {
             label: formJson.label as string,
             dateSubmitted: Timestamp.now()
         };
+
+        // If the new submission's label matches a pre-existing submission, overwrite it
+        const sameLabelIdx = freeFormList.findIndex((entry) => entry.label === newSubmission.label);
+
+        let newList = freeFormList;
+        if (sameLabelIdx != -1) {
+            // Overwrite the pre-existing submission instead of creating a new one
+            // and save the changes to the database
+            console.log(`Overwriting "${freeFormList[sameLabelIdx].label}"...`);
+            newList[sameLabelIdx] = newSubmission;
+        } else {
+            newList = [...freeFormList, newSubmission];
+        }
         // For debugging purposes
         // console.log(newSubmission);
 
         // Append new submission to list
-        const newList = [...freeFormList, newSubmission];
+        // const newList = [...freeFormList, newSubmission];
         setFreeFormList(newList);
 
         // Save updated submission list to the database
