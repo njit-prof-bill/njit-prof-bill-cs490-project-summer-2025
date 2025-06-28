@@ -1,4 +1,4 @@
-// src/components/fileUpload.tsx
+// src/components/FileUpload.tsx
 "use client";
 
 import React, { useState } from "react";
@@ -33,6 +33,11 @@ const FileUpload: React.FC = () => {
   const toast = useToast();
 
   const onDrop = async (acceptedFiles: File[]) => {
+    if (!user) {
+      toast.error("You must be logged in to upload files");
+      return;
+    }
+
     const newFiles = acceptedFiles.map((file) => ({
       file,
       status: "uploading" as const,
@@ -44,52 +49,72 @@ const FileUpload: React.FC = () => {
       const file = newFiles[i].file;
 
       try {
-        // mark as processing
+        // 1) mark as processing
         setUploadedFiles((prev) =>
-          prev.map((f, j) =>
-            j === idx ? { ...f, status: "processing" } : f
-          )
+          prev.map((f, j) => (j === idx ? { ...f, status: "processing" } : f))
         );
 
-        // parse via API
+        // 2) get a fresh Firebase ID token
+        const idToken = await user.getIdToken();
+        if (!idToken) throw new Error("Failed to retrieve auth token");
+
+        // 3) upload to your GridFS endpoint
+        const form = new FormData();
+        form.append("file", file);
+
+        const headers: Record<string, string> = {
+          Authorization: `Bearer ${idToken}`,
+        };
+
+        const uploadRes = await fetch("/api/uploads", {
+          method: "POST",
+          headers,
+          body: form,
+        });
+
+        if (!uploadRes.ok) {
+          const text = await uploadRes.text();
+          console.error("Upload error:", uploadRes.status, text);
+          throw new Error(`Upload failed: ${uploadRes.status}`);
+        }
+
+        const { fileId, filename, type } = (await uploadRes.json()) as {
+          fileId: string;
+          filename: string;
+          type: string;
+        };
+
+        // 4) now parse the document
         const parsedData = await parseDocument(file);
         parseAndUpdateProfile(parsedData);
 
-        // save to Firestore
-        if (user) {
-          await addDoc(
-            collection(db, "users", user.uid, "corpus"),
-            {
-              source:    "upload",
-              createdAt: serverTimestamp(),
-              ...parsedData,
-            }
-          );
-        }
+        // 5) persist a record in Firestore
+        await addDoc(
+          collection(db, "users", user.uid, "uploadedFiles"),
+          {
+            source:    "upload",
+            fileId,     // gridFs reference
+            filename,
+            type,
+            createdAt: serverTimestamp(),
+            ...parsedData,
+          }
+        );
 
-        // mark completed
+        // 6) mark completed
         setUploadedFiles((prev) =>
-          prev.map((f, j) =>
-            j === idx ? { ...f, status: "completed" } : f
-          )
+          prev.map((f, j) => (j === idx ? { ...f, status: "completed" } : f))
         );
         toast.success(`${file.name} processed & saved!`);
-      } catch (error) {
+      } catch (error: unknown) {
+        const message =
+          error instanceof Error ? error.message : "Processing failed";
         setUploadedFiles((prev) =>
           prev.map((f, j) =>
-            j === idx
-              ? {
-                  ...f,
-                  status: "error",
-                  error:
-                    error instanceof Error
-                      ? error.message
-                      : "Processing failed",
-                }
-              : f
+            j === idx ? { ...f, status: "error", error: message } : f
           )
         );
-        toast.error(`Failed to process ${file.name}`);
+        toast.error(`Failed to process ${file.name}: ${message}`);
       }
     }
   };
@@ -164,7 +189,8 @@ const FileUpload: React.FC = () => {
               : "Upload your documents"}
           </h3>
           <p className="text-neutral-400 mb-4">
-            Drag and drop your resume, LinkedIn profile, or career documents here
+            Drag and drop your resume, LinkedIn profile, or career documents
+            here
           </p>
           <div className="text-sm text-neutral-500">
             Supported formats: PDF, DOCX, TXT, MD (max 10MB)
@@ -200,9 +226,7 @@ const FileUpload: React.FC = () => {
                     </p>
                   )}
                   {uf.status === "error" && uf.error && (
-                    <p className="text-sm text-red-500">
-                      {uf.error}
-                    </p>
+                    <p className="text-sm text-red-500">{uf.error}</p>
                   )}
                 </div>
               </div>
