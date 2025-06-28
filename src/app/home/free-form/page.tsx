@@ -183,7 +183,7 @@ export default function FreeFormPage() {
         const formJson = Object.fromEntries(formData.entries())
 
         // For debugging purposes
-        console.log(formJson);
+        // console.log(formJson);
 
         // Convert the object into a new free-form submission object 
         // and append it to the list of free-form submissions
@@ -193,14 +193,14 @@ export default function FreeFormPage() {
             dateSubmitted: Timestamp.now()
         };
 
-        // If the new submission's label matches a pre-existing submission, overwrite it
+        // If the new submission's label matches a pre-existing submission, update it
         const sameLabelIdx = freeFormList.findIndex((entry) => entry.label === newSubmission.label);
 
         let newList = freeFormList;
         if (sameLabelIdx != -1) {
-            // Overwrite the pre-existing submission instead of creating a new one
-            // and save the changes to the database
-            console.log(`Overwriting "${freeFormList[sameLabelIdx].label}"...`);
+            // Update the pre-existing submission instead of 
+            // appending a new one to the list, and save the changes to the database
+            console.log(`Updating "${freeFormList[sameLabelIdx].label}"...`);
             newList[sameLabelIdx] = newSubmission;
         } else {
             newList = [...freeFormList, newSubmission];
@@ -225,7 +225,7 @@ export default function FreeFormPage() {
             try {
                 const responseObj = JSON.parse(AIResponse);
                 // For debugging purposes
-                console.log(JSON.parse(AIResponse));
+                // console.log(JSON.parse(AIResponse));
                 saveAIResponse(responseObj, user, db);
             } catch (error) {
                 console.error("Error parsing AI response: ", error);
