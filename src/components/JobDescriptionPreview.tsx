@@ -87,14 +87,7 @@ export default function JobDescriptionPreview({
             </p>
           </div>
           <div className="flex items-start space-x-3">
-            <div className="text-right">
-              <p className="text-xs text-zinc-500">
-                Extracted
-              </p>
-              <p className="text-sm text-zinc-400">
-                {formatDate(selectedJob.extractedAt)}
-              </p>
-            </div>
+          
             {onDelete && (
               <button
                 onClick={handleDelete}
@@ -135,12 +128,22 @@ export default function JobDescriptionPreview({
 
       {/* Footer */}
       <div className="bg-zinc-800 px-6 py-3 border-t border-zinc-700">
-        <div className="flex justify-between items-center text-xs text-zinc-500">
+
+              <div className="text-right">
+              <p className="text-xs text-zinc-500">
+                Extracted
+              </p>
+              <p className="text-sm text-zinc-400">
+                {formatDate(selectedJob.extractedAt)}
+              </p>
+            </div>
+
+        {/* <div className="flex justify-between items-center text-xs text-zinc-500">
           <span>Document ID: {selectedJob.id}</span>
           <span>
             {selectedJob.jobDescription.length} characters
           </span>
-        </div>
+        </div> */}
       </div>
     </div>
   );

@@ -30,28 +30,12 @@ const BaseLayout: React.FC<{
       
       {/* Middle Column */}
        {/* backgroundColor: '#181818'  */}
-      <div style={{ flex: 1, padding: '0.2rem'}}>
-
-       
-        
+      <div style={{ flex: 1, padding: '0.2rem'}}> 
         <ResumeLeftTop />
         {/* <ResumeLeftBottom/> */}
-
         
       </div>
       
-
-
-      {/* Right Column */}
-      {/* <div style={{ flex: 1, padding: '0.2rem'}}> */}
-        {/*  backgroundColor: '#181818'  */}
-
-
-            {/* <ResumeUserText /> */}
-      {/* </div> */}
-
-
-
 
     </div>
   );

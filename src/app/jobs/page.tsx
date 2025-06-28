@@ -52,15 +52,7 @@ export default function HomePage() {
         <div className="flex flex-col items-center">
          
 
-
-
-
-
-
-
          <Card className="w-full max-w shadow-lg">
-
-   
 
                 <CardHeader>
                     <CardTitle>Placeholder: recent activity </CardTitle>
@@ -68,21 +60,14 @@ export default function HomePage() {
 
                 <CardContent>
 
-                
-
-
                 <JobDescriptionUpload />
 
                 <JobDescriptionsList />
-
-
-
 
                     <CardDescription>
             
                     </CardDescription>
                 </CardContent>
-
 
 
 {/* 
