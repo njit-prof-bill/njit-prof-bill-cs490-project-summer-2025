@@ -122,7 +122,7 @@ function LabelMenu({freeFormList, setFreeFormList, text, setText, label, setLabe
 }
 
 function formatDateTime(isoString: string): string {
-    console.log(isoString);
+    // console.log(isoString);
     const date = new Date(isoString);
 
     return new Intl.DateTimeFormat("en-US", {
@@ -147,33 +147,6 @@ function SubmissionDate({dateSubmitted}: SubmissionDateProps) {
             <p>Modified: {date}</p>
         </div>
     );
-    // const date = dateSubmitted.toDate();
-    // const month = date.getMonth();
-    // const day = date.getDate();
-    // const year = date.getFullYear();
-    // const hours = date.getHours();
-    // const minutes = date.getMinutes();
-    // const seconds = date.getSeconds();
-    // const monthNames = [
-    //     "January",
-    //     "February",
-    //     "March",
-    //     "April",
-    //     "May",
-    //     "June",
-    //     "July",
-    //     "August",
-    //     "September",
-    //     "October",
-    //     "November",
-    //     "December"
-    // ];
-    // const monthWord = monthNames[month];
-    // return (
-    //     <div>
-    //         <p>Modified: {monthWord} {day}, {year} at {hours}:{minutes}:{seconds}</p>
-    //     </div>
-    // );
 }
 
 export default function FreeFormPage() {
@@ -210,7 +183,7 @@ export default function FreeFormPage() {
         const formJson = Object.fromEntries(formData.entries())
 
         // For debugging purposes
-        console.log(formJson);
+        // console.log(formJson);
 
         // Convert the object into a new free-form submission object 
         // and append it to the list of free-form submissions
@@ -219,11 +192,22 @@ export default function FreeFormPage() {
             label: formJson.label as string,
             dateSubmitted: Timestamp.now()
         };
+
+        // If the new submission's label matches a pre-existing submission, update it
+        const sameLabelIdx = freeFormList.findIndex((entry) => entry.label === newSubmission.label);
+
+        let newList = freeFormList;
+        if (sameLabelIdx != -1) {
+            // Update the pre-existing submission instead of 
+            // appending a new one to the list, and save the changes to the database
+            console.log(`Updating "${freeFormList[sameLabelIdx].label}"...`);
+            newList[sameLabelIdx] = newSubmission;
+        } else {
+            newList = [...freeFormList, newSubmission];
+        }
         // For debugging purposes
         // console.log(newSubmission);
 
-        // Append new submission to list
-        const newList = [...freeFormList, newSubmission];
         setFreeFormList(newList);
 
         // Save updated submission list to the database
@@ -241,7 +225,7 @@ export default function FreeFormPage() {
             try {
                 const responseObj = JSON.parse(AIResponse);
                 // For debugging purposes
-                console.log(JSON.parse(AIResponse));
+                // console.log(JSON.parse(AIResponse));
                 saveAIResponse(responseObj, user, db);
             } catch (error) {
                 console.error("Error parsing AI response: ", error);
@@ -282,7 +266,7 @@ export default function FreeFormPage() {
                 }));
             }
         }
-        console.log(freeFormList);
+        // console.log(freeFormList);
         return freeFormList;
     }
 
@@ -329,201 +313,3 @@ export default function FreeFormPage() {
         </div>
     );
 }
-
-// "use client";
-
-// import { useAuth } from "@/context/authContext";
-// import { useRouter } from "next/navigation";
-// import { useState, useEffect } from "react";
-// import { db } from "@/lib/firebase";
-// import { collection, doc, setDoc, addDoc, getDoc, updateDoc, serverTimestamp, Timestamp } from "firebase/firestore";
-// import { getAuth } from "firebase/auth";
-// import { getAIResponse, saveAIResponse, AIPrompt } from "@/components/ai/aiPrompt";
-
-// type freeFormEntry = {
-//     text: string;
-//     label: string;
-//     dateSubmitted: Timestamp;
-// };
-
-// export default function FreeFormPage() {
-//     // For checking whether the user is logged in and redirecting them accordingly
-//     const { user, loading } = useAuth();
-//     const router = useRouter();
-//     // For retrieving any free-form text the user entered in the past (if it exists)
-//     const [freeFormList, setFreeFormList] = useState<freeFormEntry[]>([]);
-//     const [label, setLabel] = useState("");
-//     const [corpusValue, setCorpusValue] = useState("");
-//     const [submitting, setSubmitting] = useState(false);
-//     const [submitted, setSubmitted] = useState(false);
-
-
-//     useEffect(() => {
-//         if (!loading && user) {
-//             // Retrieve the user's pre-existing free-form text (if it exists)
-//             getFreeFormList().then((arr: freeFormEntry[]) => {
-//                 if (arr) {
-//                     setFreeFormList([...arr]);
-//                 }
-//             });
-//             // getFreeFormCorpus().then((corpus) => {
-//             //     if (corpus) {
-//             //         setCorpusValue(corpus);
-//             //     }
-//             // });
-//         }
-//         if (!loading && !user) {
-//             router.push("/"); // Redirect to landing page if not authenticated
-//         }
-//     }, [user, loading, router]);
-
-//     if (loading) {
-//         return <p>Loading...</p>; // Show a loading state while checking auth
-//     }
-
-//     async function getFreeFormList() {
-//         let freeFormList: freeFormEntry[] = [];
-//         if (user) {
-//             const documentRef = doc(db, "users", user.uid);
-//             const document = await getDoc(documentRef);
-//             const data = document.data();
-//             if (data?.freeFormText) {
-//                 freeFormList = data.freeFormText.map((entry: any): freeFormEntry => ({
-//                     text: entry.text ?? "",
-//                     label: entry.label ?? "",
-//                     dateSubmitted: entry.dateSubmitted ?? new Timestamp(0, 0)
-//                 }));
-//             }
-//         }
-//         return freeFormList;
-//     }
-
-//     // async function setFreeFormCorpus(corpus: string) {
-//     //     // Documents are identified in the database by the user's UID
-//     //     let uid;
-//     //     if (user) {
-//     //         uid = user.uid;
-//     //     } else {
-//     //         // Don't try to send anything if user is logged out
-//     //         return;
-//     //     }
-//     //     setSubmitting(true);
-//     //     setSubmitted(false);
-//     //     setTimeout(() => setSubmitted(false), 3000); // reset after 3s
-
-//     //     // Should overwrite the user's pre-existing submission
-//     //     const newSubmissionRef = doc(db, "users", uid);
-//     //     await updateDoc(newSubmissionRef, { freeFormText: { text: corpus } });
-//     //     setSubmitting(false);
-//     //     setSubmitted(true);
-
-//     //     // For debugging purposes
-//     //     //console.log("User    UID: ", user.uid);
-//     //     //console.log("Document ID: ", newSubmissionRef.id);
-//     // }
-
-//     // async function getFreeFormCorpus() {
-//     //     // Retrieve the user's pre-existing free-form text (if it exists)
-//     //     let corpus = "";
-//     //     let uid;
-//     //     if (user) {
-//     //         // Documents are identified in the database by the user's UID
-//     //         uid = user.uid;
-//     //     } else {
-//     //         // Don't try to retrieve anything if the user is logged out
-//     //         return corpus;
-//     //     }
-//     //     const documentRef = doc(db, "users", uid);
-//     //     const document = await getDoc(documentRef);
-//     //     if (!document.exists) {
-//     //         return corpus;
-//     //     }
-//     //     const data = document.data();
-//     //     // Check if the data exists before attempting to parse it
-//     //     if (data && typeof data.freeFormText.text === "string") {
-//     //         corpus = data.freeFormText.text;
-//     //     }
-//     //     return corpus;
-//     // }
-//     function getFreeFormCorpus(freeFormList: freeFormEntry[], index: number) {
-//         // Just to test, get the 1st submission in the array
-//         return (Array.isArray(freeFormList) && freeFormList) ? freeFormList[0] : "";
-//     }
-
-//     async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-//         // Prevent the browser from reloading the page
-//         event.preventDefault();
-
-//         // Read the form data and then convert it to a JSON object
-//         const form = event.target as HTMLFormElement;
-//         const formData = new FormData(form);
-//         const formJson = Object.fromEntries(formData.entries())
-
-//         // Send the form data to the database
-//         //setFreeFormCorpus(formJson.text as string);
-
-//         // For debugging purposes
-//         console.log(formJson);
-
-//         // Send AI prompt with text corpus and retrieve its response
-//         // try {
-//         //     const AIResponse = await getAIResponse(AIPrompt, formJson.text as string);
-//         //     // For debugging purposes
-//         //     //console.log(AIResponse);
-
-//         //     // For debugging purposes
-//         //     // console.log(finalResponse);
-
-//         //     try {
-//         //         const responseObj = JSON.parse(AIResponse);
-//         //         // For debugging purposes
-//         //         console.log(JSON.parse(AIResponse));
-//         //         saveAIResponse(responseObj, user, db);
-//         //     } catch (error) {
-//         //         console.error("Error parsing AI response: ", error);
-//         //     }
-//         // } catch (error) {
-//         //     console.error("Error fetching AI response: ", error);
-//         // }
-
-//     }
-//     return (
-//         <div className="flex items-center justify-center min-h-screen text-gray-900 dark:text-gray-100">
-//             <div className="w-full max-w-md">
-//                 <h1 className="text-2xl font-bold mb-6">Free-form Text</h1>
-//                 <form method="post" onSubmit={handleSubmit}>
-//                     <p>Enter some text in the box below. <br></br>When you are done, hit 'Submit'.</p>
-//                     <textarea
-//                         name="text"
-//                         // Using defaultValue since I just want to pre-fill the text field once
-//                         // with whatever the user entered there in a past session,
-//                         // instead of updating the field while the user is typing in it.
-//                         //defaultValue={corpusValue}
-//                         placeholder="Start typing here"
-//                         rows={15}
-//                         className="w-full p-3 border border-gray-300 rounded-md mb-4"
-
-//                     ></textarea>
-//                     <input
-//                         name="label"
-//                         placeholder="Enter a label for this submission"
-//                         className="w-full p-3 border border-gray-300 rounded-md mb-4"
-//                         required
-//                     ></input>
-//                     <button
-//                         type="submit"
-//                         disabled={submitting}
-//                         className={`px-4 py-2 rounded text-white font-semibold transition duration-300 ${submitted
-//                                 ? "bg-blue-600 cursor-not-allowed"
-//                                 : submitting
-//                                     ? "bg-gray-500 cursor-wait"
-//                                     : "bg-blue-600 hover:bg-blue-700 cursor-pointer"
-//                             }`}
-//                     >
-//                         {submitting ? "Submitting..." : submitted ? "Submitted!" : "Submit"}
-//                     </button>
-//                 </form>
-//             </div>
-//         </div>
-//     );
-// }
