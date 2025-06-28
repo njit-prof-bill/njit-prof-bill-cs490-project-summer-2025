@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
           content: `${prompt}\n\n${text}`
         }
       ],
-      model: "llama-3.3-70b-versatile",
+      model: "llama3-70b-8192",
     });
 
     const response = completion.choices[0]?.message?.content;

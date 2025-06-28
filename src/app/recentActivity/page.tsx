@@ -14,6 +14,12 @@ import Spinner, { spinnerStyles } from '../../components/ui/Spinner';
 
 
 
+import JobDescriptionsList from "@/components/JobDescriptionsList";
+
+
+
+
+
 export default function HomePage() {
 
     const { user, loading } = useAuth();
@@ -41,24 +47,39 @@ export default function HomePage() {
     return (
         <div className="flex flex-col items-center">
          
-         <Card className="w-full max-w-md shadow-lg">
+
+
+
+
+
+
+
+         <Card className="w-full max-w shadow-lg">
+
+   
 
                 <CardHeader>
                     <CardTitle>Placeholder: recent activity </CardTitle>
                 </CardHeader>
 
                 <CardContent>
-                    <CardDescription>
-              
-                    
 
+                <JobDescriptionsList />
+
+                    <CardDescription>
+            
                     </CardDescription>
                 </CardContent>
 
 
+
+{/* 
+
                 <CardFooter>
-                    <CardDescription></CardDescription>
-                </CardFooter>
+                    <CardDescription>
+                        stuff
+                    </CardDescription>
+                </CardFooter> */}
 
             </Card>
 
