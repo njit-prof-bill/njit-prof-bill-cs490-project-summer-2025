@@ -208,8 +208,6 @@ export default function FreeFormPage() {
         // For debugging purposes
         // console.log(newSubmission);
 
-        // Append new submission to list
-        // const newList = [...freeFormList, newSubmission];
         setFreeFormList(newList);
 
         // Save updated submission list to the database
