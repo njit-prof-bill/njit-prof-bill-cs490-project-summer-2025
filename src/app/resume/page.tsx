@@ -10,6 +10,11 @@ import Spinner, { spinnerStyles } from '@/components/ui/Spinner';
 import { processDocumentHandler } from '@/lib/processDocument';
 import { getSourceDocIdFromFile } from '@/utils/getSourceDocId';
 
+import GeneratorCard from "../../components/GeneratorCard";
+
+
+
+
 import {
   Card,
   CardHeader,
@@ -19,6 +24,8 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import SubmissionFeedback from "@/components/SubmissionFeedback";
+
+
 
 export default function HomePage() {
   const { user, loading } = useAuth();
@@ -104,6 +111,8 @@ export default function HomePage() {
 return (
   <BaseLayout
     leftContent={<div>Left Sidebar</div>}
+  
+  
     middleContent={
       <div className="flex flex-col items-center">
         <Card className="w-full max-w-md shadow-lg">
@@ -140,9 +149,26 @@ return (
           </CardContent>
           <CardFooter />
         </Card>
+
+
+                 {/* <GeneratorCard /> */}
+              <GeneratorCard />
+
+
       </div>
+
+
+
+
+
+
     }
-    rightContent={<div>Right Sidebar</div>}
+
+
+    
+    // rightContent={<div>Right Sidebar</div>}
+
+
   />
 );
 

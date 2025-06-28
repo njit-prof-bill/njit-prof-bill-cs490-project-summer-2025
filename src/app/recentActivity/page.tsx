@@ -14,8 +14,12 @@ import Spinner, { spinnerStyles } from '../../components/ui/Spinner';
 
 
 
-import JobDescriptionsList from "@/components/JobDescriptionsList";
+// import JobDescriptionsList from "@/components/JobDescriptionsList";
 
+// import JobDescriptionUpload from "@/components/JobDescriptionUpload";
+
+
+// import BaseLayout from "@/components/BaseLayout";
 
 
 
@@ -64,7 +68,15 @@ export default function HomePage() {
 
                 <CardContent>
 
-                <JobDescriptionsList />
+                
+
+{/* 
+                <JobDescriptionUpload />
+
+                <JobDescriptionsList /> */}
+
+
+
 
                     <CardDescription>
             

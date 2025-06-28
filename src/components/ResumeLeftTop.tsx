@@ -4,6 +4,13 @@ import { onAuthStateChanged, User } from 'firebase/auth';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 import JobDescriptionUpload from '../components/JobDescriptionUpload'; // adjust the path if needed
 
+
+
+import JobDescriptionsList from "@/components/JobDescriptionsList";
+
+
+
+
 const ResumeLeftTop: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [jsonObject, setJsonObject] = useState<any | null>(null);
@@ -45,7 +52,14 @@ const ResumeLeftTop: React.FC = () => {
                 </CardHeader>
 
                 <CardContent>
-                  <JobDescriptionUpload />
+
+              
+                  
+                   <JobDescriptionsList />
+
+                  {/* <JobDescriptionUpload /> */}
+
+                  
                 </CardContent>
 
                 <CardFooter>
