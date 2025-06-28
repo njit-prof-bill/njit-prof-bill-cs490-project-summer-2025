@@ -10,6 +10,11 @@ import Spinner, { spinnerStyles } from '@/components/ui/Spinner';
 import { processDocumentHandler } from '@/lib/processDocument';
 import { getSourceDocIdFromFile } from '@/utils/getSourceDocId';
 
+import GeneratorPageLayout from "../../components/GeneratorPageLayout";
+
+
+
+
 import {
   Card,
   CardHeader,
@@ -19,6 +24,8 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import SubmissionFeedback from "@/components/SubmissionFeedback";
+
+
 
 export default function HomePage() {
   const { user, loading } = useAuth();
@@ -102,48 +109,75 @@ export default function HomePage() {
 
 
 return (
-  <BaseLayout
-    leftContent={<div>Left Sidebar</div>}
-    middleContent={
-      <div className="flex flex-col items-center">
-        <Card className="w-full max-w-md shadow-lg">
-          <CardHeader>
-            <CardTitle>Upload Your Resume</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <CardDescription>  Upload a resume file (.docx, .pdf, .txt, .md)</CardDescription>
-            <style>{spinnerStyles}</style>
-              {uploading && (
-                <div style={{ display: 'flex', justifyContent: 'center' }}>
-                  <Spinner />
-                </div>
-              )}
-            <input
-              id="docx-upload"
-              type="file"
-              accept=".docx,.pdf,.txt,.md"
-              onChange={handleUploadAfterPick}
-              ref={fileInputRef}
-              className="hidden"
-            />
-            <label htmlFor="docx-upload" className="cursor-pointer">
-              <div className="inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
-                {uploading ? "Uploading..." : "Select and Upload"}
-              </div>
-            </label>
-            {submissionStatus && (
-              <SubmissionFeedback
-                type={submissionStatus.type}
-                message={submissionStatus.message}
-              />
-            )}
-          </CardContent>
-          <CardFooter />
-        </Card>
-      </div>
-    }
-    rightContent={<div>Right Sidebar</div>}
-  />
+
+
+  <div>
+
+         {/* <GeneratorCard /> */}
+              <GeneratorPageLayout />
+  </div>
+
+
+  // <BaseLayout
+  //   leftContent={<div>Left Sidebar</div>}
+  
+  
+  //   middleContent={
+  //     <div className="flex flex-col items-center">
+  //       <Card className="w-full max-w-md shadow-lg">
+  //         <CardHeader>
+  //           <CardTitle>Upload Your Resume</CardTitle>
+  //         </CardHeader>
+  //         <CardContent className="space-y-4">
+  //           <CardDescription>  Upload a resume file (.docx, .pdf, .txt, .md)</CardDescription>
+  //           <style>{spinnerStyles}</style>
+  //             {uploading && (
+  //               <div style={{ display: 'flex', justifyContent: 'center' }}>
+  //                 <Spinner />
+  //               </div>
+  //             )}
+  //           <input
+  //             id="docx-upload"
+  //             type="file"
+  //             accept=".docx,.pdf,.txt,.md"
+  //             onChange={handleUploadAfterPick}
+  //             ref={fileInputRef}
+  //             className="hidden"
+  //           />
+  //           <label htmlFor="docx-upload" className="cursor-pointer">
+  //             <div className="inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
+  //               {uploading ? "Uploading..." : "Select and Upload"}
+  //             </div>
+  //           </label>
+  //           {submissionStatus && (
+  //             <SubmissionFeedback
+  //               type={submissionStatus.type}
+  //               message={submissionStatus.message}
+  //             />
+  //           )}
+  //         </CardContent>
+  //         <CardFooter />
+  //       </Card>
+
+
+            
+
+
+  //     </div>
+
+
+
+
+
+
+  //   }
+
+
+    
+  //   // rightContent={<div>Right Sidebar</div>}
+
+
+  // />
 );
 
 }

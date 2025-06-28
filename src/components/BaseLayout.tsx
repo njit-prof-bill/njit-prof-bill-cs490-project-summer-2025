@@ -12,8 +12,8 @@ import ResumeLeftBottom from '../components/ResumeLeftBottom';
 const BaseLayout: React.FC<{
   leftContent: React.ReactNode;
   middleContent: React.ReactNode;
-  rightContent: React.ReactNode;
-}> = ({ leftContent, middleContent, rightContent }) => {
+  // rightContent: React.ReactNode;
+}> = ({ leftContent, middleContent }) => {
   return (
     <div style={{
       display: 'flex',
@@ -23,26 +23,20 @@ const BaseLayout: React.FC<{
       {/* Left Column */}
       {/*  backgroundColor: '#181818'  */}
       <div style={{ flex: 1, padding: '0.2rem' }}>
-        
-        <ResumeLeftTop />
-        <ResumeLeftBottom/>
-
+         <ResumeCenter />
+        {middleContent}
+       
       </div>
       
       {/* Middle Column */}
        {/* backgroundColor: '#181818'  */}
-      <div style={{ flex: 2, padding: '0.2rem'}}>
-
-        <ResumeCenter />
-        {middleContent}
+      <div style={{ flex: 1, padding: '0.2rem'}}> 
+        <ResumeLeftTop />
+        {/* <ResumeLeftBottom/> */}
         
       </div>
       
-      {/* Right Column */}
-      <div style={{ flex: 1, padding: '0.2rem'}}>
-        {/*  backgroundColor: '#181818'  */}
-            <ResumeUserText />
-      </div>
+
     </div>
   );
 };

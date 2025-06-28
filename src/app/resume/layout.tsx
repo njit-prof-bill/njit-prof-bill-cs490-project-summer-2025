@@ -26,7 +26,7 @@ export default function HomeLayout({ children }: { children: ReactNode }) {
                 {isSidePanelOpen && <SidePanel isSidePanelOpen={isSidePanelOpen} />}
 
                 {/* Main Content */}
-                <main className="flex-1 p-4">
+                <main className="flex-1 max-w p-1">
                     {children}
 
 
