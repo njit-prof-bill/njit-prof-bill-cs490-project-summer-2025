@@ -55,14 +55,18 @@ export default function HomePage() {
          <Card className="w-full max-w shadow-lg">
 
                 <CardHeader>
-                    <CardTitle>Placeholder: recent activity </CardTitle>
+                    <CardTitle> </CardTitle>
                 </CardHeader>
 
                 <CardContent>
 
+
+{/* -----------Job Description Listings display UI and Upload ------------*/}
                 <JobDescriptionUpload />
 
                 <JobDescriptionsList />
+{/* ---------------------------------------------- */}
+
 
                     <CardDescription>
             
