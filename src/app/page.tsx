@@ -352,7 +352,8 @@ export default function LandingPage() {
           </div>
         </div>
       </div>
-
+   
+      {/* Global styles for animations */}
       <style jsx>{`
         @keyframes fade-in-up {
           from { opacity: 0; transform: translateY(40px); }
