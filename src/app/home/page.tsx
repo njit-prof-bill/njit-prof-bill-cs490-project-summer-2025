@@ -11,6 +11,7 @@ import { useProfile } from "@/context/profileContext";
 
 import FileUpload from "@/components/fileUpload";
 import BiographyForm from "@/components/biographyForm";
+import UploadedItems from "@/components/uploadedItems";
 import {
   Card,
   CardHeader,
@@ -91,6 +92,19 @@ export default function HomePage() {
                       <BiographyForm />
                     </TabsContent>
                   </Tabs>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* UploadedItems Card */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+              <Card className="mt-6">
+                <CardHeader>
+                  <CardTitle>Your Past Uploads</CardTitle>
+                  <CardDescription>Manage and review your previously uploaded files or texts</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <UploadedItems />
                 </CardContent>
               </Card>
             </motion.div>
