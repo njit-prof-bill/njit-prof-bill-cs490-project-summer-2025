@@ -6,12 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { auth, db } from "@/lib/firebase"; // Make sure to export db from your firebase config
 import { getFriendlyFirebaseErrorMessage } from "@/utils/firebaseErrorHandler";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
-import { toast } from "sonner"; // Import Sonner's toast function
-import { GoogleAuthProvider, signInWithPopup } from "firebase/auth"; // Import GoogleAuthProvider
-import { FcGoogle } from "react-icons/fc"; // Import Google icon for the button
+import { toast } from "sonner";
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { FcGoogle } from "react-icons/fc";
 
 interface RegistrationFormValues {
     email: string;
@@ -32,14 +33,37 @@ export function RegistrationForm({ onRegister }: { onRegister: () => void }) {
         },
     });
 
+    // Function to store user data in Firestore
+    const storeUserInFirestore = async (user: any, authMethod: 'email' | 'google') => {
+        try {
+            await setDoc(doc(db, 'users', user.uid), {
+                email: user.email,
+                uid: user.uid,
+                authMethod: authMethod,
+                emailVerified: user.emailVerified,
+                createdAt: serverTimestamp(),
+                lastLoginAt: serverTimestamp(),
+            });
+            console.log("User data stored in Firestore successfully");
+        } catch (error) {
+            console.error("Error storing user data in Firestore:", error);
+            // Don't throw error here as the user is already created in Auth
+            toast.error("Account created but there was an issue storing user data. Please contact support if you experience issues.");
+        }
+    };
+
     const handleGoogleSignIn = async () => {
         try {
-            const provider = new GoogleAuthProvider(); // Initialize GoogleAuthProvider
-            const result = await signInWithPopup(auth, provider); // Sign in with Google popup
+            const provider = new GoogleAuthProvider();
+            const result = await signInWithPopup(auth, provider);
             const user = result.user;
 
+            // Store user data in Firestore
+            await storeUserInFirestore(user, 'google');
+
             console.log("Google sign-in successful:", user);
-            onRegister(); // Notify the parent component
+            toast.success("Successfully signed in with Google!");
+            onRegister();
         } catch (err: unknown) {
             toast.error("Failed to sign in with Google. Please try again.");
             console.error("Google sign-in error:", err);
@@ -55,18 +79,23 @@ export function RegistrationForm({ onRegister }: { onRegister: () => void }) {
         }
 
         try {
+            // Create user in Firebase Auth
             const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
             const user = userCredential.user;
+
+            // Store user data in Firestore
+            await storeUserInFirestore(user, 'email');
 
             // Send email verification
             await sendEmailVerification(user);
 
             // Show toast notification
-            toast.success("Verification email sent! Please check your inbox and verify your email before logging in.");
+            toast.success("Account created successfully! Verification email sent - please check your inbox and verify your email before logging in.");
 
             onRegister(); // Notify the parent component to switch to the login form
         } catch (err: unknown) {
             setError(getFriendlyFirebaseErrorMessage(err));
+            console.error("Registration error:", err);
         }
     };
 
@@ -177,7 +206,7 @@ export function RegistrationForm({ onRegister }: { onRegister: () => void }) {
                     onClick={handleGoogleSignIn}
                     className="w-full flex items-center justify-center gap-2 dark:bg-black dark:text-stone-300 dark:border-stone-600 border-1 bg-white text-black border-black"
                 >
-                    <FcGoogle className="h-5 w-5" /> {/* Google Icon */}
+                    <FcGoogle className="h-5 w-5" />
                     Continue with Google
                 </Button>
             </form>
