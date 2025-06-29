@@ -26,6 +26,8 @@ export async function POST(request: NextRequest) {
           - jobDescription: The full job description text (cleaned up)
           - timestamp: Current ISO timestamp
 
+         - jobDescription should remain mostly the original size of the full job description text after cleanup
+
           If any information is not found, use "Not specified" for that field. Always return valid JSON only.`
         },
         {

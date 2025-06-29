@@ -186,14 +186,15 @@ export default function AIJobDescriptionsListGenerate({
   }
 
   return (
-    <div className="w-full px-0 pb-0">
+    <div className="w-full px-0 pb-0 h-full">
       
-      {/* Grid: 1/3 for list, 2/3 for preview */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-2">
+      {/* Grid: 2/5 for list, 3/5 for preview */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-2 h-full">
 
-        {/* Left side - Job List (1/3 width) */}
-        <div className="lg:col-span-2 space-y-2">
-          <div className="flex justify-between items-center mb-6">
+        {/* Left side - Job List (2/5 width) */}
+        <div className="lg:col-span-2 flex flex-col h-full">
+          {/* Header - Fixed */}
+          <div className="flex justify-between items-center mb-4 flex-shrink-0">
             <h2 className="text-xl font-semibold">
               Job Descriptions ({jobDescriptions.length})
             </h2>
@@ -205,57 +206,83 @@ export default function AIJobDescriptionsListGenerate({
             </button>
           </div>
 
-          {jobDescriptions.map((job) => (
-            <div
-              key={job.id}
-              onClick={() => handleJobSelect(job)}
-              className={`bg-zinc-900 border rounded-lg p-3 cursor-pointer transition-all hover:border-zinc-600 ${
-                selectedJob?.id === job.id 
-                  ? 'border-orange-600 bg-zinc-800' 
-                  : 'border-zinc-700'
-              }`}
-            >
-              <div className="flex justify-between items-start space-x-3">
-                <div className="flex-1 space-y-2 min-w-0">
-                  {/* Job Title */}
-                  <h3 className="text-lg font-semibold text-white truncate">
-                    {job.jobTitle}
-                  </h3>
-                  
-                  {/* Company Name */}
-                  <p className="text-orange-600 font-medium truncate">
-                    {job.companyName}
-                  </p>
-
-                  {/* Timestamp */}
-                  <p className="text-xs text-zinc-500">
-                    {formatDate(job.extractedAt)}
-                  </p>
-                </div>
-
-                {/* Delete Button */}
-                <button
-                  onClick={(e) => handleDelete(job.id, e)}
-                  disabled={deletingId === job.id}
-                  className="flex-shrink-0 p-2 text-zinc-500 hover:text-red-500 hover:bg-zinc-800 rounded transition-colors disabled:opacity-50"
-                  title="Delete job description"
+          {/* Scrollable Job List */}
+          <div className="flex-1 overflow-y-auto pr-2 min-h-0 max-h-full job-list-scroll" style={{
+            scrollbarWidth: 'thin',
+            scrollbarColor: '#52525b #27272a'
+          }}>
+            {/* Custom scrollbar styles for webkit browsers */}
+            <style jsx>{`
+              .job-list-scroll::-webkit-scrollbar {
+                width: 6px;
+              }
+              .job-list-scroll::-webkit-scrollbar-track {
+                background: #27272a;
+                border-radius: 3px;
+              }
+              .job-list-scroll::-webkit-scrollbar-thumb {
+                background: #52525b;
+                border-radius: 3px;
+              }
+              .job-list-scroll::-webkit-scrollbar-thumb:hover {
+                background: #71717a;
+              }
+            `}</style>
+            
+            <div className="space-y-2">
+              {jobDescriptions.map((job) => (
+                <div
+                  key={job.id}
+                  onClick={() => handleJobSelect(job)}
+                  className={`bg-zinc-900 border rounded-lg p-3 cursor-pointer transition-all hover:border-zinc-600 ${
+                    selectedJob?.id === job.id 
+                      ? 'border-orange-600 bg-zinc-800' 
+                      : 'border-zinc-700'
+                  }`}
                 >
-                  {deletingId === job.id ? (
-                    <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                  ) : (
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  )}
-                </button>
-              </div>
+                  <div className="flex justify-between items-start space-x-3">
+                    <div className="flex-1 space-y-2 min-w-0">
+                      {/* Job Title */}
+                      <h3 className="text-lg font-semibold text-white truncate">
+                        {job.jobTitle}
+                      </h3>
+                      
+                      {/* Company Name */}
+                      <p className="text-orange-600 font-medium truncate">
+                        {job.companyName}
+                      </p>
+
+                      {/* Timestamp */}
+                      <p className="text-xs text-zinc-500">
+                        {formatDate(job.extractedAt)}
+                      </p>
+                    </div>
+
+                    {/* Delete Button */}
+                    <button
+                      onClick={(e) => handleDelete(job.id, e)}
+                      disabled={deletingId === job.id}
+                      className="flex-shrink-0 p-2 text-zinc-500 hover:text-red-500 hover:bg-zinc-800 rounded transition-colors disabled:opacity-50"
+                      title="Delete job description"
+                    >
+                      {deletingId === job.id ? (
+                        <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                      ) : (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
         </div>
 
-        {/* Right side - Job Details (2/3 width) */}
+        {/* Right side - Job Details (3/5 width) */}
         <div className="lg:col-span-3 lg:sticky lg:top-4 lg:self-start">
           <AIJobDescriptionPreview 
             selectedJob={selectedJob} 

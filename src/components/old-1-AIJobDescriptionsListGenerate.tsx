@@ -18,15 +18,11 @@ interface JobDescription {
 interface AIJobDescriptionsListGenerateProps {
   selectedJob?: JobDescription | null;
   onJobSelect?: (job: JobDescription | null) => void;
-  onGenerate?: () => void;
-  isGenerating?: boolean;
 }
 
 export default function AIJobDescriptionsListGenerate({ 
   selectedJob: externalSelectedJob, 
-  onJobSelect,
-  onGenerate,
-  isGenerating = false
+  onJobSelect
 }: AIJobDescriptionsListGenerateProps) {
   const [jobDescriptions, setJobDescriptions] = useState<JobDescription[]>([]);
   const [internalSelectedJob, setInternalSelectedJob] = useState<JobDescription | null>(null);
@@ -191,11 +187,14 @@ export default function AIJobDescriptionsListGenerate({
 
   return (
     <div className="w-full px-0 pb-0">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left side - Job List */}
-        <div className="space-y-4">
+      
+      {/* Grid: 1/3 for list, 2/3 for preview */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-2">
+
+        {/* Left side - Job List (1/3 width) */}
+        <div className="lg:col-span-2 space-y-2">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold text-white">
+            <h2 className="text-xl font-semibold">
               Job Descriptions ({jobDescriptions.length})
             </h2>
             <button
@@ -210,7 +209,7 @@ export default function AIJobDescriptionsListGenerate({
             <div
               key={job.id}
               onClick={() => handleJobSelect(job)}
-              className={`bg-zinc-900 border rounded-lg p-4 cursor-pointer transition-all hover:border-zinc-600 ${
+              className={`bg-zinc-900 border rounded-lg p-3 cursor-pointer transition-all hover:border-zinc-600 ${
                 selectedJob?.id === job.id 
                   ? 'border-orange-600 bg-zinc-800' 
                   : 'border-zinc-700'
@@ -256,14 +255,12 @@ export default function AIJobDescriptionsListGenerate({
           ))}
         </div>
 
-        {/* Right side - Job Details */}
-        <div className="lg:sticky lg:top-4 lg:self-start">
+        {/* Right side - Job Details (2/3 width) */}
+        <div className="lg:col-span-3 lg:sticky lg:top-4 lg:self-start">
           <AIJobDescriptionPreview 
             selectedJob={selectedJob} 
             onDelete={handleDelete}
             isDeletingFromPreview={deletingId === selectedJob?.id}
-            onGenerate={onGenerate}
-            isGenerating={isGenerating}
             user={user}
           />
         </div>
