@@ -3,7 +3,13 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter }
 import AIJobDescriptionsListGenerate from "@/components/AIJobDescriptionsListGenerate";
 import GenerateResumeButton from '@/components/GenerateResumeButton';
 
+
+import AIResumesList from '@/components/AIResumesList';
+
 import { useState, useEffect } from "react";
+
+
+
 
 // Match the interface from your existing components
 interface JobDescription {
@@ -21,9 +27,11 @@ interface GenerationResult {
   error?: string;
   // Define based on what your generation function returns
 }
+
 export default function GenerateCard() {
     const [selectedJob, setSelectedJob] = useState<JobDescription | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
+    const [showJobDescriptions, setShowJobDescriptions] = useState(true);
  
     const handleGenerationComplete = (result: GenerationResult) => {
         console.log('Resume generated:', result);
@@ -52,25 +60,66 @@ export default function GenerateCard() {
                     variant="primary"
                     className="w-64 mx-auto"
                     // className="w-full"
-
                 />
-
-
-
             </h2>
 
+            {/* Toggle Button - positioned above the content */}
+            <div className="flex justify-end mb-4">
+                <button
+                    onClick={() => setShowJobDescriptions(!showJobDescriptions)}
+                    className="flex items-center gap-2 px-3 py-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 text-white rounded-lg transition-colors duration-200 shadow-sm"
+                    title={showJobDescriptions ? "Hide Job Descriptions" : "Show Job Descriptions"}
+                >
+                    <span className="text-sm font-medium">
+                        {showJobDescriptions ? "Hide Jobs" : "Show Jobs"}
+                    </span>
+                    <svg 
+                        className={`w-4 h-4 transform transition-transform duration-200 ${showJobDescriptions ? 'rotate-180' : ''}`}
+                        fill="none" 
+                        stroke="currentColor" 
+                        viewBox="0 0 24 24"
+                    >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+            </div>
+
             <div className="flex flex-row w-full max-w">
-                <div className="flex w-full h-screen">
-                    <div className="flex-1 p-0.5 p-1">
-                        <img src="/resume-page-example-2.jpg" alt="Fetched Image" />  
+                <div className="flex w-full h-screen transition-all duration-300 ease-in-out">
+                    {/* Left div - expands when right div is hidden */}
+                    <div className={`p-0.5 p-1 transition-all duration-300 ease-in-out ${
+                        showJobDescriptions ? 'flex-1' : 'flex-[3]'
+                    }`}>
+
+
+                    {/* --------------------Component for Displaying Generated Resume HERE: ------------*/}
+
+
+
+                        {/* <img src="/resume-page-example-2.jpg" alt="Fetched Image" />   */}
+
+                        < AIResumesList/>
+
+
+                    {/* ----------------------------------------------------------------------- */}
+
+
                     </div>
-                    <div className="flex-1 p-0.5 p-1">
-                        <AIJobDescriptionsListGenerate 
-                            selectedJob={selectedJob}
-                            onJobSelect={handleJobSelect}
-                            onGenerate={handleGenerate}
-                            isGenerating={isGenerating}
-                        />
+
+                    {/* Right div - collapses/expands based on state */}
+                    <div className={`p-0.5 p-1 transition-all duration-300 ease-in-out overflow-hidden ${
+                        showJobDescriptions 
+                            ? 'flex-1 opacity-100' 
+                            : 'flex-0 w-0 opacity-0 pointer-events-none'
+                    }`}>
+                        {showJobDescriptions && (
+                            <AIJobDescriptionsListGenerate 
+                                selectedJob={selectedJob}
+                                onJobSelect={handleJobSelect}
+                                onGenerate={handleGenerate}
+                                isGenerating={isGenerating}
+                            />
+                        )}
                     </div>
                 </div>
             </div>

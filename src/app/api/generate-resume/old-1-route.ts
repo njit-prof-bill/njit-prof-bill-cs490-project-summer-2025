@@ -33,61 +33,43 @@ export async function POST(request: NextRequest) {
       );
     }
 
-
-// Additional prompts if they come out too rigid.
-// These give goofy but interesting results:
-
-// - Tailor the resume to fit the JOB REQUIREMENTS as best as possible
-// - Make up qualifications that fit the requirements if you have to
-
-
-
-
-
-
     // Prepare the resume generation prompt for Groq
-    const prompt = `Generate a professional resume tailored to the job requirements. Output ONLY the resume content without any introductory text, explanations, or comments.
+    const prompt = `You are an expert resume writer and career counselor. Create a professional, tailored resume that maximally aligns with the job requirements.
 
-JOB REQUIREMENTS:
+JOB DESCRIPTION TO MATCH:
 Title: ${jobData.jobTitle}
 Company: ${jobData.companyName}
-Description: ${jobData.jobDescription}
+Full Description: ${jobData.jobDescription}
 
-
-USER DATA:
+USER PROFILE DATA:
 ${JSON.stringify(userData, null, 2)}
 
-RESUME FORMAT REQUIREMENTS:
-- Start directly with the contact information
-- Include: Contact Info, Professional Summary, Experience, Skills, Education
-- Use bullet points for experience items
-- Tailor content to match job keywords and requirements
-- Quantify achievements where possible
-- Keep content ATS-friendly
-- Maximum 2 pages worth of content
+INSTRUCTIONS:
+1. Create a complete, professional resume in a clean, ATS-friendly format
+2. Tailor the resume specifically to match the job requirements and keywords from the job description
+3. Highlight relevant skills, experience, and achievements that align with the position
+4. Use action verbs and quantify achievements where possible
+5. Ensure the resume is compelling and positions the candidate as an ideal fit
+6. Include appropriate sections: Contact Info, Professional Summary, Experience, Skills, Education, etc.
+7. Keep the resume concise but comprehensive (1-2 pages worth of content)
+8. Use the user's actual data but present it in the most favorable light for this specific job
 
-- Tailor the resume to fit the JOB REQUIREMENTS as best as possible
-
-OUTPUT ONLY THE RESUME CONTENT - NO ADDITIONAL TEXT OR COMMENTS.`;
+Format the resume in clean, professional text format with clear section headers and bullet points.`;
 
     // Call Groq API to generate the resume
     const completion = await groq.chat.completions.create({
       messages: [
         {
-          role: 'system',
-          content: 'You are a professional resume writer. Output only the requested resume content without any explanatory text, introductions, or commentary. Start directly with the resume content.'
-        },
-        {
           role: 'user',
           content: prompt,
         },
       ],
-      model: 'llama3-70b-8192',
-      temperature: 0.3, // Lower temperature for more consistent formatting
-      max_tokens: 1500, // Increased for full resume content
+      model: 'llama3-70b-8192', // Using the same model as your reference
+      temperature: 0.7,
+      max_tokens: 1000,
     });
 
-    let generatedResume = completion.choices[0]?.message?.content;
+    const generatedResume = completion.choices[0]?.message?.content;
 
     if (!generatedResume) {
       return NextResponse.json(
@@ -95,9 +77,6 @@ OUTPUT ONLY THE RESUME CONTENT - NO ADDITIONAL TEXT OR COMMENTS.`;
         { status: 500 }
       );
     }
-
-    // Clean up any remaining unwanted text
-    generatedResume = cleanResumeContent(generatedResume);
 
     // Prepare resume data to return (and potentially store client-side)
     const resumeData = {
@@ -133,35 +112,6 @@ OUTPUT ONLY THE RESUME CONTENT - NO ADDITIONAL TEXT OR COMMENTS.`;
       { status: 500 }
     );
   }
-}
-
-// Helper function to clean up unwanted commentary from the AI response
-function cleanResumeContent(content: string): string {
-  // Remove common AI commentary patterns
-  const unwantedPatterns = [
-    /^Here is a tailored resume.*?:/i,
-    /^Here's a professional resume.*?:/i,
-    /^I've created a resume.*?:/i,
-    /^Below is a tailored resume.*?:/i,
-    /^This resume is tailored.*?:/i,
-    /^Here's the resume.*?:/i,
-    /^I'll create a resume.*?:/i,
-    /^Let me create.*?:/i,
-    /^I've tailored this resume.*?:/i,
-    /^This professional resume.*?:/i,
-  ];
-
-  let cleanedContent = content.trim();
-
-  // Remove unwanted introductory text
-  for (const pattern of unwantedPatterns) {
-    cleanedContent = cleanedContent.replace(pattern, '').trim();
-  }
-
-  // Remove any leading/trailing whitespace and normalize line breaks
-  cleanedContent = cleanedContent.replace(/^\s+|\s+$/g, '');
-  
-  return cleanedContent;
 }
 
 // Handle OPTIONS for CORS if needed

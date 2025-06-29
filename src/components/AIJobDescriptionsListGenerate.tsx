@@ -189,7 +189,7 @@ export default function AIJobDescriptionsListGenerate({
     <div className="w-full px-0 pb-0">
       
       {/* Grid: 1/3 for list, 2/3 for preview */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-2">
 
         {/* Left side - Job List (1/3 width) */}
         <div className="lg:col-span-2 space-y-2">

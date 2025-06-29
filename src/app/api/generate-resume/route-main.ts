@@ -33,18 +33,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-
-// Additional prompts if they come out too rigid.
-// These give goofy but interesting results:
-
-// - Tailor the resume to fit the JOB REQUIREMENTS as best as possible
-// - Make up qualifications that fit the requirements if you have to
-
-
-
-
-
-
     // Prepare the resume generation prompt for Groq
     const prompt = `Generate a professional resume tailored to the job requirements. Output ONLY the resume content without any introductory text, explanations, or comments.
 
@@ -52,7 +40,6 @@ JOB REQUIREMENTS:
 Title: ${jobData.jobTitle}
 Company: ${jobData.companyName}
 Description: ${jobData.jobDescription}
-
 
 USER DATA:
 ${JSON.stringify(userData, null, 2)}
@@ -65,8 +52,6 @@ RESUME FORMAT REQUIREMENTS:
 - Quantify achievements where possible
 - Keep content ATS-friendly
 - Maximum 2 pages worth of content
-
-- Tailor the resume to fit the JOB REQUIREMENTS as best as possible
 
 OUTPUT ONLY THE RESUME CONTENT - NO ADDITIONAL TEXT OR COMMENTS.`;
 

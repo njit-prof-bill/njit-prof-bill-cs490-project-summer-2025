@@ -149,7 +149,7 @@ export default function AIJobDescriptionPreview({
       </div>
 
       {/* Job Description Content */}
-      <div className="p-6">
+      <div className="p-4">
         <div className="space-y-4">
           <div>
             <h3 className="text-sm font-medium text-zinc-400 uppercase tracking-wide mb-3">

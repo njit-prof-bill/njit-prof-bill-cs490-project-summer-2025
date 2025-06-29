@@ -68,16 +68,9 @@ export default function GenerateResumeButton({
         throw new Error('User profile data not found. Please complete your profile first.');
       }
 
-      const categoryData = userDocSnap.data();
-      
-      // Extract only the groqResponse key from the document
-      const groqResponse = categoryData?.groqResponse;
-      
-      if (!groqResponse) {
-        throw new Error('User profile data (groqResponse) not found. Please complete your profile first.');
-      }
+      const userData = userDocSnap.data();
 
-      // Send only the groqResponse data to API route for Groq processing
+      // Send data to API route for Groq processing
       const response = await fetch('/api/generate-resume', {
         method: 'POST',
         headers: {
@@ -85,7 +78,7 @@ export default function GenerateResumeButton({
         },
         body: JSON.stringify({
           jobData: selectedJob,
-          userData: groqResponse, // Only sending the groqResponse content
+          userData: userData,
           userId: user.uid,
         }),
       });
