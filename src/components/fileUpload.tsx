@@ -62,13 +62,9 @@ const FileUpload: React.FC = () => {
         const form = new FormData();
         form.append("file", file);
 
-        const headers: Record<string, string> = {
-          Authorization: `Bearer ${idToken}`,
-        };
-
         const uploadRes = await fetch("/api/uploads", {
           method: "POST",
-          headers,
+          headers: { Authorization: `Bearer ${idToken}` },
           body: form,
         });
 
