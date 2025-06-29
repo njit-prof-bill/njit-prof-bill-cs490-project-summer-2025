@@ -4,10 +4,7 @@ import { useAuth } from "@/context/authContext";
 import { collection, query, orderBy, getDocs, DocumentData, doc, deleteDoc } from "firebase/firestore";
 import { firestore } from "@/lib/firebase";
 
-
-import JobDescriptionPreview from "./JobDescriptionPreview";
-
-
+import AIJobDescriptionPreview from "./AIJobDescriptionPreview";
 
 interface JobDescription {
   id: string;
@@ -18,13 +15,28 @@ interface JobDescription {
   createdAt: any;
 }
 
-export default function JobDescriptionsList() {
+interface AIJobDescriptionsListGenerateProps {
+  selectedJob?: JobDescription | null;
+  onJobSelect?: (job: JobDescription | null) => void;
+  onGenerate?: () => void;
+  isGenerating?: boolean;
+}
+
+export default function AIJobDescriptionsListGenerate({ 
+  selectedJob: externalSelectedJob, 
+  onJobSelect,
+  onGenerate,
+  isGenerating = false
+}: AIJobDescriptionsListGenerateProps) {
   const [jobDescriptions, setJobDescriptions] = useState<JobDescription[]>([]);
-  const [selectedJob, setSelectedJob] = useState<JobDescription | null>(null);
+  const [internalSelectedJob, setInternalSelectedJob] = useState<JobDescription | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const { user } = useAuth();
+
+  // Use external selectedJob if provided, otherwise use internal state
+  const selectedJob = externalSelectedJob !== undefined ? externalSelectedJob : internalSelectedJob;
 
   const fetchJobDescriptions = async () => {
     if (!user?.uid) {
@@ -88,9 +100,12 @@ export default function JobDescriptionsList() {
     }
   };
 
-  const truncateText = (text: string, maxLength: number = 300) => {
-    if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + "...";
+  const handleJobSelect = (job: JobDescription) => {
+    if (onJobSelect) {
+      onJobSelect(job);
+    } else {
+      setInternalSelectedJob(job);
+    }
   };
 
   const handleDelete = async (jobId: string, event?: React.MouseEvent) => {
@@ -131,7 +146,11 @@ export default function JobDescriptionsList() {
       
       // Clear selection if the deleted job was selected
       if (selectedJob?.id === jobId) {
-        setSelectedJob(null);
+        if (onJobSelect) {
+          onJobSelect(null);
+        } else {
+          setInternalSelectedJob(null);
+        }
       }
 
     } catch (err) {
@@ -141,9 +160,6 @@ export default function JobDescriptionsList() {
       setDeletingId(null);
     }
   };
-
-  // Import the preview component at the top of the file
-  // import JobDescriptionPreview from "./JobDescriptionPreview";
 
   if (loading) {
     return (
@@ -193,7 +209,7 @@ export default function JobDescriptionsList() {
           {jobDescriptions.map((job) => (
             <div
               key={job.id}
-              onClick={() => setSelectedJob(job)}
+              onClick={() => handleJobSelect(job)}
               className={`bg-zinc-900 border rounded-lg p-4 cursor-pointer transition-all hover:border-zinc-600 ${
                 selectedJob?.id === job.id 
                   ? 'border-orange-600 bg-zinc-800' 
@@ -240,22 +256,17 @@ export default function JobDescriptionsList() {
           ))}
         </div>
 
-
-
         {/* Right side - Job Details */}
         <div className="lg:sticky lg:top-4 lg:self-start">
-          <JobDescriptionPreview 
+          <AIJobDescriptionPreview 
             selectedJob={selectedJob} 
             onDelete={handleDelete}
             isDeletingFromPreview={deletingId === selectedJob?.id}
+            onGenerate={onGenerate}
+            isGenerating={isGenerating}
+            user={user}
           />
-
-
-          
         </div>
-
-
-
       </div>
     </div>
   );

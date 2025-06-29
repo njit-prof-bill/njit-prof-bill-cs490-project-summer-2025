@@ -13,12 +13,18 @@ interface JobDescriptionPreviewProps {
   selectedJob: JobDescription | null;
   onDelete?: (jobId: string) => void;
   isDeletingFromPreview?: boolean;
+  onGenerate?: () => void;
+  isGenerating?: boolean;
+  user?: any; // Replace with your actual User type
 }
 
-export default function JobDescriptionPreview({ 
+export default function AIJobDescriptionPreview({ 
   selectedJob, 
   onDelete, 
-  isDeletingFromPreview = false 
+  isDeletingFromPreview = false,
+  onGenerate,
+  isGenerating = false,
+  user
 }: JobDescriptionPreviewProps) {
   
   const handleDelete = () => {
@@ -26,6 +32,12 @@ export default function JobDescriptionPreview({
     
     if (confirm(`Are you sure you want to delete "${selectedJob.jobTitle}" at ${selectedJob.companyName}?`)) {
       onDelete(selectedJob.id);
+    }
+  };
+
+  const handleGenerate = () => {
+    if (onGenerate) {
+      onGenerate();
     }
   };
 
@@ -66,7 +78,7 @@ export default function JobDescriptionPreview({
             No Job Selected
           </h3>
           <p className="text-sm text-zinc-600">
-            Click on a job from the list to view its full details
+            Click on a job from the list to view its details
           </p>
         </div>
       </div>
@@ -87,7 +99,33 @@ export default function JobDescriptionPreview({
             </p>
           </div>
           <div className="flex items-start space-x-3">
-          
+            {/* Generate Button - Only show if onGenerate is provided */}
+            {onGenerate && (
+              <button
+                onClick={handleGenerate}
+                disabled={isGenerating || !user}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:opacity-50 text-white text-sm font-medium rounded transition-colors flex items-center space-x-2"
+                title={!user ? "Please log in to generate AI insights" : "Generate AI insights for this job"}
+              >
+                {isGenerating ? (
+                  <>
+                    <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    <span>Generating Resume...</span>
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    <span>Generate Resume</span>
+                  </>
+                )}
+              </button>
+            )}
+
+            {/* Delete Button */}
             {onDelete && (
               <button
                 onClick={handleDelete}
@@ -128,15 +166,14 @@ export default function JobDescriptionPreview({
 
       {/* Footer */}
       <div className="bg-zinc-800 px-6 py-3 border-t border-zinc-700">
-
-              <div className="text-right">
-              <p className="text-xs text-zinc-500">
-                Extracted
-              </p>
-              <p className="text-sm text-zinc-400">
-                {formatDate(selectedJob.extractedAt)}
-              </p>
-            </div>
+        <div className="text-right">
+          <p className="text-xs text-zinc-500">
+            Extracted
+          </p>
+          <p className="text-sm text-zinc-400">
+            {formatDate(selectedJob.extractedAt)}
+          </p>
+        </div>
       </div>
     </div>
   );
