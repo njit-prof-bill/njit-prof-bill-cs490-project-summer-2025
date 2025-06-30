@@ -22,7 +22,9 @@ export default function ViewJobAdsPage() {
   const [editData, setEditData] = useState<Partial<JobAd>>({});
   const [refresh, setRefresh] = useState(false);
   const [generating, setGenerating] = useState(false); // Track whether resume is being generated
-  const [error, setError] = useState<string | null>(null);
+  const [generated, setGenerated] = useState(false); // Track whether resume was successfully generated
+  // const [error, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && user) {
@@ -40,17 +42,21 @@ export default function ViewJobAdsPage() {
     if (!user) return;
     try {
       setGenerating(true);
-      setError(null); // Clear any previous error message
+      // setError(null); // Clear any previous error message
+      setStatus(null); // Clear any previous status message
       const userRef = doc(db, "users", user.uid);
       const userSnap = await getDoc(userRef);
       if (userSnap.exists() && userSnap.data().resumeFields) {
         const resumeInfo = JSON.stringify(userSnap.data().resumeFields);
         const jobAdText = jobAds[idx].jobDescription;
         await getResumeAIResponse(generateResumeAIPrompt, resumeInfo, jobAdText);
+        setStatus("Resume generated!");
+        setTimeout(() => setStatus(null), 3000);
       }
     } catch (error) {
-      console.error("Error occurred while generating resume: ", error);
-      setError((error as Error).message);
+      setStatus(`Error occurred while generating resume: ${error}`);
+      // console.error("Error occurred while generating resume: ", error);
+      // setError((error as Error).message);
     } finally {
       setGenerating(false);
     }
@@ -188,6 +194,9 @@ export default function ViewJobAdsPage() {
               >
                 Delete
               </button>
+              <div>
+                {status && <p className="mt-2 text-sm text-green-700">{status}</p>}
+              </div>
             </div>
           )}
         </div>
