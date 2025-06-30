@@ -297,7 +297,16 @@ export async function getResumeAIResponse(prompt: string, resume: any, jobAd: st
     const result = await model.generateContent(fullPrompt);
     const response = result.response;
     const text = response.text();
-    console.log(text);
+    // console.log(text);
+    // AI's response has '```json' as first line
+    // and '```' as last line, which prevents
+    // JSON.parse() from processing it correctly.
+    var lines = text.split('\n');
+    lines.splice(0,1);  // Remove 1st line
+    lines.splice(-1,1); // Remove last line
+    var finalResponse = lines.join('\n');
+    console.log(finalResponse)
+    return finalResponse;
   } catch (error) {
       console.error("Error generating resume: ", error);
   }
