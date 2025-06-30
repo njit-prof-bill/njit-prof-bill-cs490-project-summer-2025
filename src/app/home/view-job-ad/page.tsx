@@ -5,7 +5,7 @@ import { db } from "@/lib/firebase";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { Timestamp } from "firebase/firestore";
-import { getResumeAIResponse, generateResumeAIPrompt } from "@/components/ai/aiPrompt";
+import { getResumeAIResponseJSON, generateResumeAIPromptJSON, getResumeAIResponseText, generateResumeAIPromptText } from "@/components/ai/aiPrompt";
 
 type JobAd = {
   companyName: string;
@@ -63,7 +63,8 @@ export default function ViewJobAdsPage() {
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [editData, setEditData] = useState<Partial<JobAd>>({});
   const [refresh, setRefresh] = useState(false);
-  const [generating, setGenerating] = useState(false); // Track whether resume is being generated
+  const [generatingText, setGeneratingText] = useState(false); // Track whether plain text resume is being generated
+  const [generatingJSON, setGeneratingJSON] = useState(false); // Track whether JSON resume is being generated
   const [generated, setGenerated] = useState(false); // Track whether resume was successfully generated
   // const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null); // Track status message related to resume generation
@@ -81,10 +82,36 @@ export default function ViewJobAdsPage() {
     }
   }, [user, loading, refresh]);
 
-  const handleGenerate = async (idx: number) => {
+  const handleGenerateText = async (idx: number) => {
     if (!user) return;
     try {
-      setGenerating(true);
+      setGeneratingJSON(false);
+      setGeneratingText(true);
+      setNewResume(null); // Clear any previous result
+      setStatus(null); // Clear any previous status message
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+      if (userSnap.exists() && userSnap.data().resumeFields) {
+        const resumeInfo = JSON.stringify(userSnap.data().resumeFields);
+        const jobAdText = jobAds[idx].jobDescription;
+        const result = await getResumeAIResponseText(generateResumeAIPromptJSON, resumeInfo, jobAdText);
+        setNewResume(result);
+        setStatus("Resume generated!");
+        setTimeout(() => setStatus(null), 3000);
+      }
+    } catch (error) {
+      setStatus(`Error occurred while generating resume: ${error}`);
+      setNewResume(null);
+    } finally {
+      setGeneratingText(false);
+    }
+  };
+
+  const handleGenerateJSON = async (idx: number) => {
+    if (!user) return;
+    try {
+      setGeneratingText(false);
+      setGeneratingJSON(true);
       // setError(null); // Clear any previous error message
       setNewResume(null); // Clear any previous result
       setStatus(null); // Clear any previous status message
@@ -93,7 +120,7 @@ export default function ViewJobAdsPage() {
       if (userSnap.exists() && userSnap.data().resumeFields) {
         const resumeInfo = JSON.stringify(userSnap.data().resumeFields);
         const jobAdText = jobAds[idx].jobDescription;
-        const result = await getResumeAIResponse(generateResumeAIPrompt, resumeInfo, jobAdText);
+        const result = await getResumeAIResponseJSON(generateResumeAIPromptJSON, resumeInfo, jobAdText);
         setNewResume(result);
         setStatus("Resume generated!");
         setTimeout(() => setStatus(null), 3000);
@@ -104,7 +131,7 @@ export default function ViewJobAdsPage() {
       // console.error("Error occurred while generating resume: ", error);
       // setError((error as Error).message);
     } finally {
-      setGenerating(false);
+      setGeneratingJSON(false);
     }
   };
 
@@ -227,10 +254,17 @@ export default function ViewJobAdsPage() {
               </div>
               <button
                 className="bg-blue-500 text-white px-4 py-2 rounded mr-2"
-                disabled={generating}
-                onClick={() => handleGenerate(selectedIndex)}
+                disabled={generatingText || generatingJSON}
+                onClick={() => handleGenerateText(selectedIndex)}
               >
-                {generating ? "Generating..." : "Generate Resume"}
+                {generatingText ? "Generating..." : "Generate Text Resume"}
+              </button>
+              <button
+                className="bg-blue-500 text-white px-4 py-2 rounded mr-2"
+                disabled={generatingJSON || generatingText}
+                onClick={() => handleGenerateJSON(selectedIndex)}
+              >
+                {generatingJSON ? "Generating..." : "Generate JSON Resume"}
               </button>
               <button
                 className="bg-yellow-500 text-white px-4 py-2 rounded mr-2"

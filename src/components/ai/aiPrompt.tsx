@@ -250,7 +250,7 @@ export async function getJobAdAIResponse(aiClient: any, jobAdText: string) {
   return aiResponse;
 }
 
-export const generateResumeAIPrompt = `
+export const generateResumeAIPromptJSON = `
 Use the following information submitted by a user to generate a tailored resume:
 
 1. A JSON object representing the user's information
@@ -285,7 +285,7 @@ Please return your response as a strict JSON object in the following format:
 
 Do not include any explanation, markdown, rich text, or commentary in your response.`;
 
-export async function getResumeAIResponse(prompt: string, resume: any, jobAd: string) {
+export async function getResumeAIResponseJSON(prompt: string, resume: any, jobAd: string) {
   // prompt: AI prompt
   // resume: JSON object of the 'resumeFields' structure
   // jobAd: text from a job ad
@@ -310,5 +310,58 @@ export async function getResumeAIResponse(prompt: string, resume: any, jobAd: st
   } catch (error) {
       console.error("Error generating resume: ", error);
       return "";
+  }
+}
+
+export const generateResumeAIPromptText = `
+Given a JSON object with the following structure:
+
+*** Start of Resume JSON Structure ***
+| Field | Type | Description |
+|-------|------|-------------|
+| fullName | String | Full name of the user. |
+| contact | Object | User's contact details. |
+| contact.email | Array of Strings | Email addresses. |
+| contact.phone | Array of Strings | Phone numbers (optional; also should have the format: XXX-XXX-XXXX with X being a number from 0 to 9). |
+| contact.location | String | City and state or country (optional). |
+| summary | String | Professional summary (1-2 paragraphs). |
+| workExperience | Array of Objects | List of work experiences, ordered most recent first. |
+| workExperience[].jobTitle | String | Job title. |
+| workExperience[].company | String | Company name. |
+| workExperience[].startDate | String | Start date (format: YYYY-MM). |
+| workExperience[].endDate | String | End date (or \"Present\"). |
+| workExperience[].jobSummary | String | Summary of the job role. |
+| workExperience[].responsibilities | Array of Strings | Bullet points of responsibilities/accomplishments. |
+| education | Array of Objects | Educational qualifications, ordered by most recent first. |
+| education[].degree | String | Degree title (e.g., \"Bachelor of Science in Computer Science\"). |
+| education[].institution | String | Name of the school or university. |
+| education[].startDate | String | Start date (format: YYYY-MM). |
+| education[].endDate | String | End date (or \"Present\"). |
+| education[].gpa | String | GPA if available (optional). |
+| skills | Array of Strings | List of skills. |
+*** End of Resume JSON Structure ***
+
+Generate a resume in plain text. Do not include any explanation, markdown, rich text, or commentary in your response.
+
+Here is the JSON object:`;
+
+export async function getResumeAIResponseText(prompt: string, resume: any, jobAd: string) {
+  // prompt: AI prompt
+  // resume: JSON object of the 'resumeFields' structure
+  // jobAd: text from a job ad
+  try {
+    const JSONText = await getResumeAIResponseJSON(prompt, resume, jobAd);
+    const fullPrompt = generateResumeAIPromptText + `\n\n${JSONText}\n`;
+    console.log(fullPrompt);
+
+    const result = await model.generateContent(fullPrompt);
+    const response = result.response;
+    const finalResult = response.text();
+
+    console.log(finalResult);
+    return finalResult;
+  } catch (error) {
+    console.error("Error generating resume: ", error);
+    return "";
   }
 }
