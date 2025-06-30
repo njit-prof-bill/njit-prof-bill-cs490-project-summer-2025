@@ -125,7 +125,7 @@ export async function GET(request: Request) {
   const filesColl = db.collection("uploads.files");
   const docs = await filesColl
     .find({ "metadata.userId": uid })
-    .sort({ uploadDate: -1 })
+    .sort({ "metadata.order": 1 })
     .toArray();
 
   // 3) Map to lightweight shape
@@ -134,6 +134,7 @@ export async function GET(request: Request) {
     filename:  f.filename,
     createdAt: f.uploadDate,
     type:      f.contentType,
+    order:     f.metadata?.order ?? 0,
   }));
 
   return NextResponse.json(items);
