@@ -21,11 +21,41 @@ type UploadedRecord = {
   type: string;
 };
 
+type SortBy = "name" | "date" | "type";
+type SortDir = "asc" | "desc";
+
 export default function UploadedItems() {
   const { user, loading } = useAuth();
   const [items, setItems] = useState<UploadedRecord[]>([]);
   const [viewMode, setViewMode] = useState<"list" | "icon">("list");
   const [token, setToken] = useState<string>("");
+
+  // helper to turn MIME into a short label
+  const getTypeLabel = (mime: string) =>
+    mime ===
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      ? "docx"
+      : mime.split("/")[1] || mime;
+
+  // sorting
+  const [sortBy, setSortBy] = useState<SortBy>("date");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const sortedItems = React.useMemo(() => {
+    return [...items].sort((a, b) => {
+      let diff = 0;
+      if (sortBy === "name") {
+        diff = a.filename.localeCompare(b.filename);
+      } else if (sortBy === "type") {
+        // use the short label here:
+        diff = getTypeLabel(a.type).localeCompare(getTypeLabel(b.type));
+      } else {
+        diff =
+          new Date(a.createdAt).getTime() -
+          new Date(b.createdAt).getTime();
+      }
+      return sortDir === "asc" ? diff : -diff;
+    });
+  }, [items, sortBy, sortDir]);
 
   // for modal
   const [selected, setSelected] = useState<UploadedRecord | null>(null);
@@ -91,7 +121,7 @@ export default function UploadedItems() {
     const downloadUrl =
       `/api/download?id=${encodeURIComponent(it.id)}` +
       `&type=upload&token=${encodeURIComponent(token)}`;
-    
+
     setContentUrl(downloadUrl);
 
     const res = await fetch(downloadUrl, {
@@ -106,31 +136,36 @@ export default function UploadedItems() {
     // pick preview mode
     const previewModeMap = {
       "application/pdf": "pdf",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+        "docx",
       "text/markdown": "md",
       "text/*": "text",
     } as const;
 
-    const fetchDocxContent = async() => { // .docx → HTML via mammoth
+    const fetchDocxContent = async () => {
+      // .docx → HTML via mammoth
       const blob = await res.blob();
       const arrayBuffer = await blob.arrayBuffer();
       const { value: html } = await mammoth.convertToHtml({ arrayBuffer });
       setTextContent(html);
     };
     const fetchTextContent = async (downloadUrl: string, token: string) => {
-      const res = await fetch(downloadUrl, { headers: { Authorization: `Bearer ${token}` } });
-      const txt = await res.text();
-      setTextContent(txt);      
+      const r2 = await fetch(downloadUrl, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const txt = await r2.text();
+      setTextContent(txt);
     };
 
     // Determine the preview mode using a map
-    const mode = previewModeMap[it.type as keyof typeof previewModeMap] || (it.type.startsWith("text/") ? "text" : "other");
+    const mode =
+      previewModeMap[it.type as keyof typeof previewModeMap] ||
+      (it.type.startsWith("text/") ? "text" : "other");
 
     // Set preview mode and fetch text content if needed
     setPreviewMode(mode);
 
-    if (mode === "docx")
-      await fetchDocxContent();
+    if (mode === "docx") await fetchDocxContent();
     else if (mode === "md" || mode === "text") {
       await fetchTextContent(downloadUrl, token);
     }
@@ -152,7 +187,9 @@ export default function UploadedItems() {
     <div>
       {/* header + toggle */}
       <div className="flex items-center justify-between mb-2">
-        <h4 className="text-lg font-semibold text-neutral-100">Your Uploads</h4>
+        <h4 className="text-lg font-semibold text-neutral-100">
+          Your Uploads
+        </h4>
         <div className="flex space-x-2">
           <Button
             variant="ghost"
@@ -179,14 +216,34 @@ export default function UploadedItems() {
         </div>
       </div>
 
+      {/* SORT BAR */}
+      <div className="flex items-center space-x-2 mb-4">
+        <span className="text-sm text-neutral-400">Sort by:</span>
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value as SortBy)}
+          className="bg-neutral-800 text-neutral-100 text-sm rounded px-2 py-1"
+        >
+          <option value="name">Name</option>
+          <option value="date">Date</option>
+          <option value="type">Type</option>
+        </select>
+        <button
+          onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))}
+          className="bg-neutral-800 text-neutral-100 text-sm rounded px-2 py-1"
+        >
+          {sortDir === "asc" ? "↑" : "↓"}
+        </button>
+      </div>
+
       {/* LIST VIEW */}
       {viewMode === "list" && (
         <ul className="space-y-2">
-          {items.map((it) => (
+          {sortedItems.map((it) => (
             <li
               key={it.id}
               onClick={() => openItem(it)}
-              className="flex items-center justify-between p-2 bg-neutral-800 rounded hover:bg-neutral-700 cursor-pointer"
+              className="flex items-center justify-between p-2.5 bg-neutral-800 rounded hover:bg-neutral-700 cursor-pointer"
             >
               <div className="flex items-center space-x-2 flex-1 min-w-0">
                 {it.type === "text" ? (
@@ -194,7 +251,12 @@ export default function UploadedItems() {
                 ) : (
                   <FileIcon className="h-5 w-5 text-neutral-200 flex-shrink-0" />
                 )}
-                <span className="text-neutral-100 truncate">{it.filename}</span>
+                <span className="text-neutral-100 truncate">
+                  {it.filename}
+                </span>
+                <span className="ml-2 text-xs uppercase bg-neutral-700 text-neutral-300 px-1 rounded truncate">
+                  {getTypeLabel(it.type)}
+                </span>
               </div>
               <span className="ml-4 text-sm text-neutral-400 whitespace-nowrap flex-shrink-0">
                 {fmt(it.createdAt)}
@@ -207,9 +269,9 @@ export default function UploadedItems() {
       {/* ICON / THUMBNAIL VIEW */}
       {viewMode === "icon" && (
         <div className="grid grid-cols-3 gap-4">
-          {items.map((it) => {
-            const thumbnailUrl = 
-              `/api/download?id=${encodeURIComponent(it.id)}` + 
+          {sortedItems.map((it) => {
+            const thumbnailUrl =
+              `/api/download?id=${encodeURIComponent(it.id)}` +
               `&type=upload&token=${encodeURIComponent(token)}`;
 
             return (
@@ -219,14 +281,12 @@ export default function UploadedItems() {
                 className="cursor-pointer flex flex-col items-center justify-center p-4 bg-neutral-800 rounded hover:bg-neutral-700"
               >
                 {it.type === "application/pdf" ? (
-                  // embed a tiny PDF preview
                   <embed
                     src={thumbnailUrl}
                     type="application/pdf"
                     className="w-full h-32 object-cover rounded"
                   />
                 ) : it.type.startsWith("text/") ? (
-                  // plain file icon for text
                   <embed
                     src={thumbnailUrl}
                     type={it.type}
@@ -240,7 +300,10 @@ export default function UploadedItems() {
                   <span className="block text-sm text-neutral-100 truncate max-w-full">
                     {it.filename}
                   </span>
-                  <span className="block text-xs text-neutral-400 whitespace-nowrap overflow-hidden overflow-ellipsis max-w-full">
+                  <span className="block text-xs uppercase bg-neutral-700 text-neutral-300 inline-block px-1 rounded truncate max-w-full">
+                    {getTypeLabel(it.type)}
+                  </span>
+                  <span className="block text-xs text-neutral-400 truncate">
                     {new Date(it.createdAt).toLocaleDateString()}
                   </span>
                 </div>
@@ -260,7 +323,7 @@ export default function UploadedItems() {
             >
               <X className="h-6 w-6" />
             </button>
-            
+
             <h2 className="text-xl font-semibold text-neutral-100 mb-4">
               <a
                 href={contentUrl!}
@@ -274,36 +337,30 @@ export default function UploadedItems() {
             {loadingContent ? (
               <p className="text-neutral-400">Loading…</p>
             ) : previewMode === "pdf" ? (
-              // pdf
               <iframe
                 src={contentUrl!}
                 className="w-full h-[70vh] border"
                 title={selected.filename}
               />
             ) : previewMode === "docx" ? (
-              // docx HTML
               <div
                 className="prose prose-invert max-w-none text-neutral-200"
                 dangerouslySetInnerHTML={{ __html: textContent! }}
               />
             ) : previewMode === "md" ? (
-              // markdown
               <div className="prose prose-invert overflow-auto text-neutral-200">
                 <ReactMarkdown>{textContent!}</ReactMarkdown>
               </div>
             ) : previewMode === "text" ? (
-              // plain text
               <pre className="whitespace-pre-wrap text-neutral-200">
                 {textContent}
               </pre>
             ) : (
-              // no preview
               <p className="text-neutral-400">No preview available.</p>
             )}
           </div>
         </div>
       )}
-
     </div>
   );
 }
