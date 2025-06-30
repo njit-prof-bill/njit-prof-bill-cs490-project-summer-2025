@@ -12,6 +12,8 @@ import ContactCard from "@/components/ContactCard";
 import EducationList from "@/components/EducationList";
 import JobHistory from "@/components/ui/JobHistory";
 import RawToggle from "@/components/ui/RawToggle";
+import ThemeToggle from "@/components/ThemeToggle";
+
 
 export default function HomePage() {
   const { user, loading } = useAuth();
@@ -138,6 +140,7 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-indigo-100 via-white to-blue-100 px-4 py-10">
+      <ThemeToggle />
       <div className="mx-auto max-w-5xl space-y-12">
         <div className="flex flex-col items-center mb-8">
           <h1 className="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-blue-500 to-teal-400 mb-2 drop-shadow-lg">

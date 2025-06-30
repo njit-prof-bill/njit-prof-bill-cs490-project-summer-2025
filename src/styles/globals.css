@@ -112,6 +112,23 @@
   --sidebar-ring: oklch(0.553 0.013 58.071);
 }
 
+.contrast {
+  --tw-bg-opacity: 1;
+  --tw-text-opacity: 1;
+  background-color: #000 !important;
+  color: #fff !important;
+}
+
+.contrast * {
+  background-color: #000 !important;
+  color: #fff !important;
+  border-color: #fff !important;
+}
+
+.contrast a {
+  text-decoration: underline;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
