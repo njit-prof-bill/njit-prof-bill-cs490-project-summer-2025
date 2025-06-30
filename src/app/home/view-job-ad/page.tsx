@@ -5,6 +5,7 @@ import { db } from "@/lib/firebase";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { Timestamp } from "firebase/firestore";
+import { getResumeAIResponse, generateResumeAIPrompt } from "@/components/ai/aiPrompt";
 
 type JobAd = {
   companyName: string;
@@ -20,6 +21,8 @@ export default function ViewJobAdsPage() {
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [editData, setEditData] = useState<Partial<JobAd>>({});
   const [refresh, setRefresh] = useState(false);
+  const [generating, setGenerating] = useState(false); // Track whether resume is being generated
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && user) {
@@ -32,6 +35,26 @@ export default function ViewJobAdsPage() {
       })();
     }
   }, [user, loading, refresh]);
+
+  const handleGenerate = async (idx: number) => {
+    if (!user) return;
+    try {
+      setGenerating(true);
+      setError(null); // Clear any previous error message
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+      if (userSnap.exists() && userSnap.data().resumeFields) {
+        const resumeInfo = JSON.stringify(userSnap.data().resumeFields);
+        const jobAdText = jobAds[idx].jobDescription;
+        await getResumeAIResponse(generateResumeAIPrompt, resumeInfo, jobAdText);
+      }
+    } catch (error) {
+      console.error("Error occurred while generating resume: ", error);
+      setError((error as Error).message);
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   const handleDelete = async (idx: number) => {
     if (!user) return;
@@ -147,13 +170,20 @@ export default function ViewJobAdsPage() {
                 <div className="mt-1">{jobAds[selectedIndex].jobDescription}</div>
               </div>
               <button
+                className="bg-blue-500 text-white px-4 py-2 rounded mr-2"
+                disabled={generating}
+                onClick={() => handleGenerate(selectedIndex)}
+              >
+                {generating ? "Generating..." : "Generate Resume"}
+              </button>
+              <button
                 className="bg-yellow-500 text-white px-4 py-2 rounded mr-2"
                 onClick={() => handleEdit(selectedIndex)}
               >
                 Edit
               </button>
               <button
-                className="bg-red-600 text-white px-4 py-2 rounded"
+                className="bg-red-600 text-white px-4 py-2 rounded mr-2"
                 onClick={() => handleDelete(selectedIndex)}
               >
                 Delete
