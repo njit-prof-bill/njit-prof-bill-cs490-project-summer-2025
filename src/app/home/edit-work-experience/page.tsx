@@ -22,6 +22,10 @@ type ResponsibilitiesFormProps = {
 };
 
 function ResponsibilitiesForm({ resList, setResList, jobIdx }: ResponsibilitiesFormProps) {
+    const [statusMessage, setStatusMessage] = useState<string | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [formChanged, setFormChanged] = useState(false); //for unsaved changes check
+
     function handleChange(index: number, value: string) {
         setResList(
             resList.map((res, i) => (i === index ? value : res))
@@ -38,6 +42,64 @@ function ResponsibilitiesForm({ resList, setResList, jobIdx }: ResponsibilitiesF
         setResList(resList.filter((_, i) => i !== index));
     }
 
+    function placeboSubmit() { //all this does is reset formChanged and statusMessage so unchanged edits can be set & reset
+        try {
+            setIsSubmitting(true);
+            setStatusMessage("Saved!");
+            setFormChanged(false);
+            setTimeout(() => setStatusMessage(null), 2000);
+        } finally {
+            setIsSubmitting(false);
+        }
+    }
+
+    useEffect(() => {
+        //handles reload and close tab if there are unsaved changes
+        const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+            if (formChanged) {
+                event.preventDefault();
+                event.returnValue = ''; //is deprecated but might be necessary to prompt on Chrome
+            }
+        };
+
+        //handles (most) clicks on links within the page if there are unsaved changes
+        const handleClick = (event: MouseEvent) => {
+            if (!formChanged) return;
+
+            const nav = document.querySelector('nav');
+            if (nav && nav.contains(event.target as Node)) {
+                const target = (event.target as HTMLElement).closest('a');
+                if (target && target instanceof HTMLAnchorElement) {
+                    const confirmed = window.confirm('You have unsaved changes. Leave this page?');
+                    if (!confirmed) {
+                        event.preventDefault();
+                        event.stopImmediatePropagation();
+                    }
+                }
+            }
+
+            const header = document.querySelector('header');
+            if (header && header.contains(event.target as Node)) {
+                const target = (event.target as HTMLElement).closest('a');
+                if (target && target instanceof HTMLAnchorElement) {
+                    const confirmed = window.confirm('You have unsaved changes. Leave this page?');
+                    if (!confirmed) {
+                        event.preventDefault();
+                        event.stopImmediatePropagation();
+                    }
+                }
+            }
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        document.addEventListener('click', handleClick, true);
+
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+            document.removeEventListener('click', handleClick, true);
+        };
+    }, [formChanged]);
+
     return (
         <>
             <h3 className="text-md font-semibold mt-4">Responsibilities:</h3>
@@ -49,17 +111,37 @@ function ResponsibilitiesForm({ resList, setResList, jobIdx }: ResponsibilitiesF
                         name={`responsibilities_${idx}_job_${jobIdx}`}
                         placeholder="Enter a responsibility here"
                         value={res}
-                        onChange={(e) => handleChange(idx, e.target.value)}
+                        onChange={(e) => {
+                            handleChange(idx, e.target.value);
+                            setFormChanged(true);
+                            setStatusMessage("There has been a change. Don't forget to click \"Save Responsibility\" and then the \"Save\" button at the bottom!");
+                        }}
                         className="border rounded w-full p-2"
                     />
-                    <button onClick={(e) => removeRes(e, idx)} className="bg-red-500 text-white px-3 py-1 mt-2 rounded hover:bg-red-600 cursor-pointer">
+                    <button onClick={(e) => {
+                        removeRes(e, idx);
+                        setFormChanged(true);
+                        setStatusMessage("There has been a change. Don't forget to click \"Save Responsibility\" and then the \"Save\" button at the bottom!");
+                    }} className="bg-red-500 text-white px-3 py-1 mt-2 rounded hover:bg-red-600 cursor-pointer">
                         Remove
                     </button>
                 </div>
             ))}
+            {statusMessage == "There has been a change. Don't forget to click \"Save Responsibility\" and then the \"Save\" button at the bottom!" && <p className="mt-2 text-sm text-yellow-400">{statusMessage}</p>}
             <button onClick={addRes} className="bg-blue-500 text-white px-4 py-2 mt-4 rounded hover:bg-blue-600 cursor-pointer">
                 Add Responsibility
             </button>
+            <br />
+            {/*PLACEBO BUTTON USED TO RESET FORMEDCHANGES, DOESN'T ACTUALLY SAVE ANYTHING IN THE BACKEND*/}
+            <button
+                type="button"
+                className="submit-button bg-green-500 text-white px-6 py-2 mt-4 rounded hover:bg-green-600 cursor-pointer disabled:opacity-50"
+                disabled={isSubmitting}
+                onClick={placeboSubmit}
+            > 
+                {isSubmitting ? "Saving..." : "Save Responsibility"}
+            </button>
+            {statusMessage == "Saved!" && <p className="mt-2 text-sm text-green-700">{statusMessage}</p>}
         </>
     );
 }
@@ -72,6 +154,7 @@ type WorkExpFormProps = {
 
 function WorkExpForm({ jobList, setJobList, user }: WorkExpFormProps) {
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [formChanged, setFormChanged] = useState(false); //for unsaved changes check
     const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
     function updateJobAt(index: number, updatedJob: JobEntry) {
@@ -101,6 +184,7 @@ function WorkExpForm({ jobList, setJobList, user }: WorkExpFormProps) {
             const docRef = doc(db, "users", user.uid);
             await updateDoc(docRef, { "resumeFields.workExperience": newJobList });
             setStatusMessage("Saved!");
+            setFormChanged(false);
             setTimeout(() => setStatusMessage(null), 2000);
         } catch (err) {
             setStatusMessage("Failed to save.");
@@ -132,6 +216,53 @@ function WorkExpForm({ jobList, setJobList, user }: WorkExpFormProps) {
         setJobList(jobList.filter((_, i) => i !== index));
     }
 
+    useEffect(() => {
+        //handles reload and close tab if there are unsaved changes
+        const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+            if (formChanged) {
+                event.preventDefault();
+                event.returnValue = ''; //is deprecated but might be necessary to prompt on Chrome
+            }
+        };
+
+        //handles (most) clicks on links within the page if there are unsaved changes
+        const handleClick = (event: MouseEvent) => {
+            if (!formChanged) return;
+
+            const nav = document.querySelector('nav');
+            if (nav && nav.contains(event.target as Node)) {
+                const target = (event.target as HTMLElement).closest('a');
+                if (target && target instanceof HTMLAnchorElement) {
+                    const confirmed = window.confirm('You have unsaved changes. Leave this page?');
+                    if (!confirmed) {
+                        event.preventDefault();
+                        event.stopImmediatePropagation();
+                    }
+                }
+            }
+
+            const header = document.querySelector('header');
+            if (header && header.contains(event.target as Node)) {
+                const target = (event.target as HTMLElement).closest('a');
+                if (target && target instanceof HTMLAnchorElement) {
+                    const confirmed = window.confirm('You have unsaved changes. Leave this page?');
+                    if (!confirmed) {
+                        event.preventDefault();
+                        event.stopImmediatePropagation();
+                    }
+                }
+            }
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        document.addEventListener('click', handleClick, true);
+
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+            document.removeEventListener('click', handleClick, true);
+        };
+    }, [formChanged]);
+
     return (
         <form onSubmit={handleSubmit} className="space-y-8">
             {jobList.map((job, i) => (
@@ -143,7 +274,11 @@ function WorkExpForm({ jobList, setJobList, user }: WorkExpFormProps) {
                         name={`jobTitle_${i}`}
                         placeholder="Job Title"
                         value={job.jobTitle}
-                        onChange={(e) => updateJobAt(i, { ...job, jobTitle: e.target.value })}
+                        onChange={(e) => {
+                            updateJobAt(i, { ...job, jobTitle: e.target.value });
+                            setFormChanged(true);
+                            setStatusMessage("There has been a change. Don't forget to save!");
+                        }}
                         className="w-full p-2 mb-2 border rounded"
                     />
                     <input
@@ -151,14 +286,22 @@ function WorkExpForm({ jobList, setJobList, user }: WorkExpFormProps) {
                         name={`company_${i}`}
                         placeholder="Company"
                         value={job.company}
-                        onChange={(e) => updateJobAt(i, { ...job, company: e.target.value })}
+                        onChange={(e) => {
+                            updateJobAt(i, { ...job, company: e.target.value });
+                            setFormChanged(true);
+                            setStatusMessage("There has been a change. Don't forget to save!");
+                        }}
                         className="w-full p-2 mb-2 border rounded"
                     />
                     <textarea
                         name={`jobSummary_${i}`}
                         placeholder="Summary of your role"
                         value={job.jobSummary}
-                        onChange={(e) => updateJobAt(i, { ...job, jobSummary: e.target.value })}
+                        onChange={(e) => {
+                            updateJobAt(i, { ...job, jobSummary: e.target.value });
+                            setFormChanged(true);
+                            setStatusMessage("There has been a change. Don't forget to save!");
+                        }}
                         className="w-full p-2 mb-2 border rounded h-24"
                     />
                     <input
@@ -168,7 +311,11 @@ function WorkExpForm({ jobList, setJobList, user }: WorkExpFormProps) {
                         value={job.startDate}
                         pattern="\d{4}-\d{2}"
                         title="Format: YYYY-MM"
-                        onChange={(e) => updateJobAt(i, { ...job, startDate: e.target.value })}
+                        onChange={(e) => {
+                            updateJobAt(i, { ...job, startDate: e.target.value });
+                            setFormChanged(true);
+                            setStatusMessage("There has been a change. Don't forget to save!");
+                        }}
                         className="w-full p-2 mb-2 border rounded"
                     />
                     <input
@@ -178,7 +325,11 @@ function WorkExpForm({ jobList, setJobList, user }: WorkExpFormProps) {
                         value={job.endDate}
                         pattern="(\d{4}-\d{2}|Present)"
                         title="Format: YYYY-MM or Present"
-                        onChange={(e) => updateJobAt(i, { ...job, endDate: e.target.value })}
+                        onChange={(e) => {
+                            updateJobAt(i, { ...job, endDate: e.target.value });
+                            setFormChanged(true);
+                            setStatusMessage("There has been a change. Don't forget to save!");
+                        }}
                         className="w-full p-2 mb-2 border rounded"
                     />
 
@@ -189,11 +340,15 @@ function WorkExpForm({ jobList, setJobList, user }: WorkExpFormProps) {
                         }
                         jobIdx={i}
                     />
+                    <br />
+                    <br />
                     <div className="flex space-x-2 mt-4">
                         <button
                             onClick={(e) => {
                                 e.preventDefault();
                                 moveJobUp(i);
+                                setFormChanged(true);
+                                setStatusMessage("There has been a change. Don't forget to save!");
                             }}
                             className="bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600 disabled:opacity-50 cursor-pointer"
                             disabled={i === 0}
@@ -204,6 +359,8 @@ function WorkExpForm({ jobList, setJobList, user }: WorkExpFormProps) {
                             onClick={(e) => {
                                 e.preventDefault();
                                 moveJobDown(i);
+                                setFormChanged(true);
+                                setStatusMessage("There has been a change. Don't forget to save!");
                             }}
                             className="bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600 disabled:opacity-50 cursor-pointer"
                             disabled={i === jobList.length - 1}
@@ -214,7 +371,11 @@ function WorkExpForm({ jobList, setJobList, user }: WorkExpFormProps) {
 
                     <div>
                         <button
-                            onClick={(e) => removeJob(e, i)}
+                            onClick={(e) => {
+                                removeJob(e, i);
+                                setFormChanged(true);
+                                setStatusMessage("There has been a change. Don't forget to save!");
+                            }}
                             className="bg-red-500 text-white px-3 py-1 mt-2 rounded hover:bg-red-600 cursor-pointer"
                         >
                             Remove Job
@@ -229,7 +390,7 @@ function WorkExpForm({ jobList, setJobList, user }: WorkExpFormProps) {
             >
                 Add New Job
             </button>
-
+            {statusMessage == "There has been a change. Don't forget to save!" && <p className="mt-2 text-sm text-yellow-400">{statusMessage}</p>}
             <div>
                 <button
                     type="submit"
@@ -238,9 +399,8 @@ function WorkExpForm({ jobList, setJobList, user }: WorkExpFormProps) {
                 >
                     {isSubmitting ? "Saving..." : "Save"}
                 </button>
-                {statusMessage && (
-                    <p className="mt-2 text-green-600 dark:text-green-400">{statusMessage}</p>
-                )}
+                {statusMessage == "Saved!" && <p className="mt-2 text-green-600 dark:text-green-400">{statusMessage}</p>}
+                {statusMessage == "Failed to save." && <p className="mt-2 text-sm text-red-600">{statusMessage}</p>}
             </div>
         </form>
     );

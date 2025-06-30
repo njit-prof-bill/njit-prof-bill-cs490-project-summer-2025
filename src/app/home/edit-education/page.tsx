@@ -23,6 +23,7 @@ type EducationFormProps = {
 function EducationForm({ educationList, setEducationList, user }: EducationFormProps) {
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formChanged, setFormChanged] = useState(false); //for unsaved changes check
 
   function moveEduUp(index: number) {
     if (index === 0) return;
@@ -61,7 +62,6 @@ function EducationForm({ educationList, setEducationList, user }: EducationFormP
       };
       newEduList.push(entry);
     }
-
     submitEduList(newEduList);
   }
 
@@ -72,6 +72,7 @@ function EducationForm({ educationList, setEducationList, user }: EducationFormP
       const newEduRef = doc(db, "users", user.uid);
       await updateDoc(newEduRef, { "resumeFields.education": newEduList });
       setStatusMessage("Saved!");
+      setFormChanged(false);
       setTimeout(() => setStatusMessage(null), 2000);
     } catch (error) {
       setStatusMessage("Failed to save.");
@@ -92,6 +93,53 @@ function EducationForm({ educationList, setEducationList, user }: EducationFormP
     setEducationList((oldEdu) => oldEdu.filter((_, i) => i !== index));
   }
 
+  useEffect(() => {
+    //handles reload and close tab if there are unsaved changes
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (formChanged) {
+        event.preventDefault();
+        event.returnValue = ''; //is deprecated but might be necessary to prompt on Chrome
+      }
+    };
+
+    //handles (most) clicks on links within the page if there are unsaved changes
+    const handleClick = (event: MouseEvent) => {
+      if (!formChanged) return;
+
+      const nav = document.querySelector('nav');
+      if (nav && nav.contains(event.target as Node)) {
+        const target = (event.target as HTMLElement).closest('a');
+        if (target && target instanceof HTMLAnchorElement) {
+          const confirmed = window.confirm('You have unsaved changes. Leave this page?');
+          if (!confirmed) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+          }
+        }
+      }
+
+      const header = document.querySelector('header');
+      if (header && header.contains(event.target as Node)) {
+        const target = (event.target as HTMLElement).closest('a');
+        if (target && target instanceof HTMLAnchorElement) {
+          const confirmed = window.confirm('You have unsaved changes. Leave this page?');
+          if (!confirmed) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+          }
+        }
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('click', handleClick, true);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('click', handleClick, true);
+    };
+  }, [formChanged]);
+
   return (
     <div>
       <form method="post" onSubmit={handleSubmit}>
@@ -109,6 +157,8 @@ function EducationForm({ educationList, setEducationList, user }: EducationFormP
                 const list = [...educationList];
                 list[index] = updated;
                 setEducationList(list);
+                setFormChanged(true);
+                setStatusMessage("There has been a change. Don't forget to save!");
               }}
               className="mb-2 w-full p-2 border rounded"
             />
@@ -124,6 +174,8 @@ function EducationForm({ educationList, setEducationList, user }: EducationFormP
                 const list = [...educationList];
                 list[index] = updated;
                 setEducationList(list);
+                setFormChanged(true);
+                setStatusMessage("There has been a change. Don't forget to save!");
               }}
               className="mb-2 w-full p-2 border rounded"
             />
@@ -141,6 +193,8 @@ function EducationForm({ educationList, setEducationList, user }: EducationFormP
                 const list = [...educationList];
                 list[index] = updated;
                 setEducationList(list);
+                setFormChanged(true);
+                setStatusMessage("There has been a change. Don't forget to save!");
               }}
               className="mb-2 w-full p-2 border rounded"
             />
@@ -158,6 +212,8 @@ function EducationForm({ educationList, setEducationList, user }: EducationFormP
                 const list = [...educationList];
                 list[index] = updated;
                 setEducationList(list);
+                setFormChanged(true);
+                setStatusMessage("There has been a change. Don't forget to save!");
               }}
               className="mb-2 w-full p-2 border rounded"
             />
@@ -173,6 +229,8 @@ function EducationForm({ educationList, setEducationList, user }: EducationFormP
                 const list = [...educationList];
                 list[index] = updated;
                 setEducationList(list);
+                setFormChanged(true);
+                setStatusMessage("There has been a change. Don't forget to save!");
               }}
               className="mb-2 w-full p-2 border rounded"
             />
@@ -181,6 +239,8 @@ function EducationForm({ educationList, setEducationList, user }: EducationFormP
                 onClick={(e) => {
                   e.preventDefault();
                   moveEduUp(index);
+                  setFormChanged(true);
+                  setStatusMessage("There has been a change. Don't forget to save!");
                 }}
                 className="bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600 disabled:opacity-50 cursor-pointer"
                 disabled={index === 0}
@@ -191,6 +251,8 @@ function EducationForm({ educationList, setEducationList, user }: EducationFormP
                 onClick={(e) => {
                   e.preventDefault();
                   moveEduDown(index);
+                  setFormChanged(true);
+                  setStatusMessage("There has been a change. Don't forget to save!");
                 }}
                 className="bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600 disabled:opacity-50 cursor-pointer"
                 disabled={index === educationList.length - 1}
@@ -200,13 +262,18 @@ function EducationForm({ educationList, setEducationList, user }: EducationFormP
             </div>
 
             <button
-              onClick={(event) => removeEdu(event, index)}
+              onClick={(event) => {
+                removeEdu(event, index);
+                setFormChanged(true);
+                setStatusMessage("There has been a change. Don't forget to save!");
+              }}
               className="bg-red-500 text-white px-3 py-1 mt-2 rounded hover:bg-red-600 cursor-pointer"
             >
               Remove
             </button>
           </div>
         ))}
+        {statusMessage == "There has been a change. Don't forget to save!" && <p className="mt-2 text-sm text-yellow-400">{statusMessage}</p>}
         <button
           onClick={addNewEdu}
           className="bg-blue-500 text-white px-4 py-2 mt-4 rounded hover:bg-blue-600 cursor-pointer"
@@ -221,7 +288,8 @@ function EducationForm({ educationList, setEducationList, user }: EducationFormP
         >
           {isSubmitting ? "Saving..." : "Save"}
         </button>
-        {statusMessage && <p className="mt-2 text-sm text-green-700">{statusMessage}</p>}
+        {statusMessage == "Saved!" && <p className="mt-2 text-sm text-green-700">{statusMessage}</p>}
+        {statusMessage == "Failed to save." && <p className="mt-2 text-sm text-red-600">{statusMessage}</p>}
       </form>
     </div>
   );

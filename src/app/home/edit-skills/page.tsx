@@ -15,6 +15,7 @@ type SkillsFormProps = {
 function SkillsForm({ skillsList, setSkillsList, user }: SkillsFormProps) {
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formChanged, setFormChanged] = useState(false); //for unsaved changes check
 
   function moveSkillUp(index: number) {
     if (index === 0) return;
@@ -30,7 +31,6 @@ function SkillsForm({ skillsList, setSkillsList, user }: SkillsFormProps) {
     setSkillsList(newList);
   }
 
-
   async function submitSkills(skills: string[]) {
     if (!user) return;
     try {
@@ -38,6 +38,7 @@ function SkillsForm({ skillsList, setSkillsList, user }: SkillsFormProps) {
       const newSkillsRef = doc(db, "users", user.uid);
       await updateDoc(newSkillsRef, { "resumeFields.skills": skills });
       setStatusMessage("Saved!");
+      setFormChanged(false);
       setTimeout(() => setStatusMessage(null), 2000);
     } catch (error) {
       setStatusMessage("Failed to save.");
@@ -75,6 +76,53 @@ function SkillsForm({ skillsList, setSkillsList, user }: SkillsFormProps) {
     );
   }
 
+  useEffect(() => {
+    //handles reload and close tab if there are unsaved changes
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (formChanged) {
+        event.preventDefault();
+        event.returnValue = ''; //is deprecated but might be necessary to prompt on Chrome
+      }
+    };
+
+    //handles (most) clicks on links within the page if there are unsaved changes
+    const handleClick = (event: MouseEvent) => {
+      if (!formChanged) return;
+
+      const nav = document.querySelector('nav');
+      if (nav && nav.contains(event.target as Node)) {
+        const target = (event.target as HTMLElement).closest('a');
+        if (target && target instanceof HTMLAnchorElement) {
+          const confirmed = window.confirm('You have unsaved changes. Leave this page?');
+          if (!confirmed) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+          }
+        }
+      }
+
+      const header = document.querySelector('header');
+      if (header && header.contains(event.target as Node)) {
+        const target = (event.target as HTMLElement).closest('a');
+        if (target && target instanceof HTMLAnchorElement) {
+          const confirmed = window.confirm('You have unsaved changes. Leave this page?');
+          if (!confirmed) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+          }
+        }
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('click', handleClick, true);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('click', handleClick, true);
+    };
+  }, [formChanged]);
+
   return (
     <div>
       <form method="post" onSubmit={handleSubmit}>
@@ -85,6 +133,8 @@ function SkillsForm({ skillsList, setSkillsList, user }: SkillsFormProps) {
                 onClick={(e) => {
                   e.preventDefault();
                   moveSkillUp(index);
+                  setFormChanged(true);
+                  setStatusMessage("There has been a change. Don't forget to save!");
                 }}
                 className="bg-gray-400 text-white px-2 rounded hover:bg-gray-500 disabled:opacity-50 cursor-pointer"
                 disabled={index === 0}
@@ -96,6 +146,8 @@ function SkillsForm({ skillsList, setSkillsList, user }: SkillsFormProps) {
                 onClick={(e) => {
                   e.preventDefault();
                   moveSkillDown(index);
+                  setFormChanged(true);
+                  setStatusMessage("There has been a change. Don't forget to save!");
                 }}
                 className="bg-gray-400 text-white px-2 rounded hover:bg-gray-500 disabled:opacity-50 cursor-pointer"
                 disabled={index === skillsList.length - 1}
@@ -110,18 +162,26 @@ function SkillsForm({ skillsList, setSkillsList, user }: SkillsFormProps) {
               name={`skill-${index}`}
               placeholder="Enter a skill here"
               value={field}
-              onChange={(event) => handleChange(index, event.target.value)}
+              onChange={(event) => {
+                handleChange(index, event.target.value);
+                setFormChanged(true);
+                setStatusMessage("There has been a change. Don't forget to save!");
+              }}
               className="flex-grow p-2 border rounded"
             />
             <button
-              onClick={(event) => removeSkill(event, index)}
+              onClick={(event) => {
+                removeSkill(event, index);                
+                setFormChanged(true);
+                setStatusMessage("There has been a change. Don't forget to save!");
+              }}
               className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 cursor-pointer"
             >
               ✕
             </button>
           </div>
         ))}
-
+        {statusMessage == "There has been a change. Don't forget to save!" && <p className="mt-2 text-sm text-yellow-400">{statusMessage}</p>}
         <button
           onClick={addNewSkill}
           className="bg-blue-500 text-white px-4 py-2 mt-2 rounded hover:bg-blue-600 cursor-pointer"
@@ -136,7 +196,8 @@ function SkillsForm({ skillsList, setSkillsList, user }: SkillsFormProps) {
         >
           {isSubmitting ? "Saving..." : "Save"}
         </button>
-        {statusMessage && <p className="mt-2 text-sm text-green-700">{statusMessage}</p>}
+        {statusMessage == "Saved!" && <p className="mt-2 text-sm text-green-700">{statusMessage}</p>}
+        {statusMessage == "Failed to save." && <p className="mt-2 text-sm text-red-600">{statusMessage}</p>}
       </form>
     </div>
   );
@@ -164,7 +225,6 @@ export default function EditSkillsPage() {
       const data = document.data();
       if (data && Array.isArray(data.resumeFields?.skills)) {
         skillList = [...data.resumeFields.skills];
-
       }
     }
     return skillList;

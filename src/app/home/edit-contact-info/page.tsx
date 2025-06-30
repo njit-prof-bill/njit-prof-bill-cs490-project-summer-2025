@@ -16,6 +16,10 @@ type EmailFormProps = {
 };
 
 function EmailForm({emailList, setEmailList, submitted, setSubmitted, error, setError}: EmailFormProps) {
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formChanged, setFormChanged] = useState(false); //for unsaved changes check
+
   function handleChange(index: number, value: string) {
     if (submitted) setSubmitted(false); // Hide success message if editing again
     if (error) setError(null);          // Clear error message on user change
@@ -39,6 +43,66 @@ function EmailForm({emailList, setEmailList, submitted, setSubmitted, error, set
     // Remove the email from the array
     setEmailList((oldEmails) => oldEmails.filter((currEmail, i) => i !== index));
   }
+
+  function placeboSubmit() { //all this does is reset formChanged and statusMessage so unchanged edits can be set & reset
+    try {
+        setIsSubmitting(true);
+        setStatusMessage("Saved!");
+        setFormChanged(false);
+        setTimeout(() => setStatusMessage(null), 2000);
+    } finally {
+        setIsSubmitting(false);
+    }
+  }
+
+  useEffect(() => {
+    //handles reload and close tab if there are unsaved changes
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+        if (formChanged) {
+            event.preventDefault();
+            event.returnValue = ''; //is deprecated but might be necessary to prompt on Chrome
+        }
+    };
+
+    //handles (most) clicks on links within the page if there are unsaved changes
+    const handleClick = (event: MouseEvent) => {
+        if (!formChanged) return;
+
+        const nav = document.querySelector('nav');
+        if (nav && nav.contains(event.target as Node)) {
+            const target = (event.target as HTMLElement).closest('a');
+            if (target && target instanceof HTMLAnchorElement) {
+                const confirmed = window.confirm('You have unsaved changes. Leave this page?');
+                if (!confirmed) {
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+                }
+            }
+        }
+
+        const header = document.querySelector('header');
+        if (header && header.contains(event.target as Node)) {
+            const target = (event.target as HTMLElement).closest('a');
+            if (target && target instanceof HTMLAnchorElement) {
+                const confirmed = window.confirm('You have unsaved changes. Leave this page?');
+                if (!confirmed) {
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+                }
+            }
+        }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('click', handleClick, true);
+
+    return () => {
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+        document.removeEventListener('click', handleClick, true);
+    };
+  }, [formChanged]);
+
+
   return (
     <>
       <h2 className="text-l font-bold">Email Address:</h2>
@@ -49,18 +113,42 @@ function EmailForm({emailList, setEmailList, submitted, setSubmitted, error, set
             name="email"
             value={email}
             pattern="^[a-zA-Z0-9.!#$%&'*\+\/=?^_`\{\|\}~\-]+@[a-zA-Z0-9\-]+(\.[a-zA-Z0-9\-]+)+$"
-            onChange={(event) => handleChange(emailIdx, event.target.value)}
+            onChange={(event) => {
+              handleChange(emailIdx, event.target.value);
+              setFormChanged(true);
+              setStatusMessage("There has been a change. Don't forget to click \"Save Email Address\" and then the \"Save\" button at the bottom!");
+            }}
             placeholder="Enter your email address here"
             className="border p-2 rounded w-full"
           />
           <button
             className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 cursor-pointer"
-            onClick={(event) => removeEmail(event, emailIdx)}>Remove</button><br></br>
+            onClick={(event) => {
+              removeEmail(event, emailIdx);
+              setFormChanged(true);
+              setStatusMessage("There has been a change. Don't forget to click \"Save Email Address\" and then the \"Save\" button at the bottom!");
+            }}>
+              Remove
+              </button><br />
         </div>
       ))}
+      {statusMessage == "There has been a change. Don't forget to click \"Save Email Address\" and then the \"Save\" button at the bottom!" && <p className="mt-2 text-sm text-yellow-400">{statusMessage}</p>} 
       <button
-        className="bg-blue-500 text-white px-4 py-2 mt-2 rounded hover:bg-blue-600 cursor-pointer"
-        onClick={addEmail}>Add New Email Address</button>
+        className="bg-blue-500 text-white px-3 py-2 mt-2 rounded hover:bg-blue-600 cursor-pointer" 
+        onClick={addEmail}
+      >
+        Add New Email Address
+      </button>
+      {/*PLACEBO BUTTON USED TO RESET FORMEDCHANGES, DOESN'T ACTUALLY SAVE ANYTHING IN THE BACKEND*/}
+      <button
+          type="button"
+          className="submit-button bg-green-500 text-white px-3 py-2 mt-4 rounded hover:bg-green-600 cursor-pointer disabled:opacity-50"
+          disabled={isSubmitting}
+          onClick={placeboSubmit}
+      > 
+      {isSubmitting ? "Saving..." : "Save Email Address"}
+      </button>
+      {statusMessage == "Saved!" && <p className="mt-2 text-sm text-green-700">{statusMessage}</p>}
     </>
   );
 }
@@ -75,6 +163,10 @@ type PhoneNumFormProps = {
 };
 
 function PhoneNumForm({phoneList, setPhoneList, submitted, setSubmitted, error, setError}: PhoneNumFormProps) {
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formChanged, setFormChanged] = useState(false); //for unsaved changes check
+
   function handleChange(index: number, value: string) {
     if (submitted) setSubmitted(false); // Hide success message if editing again
     if (error) setError(null);          // Clear error message on user change
@@ -99,6 +191,64 @@ function PhoneNumForm({phoneList, setPhoneList, submitted, setSubmitted, error, 
     setPhoneList((oldNums) => oldNums.filter((currNum, i) => i !== index));
   }
 
+  function placeboSubmit() { //all this does is reset formChanged and statusMessage so unchanged edits can be set & reset
+        try {
+            setIsSubmitting(true);
+            setStatusMessage("Saved!");
+            setFormChanged(false);
+            setTimeout(() => setStatusMessage(null), 2000);
+        } finally {
+            setIsSubmitting(false);
+        }
+    }
+
+    useEffect(() => {
+      //handles reload and close tab if there are unsaved changes
+      const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+          if (formChanged) {
+              event.preventDefault();
+              event.returnValue = ''; //is deprecated but might be necessary to prompt on Chrome
+          }
+      };
+
+      //handles (most) clicks on links within the page if there are unsaved changes
+      const handleClick = (event: MouseEvent) => {
+        if (!formChanged) return;
+
+        const nav = document.querySelector('nav');
+        if (nav && nav.contains(event.target as Node)) {
+          const target = (event.target as HTMLElement).closest('a');
+          if (target && target instanceof HTMLAnchorElement) {
+            const confirmed = window.confirm('You have unsaved changes. Leave this page?');
+            if (!confirmed) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+            }
+              }
+          }
+
+          const header = document.querySelector('header');
+          if (header && header.contains(event.target as Node)) {
+              const target = (event.target as HTMLElement).closest('a');
+              if (target && target instanceof HTMLAnchorElement) {
+                  const confirmed = window.confirm('You have unsaved changes. Leave this page?');
+                  if (!confirmed) {
+                      event.preventDefault();
+                      event.stopImmediatePropagation();
+                  }
+              }
+          }
+      };
+
+      window.addEventListener('beforeunload', handleBeforeUnload);
+      document.addEventListener('click', handleClick, true);
+
+      return () => {
+          window.removeEventListener('beforeunload', handleBeforeUnload);
+          document.removeEventListener('click', handleClick, true);
+      };
+    }, [formChanged]);
+
   return (
     <>
       <h2 className="text-l font-bold">Phone Number (Format: 123-456-7890):</h2>
@@ -109,18 +259,43 @@ function PhoneNumForm({phoneList, setPhoneList, submitted, setSubmitted, error, 
             name="phone"
             pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}"
             value={phoneNum}
-            onChange={(event) => handleChange(phoneIdx, event.target.value)}
-            placeholder="Enter your number here"
+            onChange={(event) => {
+              handleChange(phoneIdx, event.target.value);
+                setFormChanged(true);
+                setStatusMessage("There has been a change. Don't forget to click \"Save Phone Number\" and then the \"Save\" button at the bottom!");
+            }}
+            placeholder="Enter your phone number here"
             className="border p-2 rounded w-full"
           />
           <button
             className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 cursor-pointer"
-            onClick={(event) => removePhoneNum(event, phoneIdx)}>Remove</button><br></br>
+            onClick={(event) => {
+              removePhoneNum(event, phoneIdx);
+              setFormChanged(true);
+              setStatusMessage("There has been a change. Don't forget to click \"Save Phone Number\" and then the \"Save\" button at the bottom!");
+            }}
+          >
+            Remove
+          </button><br />
         </div>
       ))}
+      {statusMessage == "There has been a change. Don't forget to click \"Save Phone Number\" and then the \"Save\" button at the bottom!" && <p className="mt-2 text-sm text-yellow-400">{statusMessage}</p>}
       <button
-        className="bg-blue-500 text-white px-4 py-2 mt-2 rounded hover:bg-blue-600 cursor-pointer"
-        onClick={addPhoneNum}>Add New Phone Number</button>
+        className="bg-blue-500 text-white px-3 py-2 mt-2 rounded hover:bg-blue-600 cursor-pointer"
+        onClick={addPhoneNum}
+      >
+        Add New Phone Number
+      </button>
+      {/*PLACEBO BUTTON USED TO RESET FORMEDCHANGES, DOESN'T ACTUALLY SAVE ANYTHING IN THE BACKEND*/}
+      <button
+          type="button"
+          className="submit-button bg-green-500 text-white px-3 py-2 mt-4 rounded hover:bg-green-600 cursor-pointer disabled:opacity-50"
+          disabled={isSubmitting}
+          onClick={placeboSubmit}
+      > 
+          {isSubmitting ? "Saving..." : "Save Responsibility"}
+      </button>
+      {statusMessage == "Saved!" && <p className="mt-2 text-sm text-green-700">{statusMessage}</p>}
     </>
   );
 }
@@ -137,6 +312,9 @@ export default function EditContactInfoPage() {
   const [submitting, setSubmitting] = useState(false); // Tracks if form is being submitted
   const [submitted, setSubmitted] = useState(false); // Tracks if submission succeeded
   const [error, setError] = useState<string | null>(null); // Stores error message for display
+  
+  const [formChanged, setFormChanged] = useState(false); //for unsaved changes check
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && user) {
@@ -195,12 +373,62 @@ export default function EditContactInfoPage() {
 
       setSubmitting(false); // Hide spinner
       setSubmitted(true);   // Trigger visual success feedback
+      setFormChanged(false);  // Lets page know change has been saved
+      setTimeout(() => setStatusMessage(null), 1); // Removes "unsaved change" from page and resets after 3s
+      setTimeout(() => setSubmitted(false), 3000);
     } catch (err: any) {
       console.error("Error updating contact info:", err);
       setError("Something went wrong. Please try again."); // Show error feedback
       setSubmitting(false); // Stop spinner if error occurs
     }
   }
+
+  useEffect(() => {
+    //handles reload and close tab if there are unsaved changes
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (formChanged) {
+        event.preventDefault();
+        event.returnValue = ''; //is deprecated but might be necessary to prompt on Chrome
+      }
+    };
+
+    //handles (most) clicks on links within the page if there are unsaved changes
+    const handleClick = (event: MouseEvent) => {
+      if (!formChanged) return;
+
+      const nav = document.querySelector('nav');
+      if (nav && nav.contains(event.target as Node)) {
+        const target = (event.target as HTMLElement).closest('a');
+        if (target && target instanceof HTMLAnchorElement) {
+          const confirmed = window.confirm('You have unsaved changes. Leave this page?');
+          if (!confirmed) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+          }
+        }
+      }
+
+      const header = document.querySelector('header');
+      if (header && header.contains(event.target as Node)) {
+        const target = (event.target as HTMLElement).closest('a');
+        if (target && target instanceof HTMLAnchorElement) {
+          const confirmed = window.confirm('You have unsaved changes. Leave this page?');
+          if (!confirmed) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+          }
+        }
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('click', handleClick, true);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('click', handleClick, true);
+    };
+  }, [formChanged]);
 
   // Reset success and error states when user edits any field
   function handleInputChange(
@@ -210,6 +438,8 @@ export default function EditContactInfoPage() {
       setter(e.target.value);
       if (submitted) setSubmitted(false); // Hide success message if editing again
       if (error) setError(null);          // Clear error message on user change
+      setFormChanged(true);               // Shows that form is changed
+      setStatusMessage("There has been a change. Don't forget to save!"); // Visual affirmation of change
     };
   }
 
@@ -259,7 +489,7 @@ export default function EditContactInfoPage() {
         placeholder="Enter your location here"
         className="border p-2 rounded w-full"
       />
-
+      {statusMessage == "There has been a change. Don't forget to save!" && <p className="mt-2 text-sm text-yellow-400">{statusMessage}</p>}
       {/* SUBMIT BUTTON with dynamic styles for submitting and submitted states */}
       <button
         type="submit"
