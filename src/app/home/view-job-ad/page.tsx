@@ -107,7 +107,11 @@ export default function ViewJobAdsPage() {
             <div
               key={idx}
               className={`p-2 mb-2 rounded cursor-pointer ${selectedIndex === idx ? "bg-blue-100 dark:bg-stone-800" : "hover:bg-gray-100 dark:hover:bg-stone-800"}`}
-              onClick={() => setSelectedIndex(idx)}
+              onClick={() => {
+                // Don't remove the generated resume unless the user clicks on a different job ad
+                if (selectedIndex !== idx) setNewResume(null);
+                setSelectedIndex(idx);
+              }}
             >
               <div className="font-semibold">{ad.jobTitle}</div>
               <div className="text-xs text-gray-500">
