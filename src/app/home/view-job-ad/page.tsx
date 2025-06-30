@@ -14,6 +14,44 @@ type JobAd = {
   dateSubmitted: Timestamp;
 };
 
+type DownloadResumeButtonProps = {
+  text: string;
+  fileName: string;
+};
+
+function DownloadResumeButton({text, fileName}: DownloadResumeButtonProps) {
+  // text: the text of the resume file
+  // fileName: self-explalnatory
+  function handleDownload() {
+    const blob = new Blob([text], { type: "text/plain" });
+    // The URL is temporary because it is only used to 
+    // download the generated resume (which can vary if 
+    // the user clicks "Generate Resume" multiple times 
+    // for the same job ad).
+    const url = URL.createObjectURL(blob);
+    const downloadLink = document.createElement("a"); // Anchor element
+    downloadLink.href = url;
+
+    // The filename can be optional for now
+    downloadLink.download = fileName || "resume.txt";
+
+    document.body.appendChild(downloadLink);
+    // Simulating the click triggers the download programmatically
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+
+    // Free up memory
+    URL.revokeObjectURL(url);
+  }
+  
+  return (
+    <button
+      className="bg-blue-500 text-white px-4 py-2 rounded mr-2"
+      onClick={handleDownload}
+    >Download</button>
+  );
+}
+
 export default function ViewJobAdsPage() {
   const { user, loading } = useAuth();
   const [jobAds, setJobAds] = useState<JobAd[]>([]);
@@ -208,8 +246,11 @@ export default function ViewJobAdsPage() {
               <div>
                 {newResume && (
                   <div>
-                    <p>Your new generated resume:</p>
-                    <p className="font-mono">{newResume}</p>
+                    <div>
+                      <p>Your new generated resume:</p>
+                      <p className="font-mono">{newResume}</p>
+                    </div>
+                    <DownloadResumeButton text={newResume} fileName={`${jobAds[selectedIndex].jobTitle}.txt`} />
                   </div>
                 )}
               </div>
