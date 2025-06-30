@@ -61,7 +61,11 @@ export default function FileUpload({ onParsed }: { onParsed: (data: any) => void
       // Read file as base64
       const reader = new FileReader();
       reader.onload = () => {
-        const base64 = reader.result;
+        let base64 = reader.result as string;
+        // If .md file, force MIME type to text/markdown
+        if (selectedFile.name.toLowerCase().endsWith('.md') && base64.startsWith('data:text/plain')) {
+          base64 = base64.replace('data:text/plain', 'data:text/markdown');
+        }
         const newDoc = {
           id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           name: selectedFile.name,
@@ -106,7 +110,7 @@ export default function FileUpload({ onParsed }: { onParsed: (data: any) => void
   // Preview handler for local files and selected file
   const handlePreview = (doc: any) => {
     setPreviewUrl(doc.base64 || previewUrl);
-    setPreviewName(doc.name || null);
+    setPreviewName(doc.name || doc.fileName || null);
   };
 
   return (
@@ -153,7 +157,12 @@ export default function FileUpload({ onParsed }: { onParsed: (data: any) => void
                 if (selectedFile) {
                   const reader = new FileReader();
                   reader.onload = () => {
-                    setPreviewUrl(reader.result as string);
+                    let result = reader.result as string;
+                    // If .md file, force MIME type to text/markdown
+                    if (selectedFile.name.toLowerCase().endsWith('.md') && result.startsWith('data:text/plain')) {
+                      result = result.replace('data:text/plain', 'data:text/markdown');
+                    }
+                    setPreviewUrl(result);
                     setPreviewName(selectedFile.name);
                   };
                   reader.readAsDataURL(selectedFile);
@@ -174,7 +183,8 @@ export default function FileUpload({ onParsed }: { onParsed: (data: any) => void
             ...doc,
             type: getFileTypeLabel(doc),
             createdAt: doc.uploadedAt,
-            onPreview: () => handlePreview(doc),
+            fileName: doc.name, // Ensure fileName is always present
+            onPreview: () => handlePreview({ base64: doc.base64, name: doc.name }), // Always pass both base64 and name
           }))}
         />
       </div>
@@ -190,34 +200,39 @@ export default function FileUpload({ onParsed }: { onParsed: (data: any) => void
               ×
             </button>
             <div className="overflow-auto max-h-[70vh]">
-              {previewUrl.startsWith('data:application/pdf') ? (
-                <iframe src={previewUrl} title="PDF Preview" className="w-full h-[60vh] bg-white dark:bg-gray-900" />
-              ) : previewUrl.startsWith('data:image') ? (
-                <img src={previewUrl} alt="Preview" className="max-w-full max-h-[60vh] mx-auto bg-white dark:bg-gray-900" />
-              ) : previewUrl.startsWith('data:application/vnd.openxmlformats-officedocument.wordprocessingml.document') ? (
-                <DocxPreview base64={previewUrl} />
-              ) : previewUrl.startsWith('data:application/vnd.oasis.opendocument.text') ? (
-                <OdtPreview base64={previewUrl} />
-              ) : previewUrl.startsWith('data:text/markdown') || (previewName && previewName.toLowerCase().endsWith('.md') && previewUrl.startsWith('data:text/plain')) ? (
-                <MarkdownPreview base64={previewUrl} />
-              ) : previewUrl.startsWith('data:text') ? (
-                <div className="whitespace-pre-wrap text-gray-800 dark:text-gray-200 text-sm">
-                  {(() => {
-                    try {
-                      const base64 = previewUrl.split(',')[1];
-                      const text = atob(base64);
-                      return text;
-                    } catch {
-                      return 'Unable to preview this file type.';
-                    }
-                  })()}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center">
-                  <span className="text-gray-600 dark:text-gray-300 mb-2">Unable to preview this file type.</span>
-                  <a href={previewUrl} download className="text-blue-600 dark:text-blue-400 underline">Download file</a>
-                </div>
-              )}
+              {(() => {
+                // Always use previewName for extension check
+                const fileName = previewName || '';
+                const lowerName = fileName.toLowerCase();
+                // Treat any .md file as Markdown, regardless of MIME type
+                const isMarkdown = lowerName.endsWith('.md');
+                if (previewUrl.startsWith('data:application/pdf')) {
+                  return <iframe src={previewUrl} title="PDF Preview" className="w-full h-[60vh] bg-white dark:bg-gray-900" />;
+                } else if (previewUrl.startsWith('data:image')) {
+                  return <img src={previewUrl} alt="Preview" className="max-w-full max-h-[60vh] mx-auto bg-white dark:bg-gray-900" />;
+                } else if (previewUrl.startsWith('data:application/vnd.openxmlformats-officedocument.wordprocessingml.document')) {
+                  return <DocxPreview base64={previewUrl} />;
+                } else if (previewUrl.startsWith('data:application/vnd.oasis.opendocument.text')) {
+                  return <OdtPreview base64={previewUrl} />;
+                } else if (isMarkdown) {
+                  return <MarkdownPreview base64={previewUrl} />;
+                } else if (previewUrl.startsWith('data:text')) {
+                  try {
+                    const base64 = previewUrl.split(',')[1];
+                    const text = atob(base64);
+                    return <div className="whitespace-pre-wrap text-gray-800 dark:text-gray-200 text-sm">{text}</div>;
+                  } catch {
+                    return <div className="whitespace-pre-wrap text-gray-800 dark:text-gray-200 text-sm">Unable to preview this file type.</div>;
+                  }
+                } else {
+                  return (
+                    <div className="flex flex-col items-center">
+                      <span className="text-gray-600 dark:text-gray-300 mb-2">Unable to preview this file type.</span>
+                      <a href={previewUrl} download className="text-blue-600 dark:text-blue-400 underline">Download file</a>
+                    </div>
+                  );
+                }
+              })()}
             </div>
           </div>
         </div>
@@ -275,8 +290,20 @@ function MarkdownPreview({ base64 }: { base64: string }) {
   useEffect(() => {
     async function renderMarkdown() {
       try {
+        if (!base64 || !base64.includes(',')) {
+          setHtml("No Markdown content to preview.");
+          return;
+        }
         const arr = base64.split(",")[1];
+        if (!arr) {
+          setHtml("No Markdown content to preview.");
+          return;
+        }
         const text = atob(arr);
+        if (!text.trim()) {
+          setHtml("No Markdown content to preview.");
+          return;
+        }
         const result = await marked.parse(text);
         setHtml(result as string);
       } catch {
@@ -285,7 +312,17 @@ function MarkdownPreview({ base64 }: { base64: string }) {
     }
     renderMarkdown();
   }, [base64]);
-  return <div className="prose max-w-none text-gray-800 dark:text-gray-200" dangerouslySetInnerHTML={{ __html: html }} />;
+  return (
+    <div className="prose max-w-none text-gray-800 dark:text-gray-200">
+      {html === "Loading preview..." ? (
+        <span className="italic text-gray-400">Loading preview...</span>
+      ) : html === "Unable to preview this Markdown file." || html === "No Markdown content to preview." ? (
+        <span className="italic text-red-500 dark:text-red-400">{html}</span>
+      ) : (
+        <span dangerouslySetInnerHTML={{ __html: html }} />
+      )}
+    </div>
+  );
 }
 
 // Helper to get a friendly file type label
