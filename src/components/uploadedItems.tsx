@@ -52,11 +52,12 @@ function SortableTile(props: {
   record: UploadedRecord;
   fmt: (iso: string) => string;
   onClick: (r: UploadedRecord) => void;
+  onDelete: (id: string) => void;
   getTypeLabel: (m: string) => string;
   viewMode: "list" | "icon";
   token: string;
 }) {
-  const { record: it, fmt, onClick, getTypeLabel, viewMode, token } = props;
+  const { record: it, fmt, onClick, onDelete, getTypeLabel, viewMode, token } = props;
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: it.id });
 
@@ -70,6 +71,19 @@ function SortableTile(props: {
   const thumbnailUrl =
     `/api/download?id=${encodeURIComponent(it.id)}` +
     `&type=upload&token=${encodeURIComponent(token)}`;
+
+  // common delete‐button
+  const deleteBtn = (
+    <button
+      onClick={(e) => {
+        e.stopPropagation();
+        if (confirm(`Delete “${it.filename}”?`)) onDelete(it.id);
+      }}
+      className="p-1 hover:text-red-500"
+    >
+      <X className="h-4 w-4" />
+    </button>
+  );
 
   if (viewMode === "list") {
     return (
@@ -103,6 +117,7 @@ function SortableTile(props: {
         <span className="ml-4 text-sm text-neutral-400 whitespace-nowrap flex-shrink-0">
           {fmt(it.createdAt)}
         </span>
+        {deleteBtn}
       </li>
     );
   }
@@ -143,6 +158,9 @@ function SortableTile(props: {
           {new Date(it.createdAt).toLocaleDateString()}
         </span>
       </div>
+
+      { /* delete in corner */ }
+      <div className="absolute top-1 right-1">{deleteBtn}</div>
     </div>
   );
 }
@@ -224,6 +242,17 @@ export default function UploadedItems() {
     },
     [sortedItems, token]
   );
+
+  // delete handler
+  const handleDelete = useCallback((id: string) => {
+    fetch(`/api/uploads?id=${encodeURIComponent(id)}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    }).then((res) => {
+      if (res.ok) setItems((prev) => prev.filter((f) => f.id !== id));
+      else console.error("delete failed", res.status);
+    });
+  }, [token]);  
 
   // grab a fresh Firebase ID token once on mount
   useEffect(() => {
@@ -392,7 +421,7 @@ export default function UploadedItems() {
               : rectSortingStrategy
           }
         >
-          {viewMode === "list" ? (
+          {viewMode==="list" ? (
             <ul className="space-y-2">
               {sortedItems.map((it) => (
                 <SortableTile
@@ -400,6 +429,7 @@ export default function UploadedItems() {
                   record={it}
                   fmt={fmt}
                   onClick={openItem}
+                  onDelete={handleDelete}
                   getTypeLabel={getTypeLabel}
                   viewMode="list"
                   token={token}
@@ -414,6 +444,7 @@ export default function UploadedItems() {
                   record={it}
                   fmt={fmt}
                   onClick={openItem}
+                  onDelete={handleDelete}
                   getTypeLabel={getTypeLabel}
                   viewMode="icon"
                   token={token}
