@@ -74,8 +74,8 @@ export default function TopBanner({ toggleSidePanel, onForceHome }: TopBannerPro
                     <Image
                         src="/logo.png"
                         alt="Polaris Home"
-                        width={48}
-                        height={48}
+                        width={150}
+                        height={150}
                         className="mr-2 cursor-pointer"
                     />
                 </a>
