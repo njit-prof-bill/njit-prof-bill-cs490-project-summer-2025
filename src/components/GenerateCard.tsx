@@ -28,10 +28,26 @@ export default function GenerateCard() {
     const [selectedJob, setSelectedJob] = useState<JobDescription | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
     const [showJobDescriptions, setShowJobDescriptions] = useState(true);
- 
+
+
+    // ------------------------------------------------
+    const [refreshTrigger, setRefreshTrigger] = useState(0); // Add refresh trigger
+    // ------------------------------------------------
+
+
     const handleGenerationComplete = (result: GenerationResult) => {
         console.log('Resume generated:', result);
         setIsGenerating(false);
+        
+
+// ---------------------------------------------
+        // Trigger refresh of the resumes list when generation is successful
+        if (result.success) {
+            setRefreshTrigger(prev => prev + 1);
+        }
+// ----------------------------------------------
+
+
     };
 
     const handleJobSelect = (job: JobDescription | null) => {
@@ -92,7 +108,7 @@ export default function GenerateCard() {
                     }`}>
                         {/* --------------------Component for Displaying Generated Resume HERE: ------------*/}
                         {/* <img src="/resume-page-example-2.jpg" alt="Fetched Image" />   */}
-                        <AIResumesList/>
+                        <AIResumesList refreshTrigger={refreshTrigger} />
                         {/* ----------------------------------------------------------------------- */}
                     </div>
 
