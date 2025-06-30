@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import admin from "firebase-admin";
 import { bucket, db } from "@/lib/mongodb";
+import { ObjectId } from "mongodb";
 
 // disable built-in body parsing so we can stream FormData
 export const config = { api: { bodyParser: false } };
@@ -138,4 +139,39 @@ export async function GET(request: Request) {
   }));
 
   return NextResponse.json(items);
+}
+
+// DELETE /api/uploads
+export async function DELETE(request: Request) {
+  // 1) Authenticate same as GET/POST
+  const auth = request.headers.get("Authorization") || "";
+  const idToken = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+  if (!idToken) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  let decoded: admin.auth.DecodedIdToken;
+  try {
+    decoded = await admin.auth().verifyIdToken(idToken);
+  } catch {
+    return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+  }
+
+  // 2) Grab `id` from query
+  const url = new URL(request.url);
+  const id = url.searchParams.get("id");
+  if (!id) {
+    return NextResponse.json({ error: "Missing id" }, { status: 400 });
+  }
+
+  // 3) Ensure user owns it
+  const filesColl = db.collection("uploads.files");
+  const doc = await filesColl.findOne({ _id: new ObjectId(id), "metadata.userId": decoded.uid });
+  if (!doc) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  // 4) Delete from GridFS
+  await bucket.delete(new ObjectId(id));
+
+  return NextResponse.json({ success: true });
 }
