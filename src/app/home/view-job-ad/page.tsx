@@ -32,7 +32,11 @@ function DownloadResumeButton({text, fileName}: DownloadResumeButtonProps) {
     const downloadLink = document.createElement("a"); // Anchor element
     downloadLink.href = url;
 
-    // The filename can be optional for now
+    // The filename can be optional for now, but I think it would be 
+    // a good idea to set this to a value related to the job ad 
+    // when calling this function (i.e. the job title)
+    // so the user doesn't have to manually rename 
+    // different generated resumes for different job ads.
     downloadLink.download = fileName || "resume.txt";
 
     document.body.appendChild(downloadLink);
