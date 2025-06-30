@@ -94,7 +94,9 @@ export default function ViewJobAdsPage() {
       if (userSnap.exists() && userSnap.data().resumeFields) {
         const resumeInfo = JSON.stringify(userSnap.data().resumeFields);
         const jobAdText = jobAds[idx].jobDescription;
-        const result = await getResumeAIResponseText(generateResumeAIPromptJSON, resumeInfo, jobAdText);
+        // const result = await getResumeAIResponseText(generateResumeAIPromptJSON, resumeInfo, jobAdText);
+        const JSONResume = await getResumeAIResponseJSON(generateResumeAIPromptJSON, resumeInfo, jobAdText);
+        const result = await getResumeAIResponseText(generateResumeAIPromptText, JSONResume);
         setNewResume(result);
         setStatus("Resume generated!");
         setTimeout(() => setStatus(null), 3000);
