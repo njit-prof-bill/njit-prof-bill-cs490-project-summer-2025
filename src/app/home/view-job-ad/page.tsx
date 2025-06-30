@@ -102,7 +102,7 @@ export default function ViewJobAdsPage() {
         setTimeout(() => setStatus(null), 3000);
       }
     } catch (error) {
-      setStatus(`Error occurred while generating resume: ${error}`);
+      setStatus(`Error occurred while generating resume: ${(error as Error).message || String(error)}`);
       setNewResume(null);
     } finally {
       setGeneratingText(false);
@@ -128,7 +128,7 @@ export default function ViewJobAdsPage() {
         setTimeout(() => setStatus(null), 3000);
       }
     } catch (error) {
-      setStatus(`Error occurred while generating resume: ${error}`);
+      setStatus(`Error occurred while generating resume: ${(error as Error).message || String(error)}`);
       setNewResume(null);
       // console.error("Error occurred while generating resume: ", error);
       // setError((error as Error).message);
