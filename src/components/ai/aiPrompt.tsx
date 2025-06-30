@@ -309,5 +309,6 @@ export async function getResumeAIResponse(prompt: string, resume: any, jobAd: st
     return finalResponse;
   } catch (error) {
       console.error("Error generating resume: ", error);
+      return "";
   }
 }

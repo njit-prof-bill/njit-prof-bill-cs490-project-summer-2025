@@ -24,7 +24,8 @@ export default function ViewJobAdsPage() {
   const [generating, setGenerating] = useState(false); // Track whether resume is being generated
   const [generated, setGenerated] = useState(false); // Track whether resume was successfully generated
   // const [error, setError] = useState<string | null>(null);
-  const [status, setStatus] = useState<string | null>(null);
+  const [status, setStatus] = useState<string | null>(null); // Track status message related to resume generation
+  const [newResume, setNewResume] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && user) {
@@ -43,18 +44,21 @@ export default function ViewJobAdsPage() {
     try {
       setGenerating(true);
       // setError(null); // Clear any previous error message
+      setNewResume(null); // Clear any previous result
       setStatus(null); // Clear any previous status message
       const userRef = doc(db, "users", user.uid);
       const userSnap = await getDoc(userRef);
       if (userSnap.exists() && userSnap.data().resumeFields) {
         const resumeInfo = JSON.stringify(userSnap.data().resumeFields);
         const jobAdText = jobAds[idx].jobDescription;
-        await getResumeAIResponse(generateResumeAIPrompt, resumeInfo, jobAdText);
+        const result = await getResumeAIResponse(generateResumeAIPrompt, resumeInfo, jobAdText);
+        setNewResume(result);
         setStatus("Resume generated!");
         setTimeout(() => setStatus(null), 3000);
       }
     } catch (error) {
       setStatus(`Error occurred while generating resume: ${error}`);
+      setNewResume(null);
       // console.error("Error occurred while generating resume: ", error);
       // setError((error as Error).message);
     } finally {
@@ -196,6 +200,14 @@ export default function ViewJobAdsPage() {
               </button>
               <div>
                 {status && <p className="mt-2 text-sm text-green-700">{status}</p>}
+              </div>
+              <div>
+                {newResume && (
+                  <div>
+                    <p>Your new generated resume:</p>
+                    <p className="font-mono">{newResume}</p>
+                  </div>
+                )}
               </div>
             </div>
           )}
