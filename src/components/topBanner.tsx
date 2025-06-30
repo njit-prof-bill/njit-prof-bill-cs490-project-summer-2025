@@ -41,12 +41,15 @@ export default function TopBanner({ toggleSidePanel }: TopBannerProps) {
         "/home": "Home",
         "/home/settings": "Settings",
         "/home/upload-resume": "Upload Resume",
+        "/home/upload-job-ad": "Upload Job Ad",
+        "/home/view-job-ad": "View Job Ads",
         "/home/free-form": "Submit Freeform Text",
         "/home/edit-contact-info": "Edit Contact Info",
         "/home/edit-summary": "Edit Professional Summary",
         "/home/edit-skills": "Edit Skills",
         "/home/edit-education": "Edit Education",
         "/home/edit-work-experience": "Edit Work Experience",
+        "/home/view-past-uploads": "Past Uploads",
     };
 
     const pageTitle = pageTitles[pathname] || "Page"; // Default to "Page" if no match
