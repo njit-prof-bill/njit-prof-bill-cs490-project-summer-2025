@@ -21,13 +21,13 @@ export default function SidePanel({ isSidePanelOpen, onForceHome }: SidePanelPro
                         </a>
                     </li>
                     <li className="mb-2">
-                        <Link href="/home/settings" className="hover:underline">
-                            Settings
+                        <Link href="/home/job-ads" className="hover:underline">
+                            Job Ads
                         </Link>
                     </li>
                     <li>
-                        <Link href="/home/job-ads" className="hover:underline">
-                            Job Ads
+                        <Link href="/home/settings" className="hover:underline">
+                            Settings
                         </Link>
                     </li>
                 </ul>

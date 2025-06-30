@@ -16,6 +16,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Missing resume text" }, { status: 400 });
   }
 
+  // Prevent reparsing already-parsed JSON
+  try {
+    const maybeJson = JSON.parse(text);
+    if (typeof maybeJson === 'object' && maybeJson !== null) {
+      return NextResponse.json({ error: "Input appears to be already-parsed JSON. Please provide raw resume text." }, { status: 400 });
+    }
+  } catch (e) {
+    // Not JSON, continue as normal
+  }
+
   const prompt = `
 You are a resume parsing assistant. Extract the following structured data in JSON format from the resume text:
 
@@ -77,15 +87,25 @@ Parsed JSON:
 
     // GPA regex fallback: look for GPA patterns in the text if missing in parsed JSON
     function extractGPA(text: string): string[] {
-      // Matches: GPA: 3.5, GPA 3.5, 3.5/4.0, 3.50/4.00, etc.
-      const regex = /(?:GPA[:\s]*)?(\d{1}\.?\d{0,2})(?:\s*\/\s*([4][.]?0{0,2}))?/gi;
+      // Only match if 'GPA' label is present
+      const regex = /GPA[:\s]*([0-3](?:\.\d{1,2})?|4(?:\.0{1,2})?|5(?:\.0{1,2})?)(?:\s*\/\s*([45](?:\.0{1,2})?))?/gi;
       const matches = [];
       let match;
       while ((match = regex.exec(text)) !== null) {
+        let value = '';
         if (match[2]) {
-          matches.push(`${match[1]}/${match[2]}`);
+          value = `${match[1]}/${match[2]}`;
         } else {
-          matches.push(match[1]);
+          value = match[1];
+        }
+        // Validate GPA: must be between 0 and 4.0 or 5.0 (or valid fraction)
+        const num = parseFloat(match[1]);
+        const denom = match[2] ? parseFloat(match[2]) : null;
+        if (
+          (denom && num >= 0 && num <= denom && (denom === 4 || denom === 4.0 || denom === 5 || denom === 5.0)) ||
+          (!denom && num >= 0 && num <= 4.0)
+        ) {
+          matches.push(value);
         }
       }
       return matches;
@@ -96,8 +116,12 @@ Parsed JSON:
       const gpas = extractGPA(text);
       parsed.education = parsed.education.map((edu: any, idx: number) => {
         if (!edu.gpa || edu.gpa === "") {
-          // Assign a found GPA if available
+          // Assign a found GPA if available and valid
           edu.gpa = gpas[idx] || gpas[0] || "";
+        }
+        // If GPA is not valid, set to empty string
+        if (edu.gpa && !/^([0-3](\.\d{1,2})?|4(\.0{1,2})?|5(\.0{1,2})?|[0-4](\.\d{1,2})?\/[45](\.0{1,2})?)$/.test(edu.gpa)) {
+          edu.gpa = "";
         }
         return edu;
       });

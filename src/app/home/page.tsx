@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/context/authContext";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 import FileUpload from "@/components/FileUpload";
 import BioSubmission from "@/components/forms/BioSubmission";
@@ -39,6 +39,10 @@ export default function HomePage() {
 
   const [resumeList, setResumeList] = useState<any[]>([]);
   const [selectedResumeId, setSelectedResumeId] = useState<string | null>(null);
+
+  const [aiLoading, setAiLoading] = useState(false);
+
+  const breakdownRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -129,6 +133,17 @@ export default function HomePage() {
     }
   };
 
+  // Only scroll after upload/parse is complete (i.e., when aiLoading goes from true to false and parsedResume is set)
+  const prevAiLoading = useRef(false);
+  useEffect(() => {
+    if (prevAiLoading.current && !aiLoading && parsedResume && breakdownRef.current) {
+      setTimeout(() => {
+        breakdownRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 200);
+    }
+    prevAiLoading.current = aiLoading;
+  }, [aiLoading, parsedResume]);
+
   // Listen for force-home event to reset state from navigation
   useEffect(() => {
     const handler = () => handleReset();
@@ -157,7 +172,7 @@ export default function HomePage() {
                 <h2 className="text-xl font-bold text-indigo-700 dark:text-indigo-300 mb-4 text-center">
                   Upload Your Resume
                 </h2>
-                <FileUpload onParsed={setParsedResume} />
+                <FileUpload onParsed={setParsedResume} setAiLoading={setAiLoading} />
               </div>
               <div className="bg-white/80 dark:bg-gray-900/80 rounded-2xl shadow-xl p-8 flex flex-col items-center border border-indigo-200 dark:border-gray-700 w-full max-w-5xl">
                 <h2 className="text-2xl font-bold text-indigo-700 dark:text-indigo-300 mb-4 text-center">
@@ -172,6 +187,7 @@ export default function HomePage() {
               </div>
             </div>
             <button
+              ref={breakdownRef}
               onClick={handleViewBreakdown}
               disabled={!parsedResume}
               className={`w-full px-6 py-3 rounded-lg text-lg font-bold shadow-lg transition-colors duration-200 border-2 border-indigo-500 mt-8 mb-2
