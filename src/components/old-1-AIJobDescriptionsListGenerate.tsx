@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/authContext";
 import { collection, query, orderBy, getDocs, DocumentData, doc, deleteDoc } from "firebase/firestore";
@@ -109,12 +108,13 @@ export default function AIJobDescriptionsListGenerate({
     if (event) {
       event.stopPropagation(); // Prevent triggering the card click
     }
-
+    
     if (!user?.uid) {
       setError("You must be signed in to delete job descriptions.");
       return;
     }
 
+    // Find the job to get its details for confirmation
     const jobToDelete = jobDescriptions.find(job => job.id === jobId);
     const confirmMessage = jobToDelete 
       ? `Are you sure you want to delete "${jobToDelete.jobTitle}" at ${jobToDelete.companyName}?`
@@ -193,7 +193,7 @@ export default function AIJobDescriptionsListGenerate({
 
         {/* Left side - Job List (2/5 width) */}
         <div className="lg:col-span-2 flex flex-col h-full">
-          {/* Header */}
+          {/* Header - Fixed */}
           <div className="flex justify-between items-center mb-4 flex-shrink-0">
             <h2 className="text-xl font-semibold">
               Job Descriptions ({jobDescriptions.length})
@@ -206,39 +206,38 @@ export default function AIJobDescriptionsListGenerate({
             </button>
           </div>
 
-          {/* Scrollable List Container with fixed height */}
-          <div
-            className="flex-1 overflow-y-auto pr-2"
-            style={{
-              maxHeight: '60vh', // fixed height for scrolling
-              scrollbarWidth: 'thin',
-              scrollbarColor: '#52525b #27272a'
-            }}
-          >
-            {/* Custom scrollbar styles for Webkit browsers */}
+          {/* Scrollable Job List */}
+          <div className="flex-1 overflow-y-auto pr-2 min-h-0 max-h-full job-list-scroll" style={{
+            scrollbarWidth: 'thin',
+            scrollbarColor: '#52525b #27272a'
+          }}>
+            {/* Custom scrollbar styles for webkit browsers */}
             <style jsx>{`
-              .scrollbar-thin::-webkit-scrollbar {
+              .job-list-scroll::-webkit-scrollbar {
                 width: 6px;
               }
-              .scrollbar-thin::-webkit-scrollbar-track {
+              .job-list-scroll::-webkit-scrollbar-track {
                 background: #27272a;
                 border-radius: 3px;
               }
-              .scrollbar-thin::-webkit-scrollbar-thumb {
+              .job-list-scroll::-webkit-scrollbar-thumb {
                 background: #52525b;
                 border-radius: 3px;
               }
-              .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+              .job-list-scroll::-webkit-scrollbar-thumb:hover {
                 background: #71717a;
               }
             `}</style>
-            <div className="space-y-2 scrollbar-thin">
+            
+            <div className="space-y-2">
               {jobDescriptions.map((job) => (
                 <div
                   key={job.id}
                   onClick={() => handleJobSelect(job)}
                   className={`bg-zinc-900 border rounded-lg p-3 cursor-pointer transition-all hover:border-zinc-600 ${
-                    selectedJob?.id === job.id ? 'border-orange-600 bg-zinc-800' : 'border-zinc-700'
+                    selectedJob?.id === job.id 
+                      ? 'border-orange-600 bg-zinc-800' 
+                      : 'border-zinc-700'
                   }`}
                 >
                   <div className="flex justify-between items-start space-x-3">
@@ -247,15 +246,18 @@ export default function AIJobDescriptionsListGenerate({
                       <h3 className="text-lg font-semibold text-white truncate">
                         {job.jobTitle}
                       </h3>
+                      
                       {/* Company Name */}
                       <p className="text-orange-600 font-medium truncate">
                         {job.companyName}
                       </p>
+
                       {/* Timestamp */}
                       <p className="text-xs text-zinc-500">
                         {formatDate(job.extractedAt)}
                       </p>
                     </div>
+
                     {/* Delete Button */}
                     <button
                       onClick={(e) => handleDelete(job.id, e)}
@@ -280,7 +282,7 @@ export default function AIJobDescriptionsListGenerate({
           </div>
         </div>
 
-        {/* Right side - Job Details */}
+        {/* Right side - Job Details (3/5 width) */}
         <div className="lg:col-span-3 lg:sticky lg:top-4 lg:self-start">
           <AIJobDescriptionPreview 
             selectedJob={selectedJob} 

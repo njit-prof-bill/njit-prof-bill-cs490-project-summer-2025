@@ -33,7 +33,6 @@ export default function GenerateResumeButton({
 }: GenerateResumeButtonProps) {
   const [user, setUser] = useState<User | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
   
   // Initialize auth and listen for auth state changes
@@ -53,7 +52,6 @@ export default function GenerateResumeButton({
     }
 
     setIsGenerating(true);
-    setShowSuccess(false);
     setGenerationError(null);
     
     // Call the optional start callback
@@ -133,15 +131,6 @@ export default function GenerateResumeButton({
 
         console.log('Resume saved to Firebase with ID:', docRef.id);
         
-        // Show success state before completing
-        setIsGenerating(false);
-        setShowSuccess(true);
-        
-        // Hide success state after 2 seconds
-        setTimeout(() => {
-          setShowSuccess(false);
-        }, 2000);
-        
         // Call the completion callback if provided
         if (onGenerationComplete) {
           onGenerationComplete(finalResult);
@@ -153,8 +142,8 @@ export default function GenerateResumeButton({
     } catch (error) {
       console.error('Resume generation error:', error);
       setGenerationError(error instanceof Error ? error.message : 'An unexpected error occurred');
+    } finally {
       setIsGenerating(false);
-      setShowSuccess(false);
     }
   };
 
@@ -172,15 +161,11 @@ export default function GenerateResumeButton({
     outline: 'border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white disabled:border-blue-800 disabled:text-blue-800'
   };
 
-  // Success variant classes
-  const successClasses = 'bg-green-600 text-white';
-
   // Determine if button should be disabled
-  const isDisabled = isGenerating || !user || !selectedJob || showSuccess;
+  const isDisabled = isGenerating || !user || !selectedJob;
 
   // Get button text based on state
   const getButtonText = () => {
-    if (showSuccess) return 'Resume Done Generating';
     if (!user) return 'Login Required';
     if (!selectedJob) return 'Select Job First';
     if (isGenerating) return 'Generating Resume...';
@@ -189,41 +174,9 @@ export default function GenerateResumeButton({
 
   // Get tooltip text
   const getTooltipText = () => {
-    if (showSuccess) return 'Resume generation completed successfully!';
     if (!user) return 'Please log in to generate a tailored resume';
     if (!selectedJob) return 'Please select a job from the list first';
     return `Generate a resume tailored to ${selectedJob?.jobTitle} at ${selectedJob?.companyName}`;
-  };
-
-  // Get button classes based on state
-  const getButtonClasses = () => {
-    if (showSuccess) return successClasses;
-    return variantClasses[variant];
-  };
-
-  // Get icon based on state
-  const getIcon = () => {
-    if (showSuccess) {
-      return (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-        </svg>
-      );
-    }
-    
-    if (isGenerating) {
-      return (
-        <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-        </svg>
-      );
-    }
-    
-    return (
-      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-      </svg>
-    );
   };
 
   return (
@@ -233,7 +186,7 @@ export default function GenerateResumeButton({
         disabled={isDisabled}
         className={`
           ${sizeClasses[size]} 
-          ${getButtonClasses()} 
+          ${variantClasses[variant]} 
           disabled:opacity-50 
           font-medium 
           rounded 
@@ -245,8 +198,21 @@ export default function GenerateResumeButton({
         `}
         title={getTooltipText()}
       >
-        {getIcon()}
-        <span>{getButtonText()}</span>
+        {isGenerating ? (
+          <>
+            <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span>{getButtonText()}</span>
+          </>
+        ) : (
+          <>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            <span>{getButtonText()}</span>
+          </>
+        )}
       </button>
 
       {/* Error Display */}

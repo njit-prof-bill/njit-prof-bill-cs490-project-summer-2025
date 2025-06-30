@@ -240,12 +240,15 @@ export default function HomePage() {
       {/* Card 4 */} 
       <div className="w-full max-w-md shadow-lg">
 
-        <h2 className="font-bold mb-2">Freeform Text Input:</h2>
+        {/* <h2 className="font-bold mb-2">Freeform Text Input:</h2> */}
+        
         <div className="flex-1 overflow-hidden">
           
-        <Card className="w-full max-w-md shadow-lg">
+        <Card className="w-full max-w-md shadow-lg"> 
+          
                 <CardHeader>
-                    <CardTitle>Place Respective Component In Here:</CardTitle>
+                    <CardTitle>Freeform Text Input:</CardTitle>
+                   
                 </CardHeader>
                 <CardContent>
                     <BioUpload/>

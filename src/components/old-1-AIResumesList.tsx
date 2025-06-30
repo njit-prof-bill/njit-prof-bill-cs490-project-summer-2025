@@ -24,11 +24,7 @@ interface AIResume {
   };
 }
 
-interface AIResumesListProps {
-  refreshTrigger?: number;
-}
-
-export default function AIResumesList({ refreshTrigger }: AIResumesListProps) {
+export default function AIResumesList() {
   const [resumes, setResumes] = useState<AIResume[]>([]);
   const [selectedResume, setSelectedResume] = useState<AIResume | null>(null);
   const [loading, setLoading] = useState(true);
@@ -85,13 +81,8 @@ export default function AIResumesList({ refreshTrigger }: AIResumesListProps) {
 
       setResumes(resumesList);
 
-      // Auto-select the most recent resume if available and no resume is currently selected
+      // Auto-select the most recent resume if available
       if (resumesList.length > 0 && !selectedResume) {
-        setSelectedResume(resumesList[0]);
-      }
-      
-      // If we have a new resume and we're in display view, show the newest one
-      if (resumesList.length > 0 && view === 'display') {
         setSelectedResume(resumesList[0]);
       }
     } catch (err) {
@@ -102,17 +93,9 @@ export default function AIResumesList({ refreshTrigger }: AIResumesListProps) {
     }
   };
 
-  // Initial fetch when component mounts or user changes
   useEffect(() => {
     fetchResumes();
   }, [user?.uid]);
-
-  // Refresh when refreshTrigger prop changes
-  useEffect(() => {
-    if (refreshTrigger && refreshTrigger > 0) {
-      fetchResumes();
-    }
-  }, [refreshTrigger]);
 
   const formatDate = (dateString: string) => {
     try {
