@@ -146,6 +146,165 @@ export async function saveAIResponse(responseObj: any, user: any, db: any) {
     }
 }
 
+export const jobAdAIPrompt = `
+Extract the following information from the text of a job ad:
+- Company Name
+- Job Title
+- Job Description
+
+Return the result as a strict JSON object with the following structure:
+
+*** Start of Job Ad JSON Structure ***
+| Field | Type | Description |
+|-------|------|-------------|
+| companyName | String | The name of the company in the job ad. |
+| jobTitle | String | The job title of the job ad. |
+| jobDescription | String | The job description of the job ad. |
+*** End of Job Ad JSON Structure ***
+`;
+
+export async function getJobAdAIResponse(aiClient: any, jobAdText: string) {
+  // Replace with your actual AI call logic
+  const prompt = jobAdAIPrompt + "\n\nJob Ad:\n" + jobAdText;
+  const aiResponse = await aiClient(prompt);
+  return aiResponse;
+}
+
+export const generateResumeAIPromptJSON = `
+Use the following information submitted by a user to generate a tailored resume:
+
+1. A JSON object representing the user's information
+2. Text from a job ad
+
+Please return your response as a strict JSON object in the following format:
+
+*** Start of Resume JSON Structure ***
+| Field | Type | Description |
+|-------|------|-------------|
+| fullName | String | Full name of the user. |
+| contact | Object | User's contact details. |
+| contact.email | Array of Strings | Email addresses. |
+| contact.phone | Array of Strings | Phone numbers (optional; also should have the format: XXX-XXX-XXXX with X being a number from 0 to 9). |
+| contact.location | String | City and state or country (optional). |
+| summary | String | Professional summary (1-2 paragraphs). |
+| workExperience | Array of Objects | List of work experiences, ordered most recent first. |
+| workExperience[].jobTitle | String | Job title. |
+| workExperience[].company | String | Company name. |
+| workExperience[].startDate | String | Start date (format: YYYY-MM). |
+| workExperience[].endDate | String | End date (or \"Present\"). |
+| workExperience[].jobSummary | String | Summary of the job role. |
+| workExperience[].responsibilities | Array of Strings | Bullet points of responsibilities/accomplishments. |
+| education | Array of Objects | Educational qualifications, ordered by most recent first. |
+| education[].degree | String | Degree title (e.g., \"Bachelor of Science in Computer Science\"). |
+| education[].institution | String | Name of the school or university. |
+| education[].startDate | String | Start date (format: YYYY-MM). |
+| education[].endDate | String | End date (or \"Present\"). |
+| education[].gpa | String | GPA if available (optional). |
+| skills | Array of Strings | List of skills. |
+*** End of Resume JSON Structure ***
+
+Do not include any explanation, markdown, rich text, or commentary in your response.`;
+
+export async function getResumeAIResponseJSON(prompt: string, resume: any, jobAd: string) {
+  // prompt: AI prompt
+  // resume: JSON object of the 'resumeFields' structure
+  // jobAd: text from a job ad
+  try {
+    const fullPrompt = prompt 
+    + `\n\nHere is a JSON object representing the user's information:\n\n${resume}`
+    + `\n\nHere is the text of the job ad:${jobAd}\n\n`;
+    // console.log(fullPrompt);
+    const result = await model.generateContent(fullPrompt);
+    const response = result.response;
+    const text = response.text();
+    // console.log(text);
+    // AI's response has '```json' as first line
+    // and '```' as last line, which prevents
+    // JSON.parse() from processing it correctly.
+    var lines = text.split('\n');
+    lines.splice(0,1);  // Remove 1st line
+    lines.splice(-1,1); // Remove last line
+    var finalResponse = lines.join('\n');
+    console.log(finalResponse)
+    return finalResponse;
+  } catch (error) {
+      console.error("Error generating resume: ", error);
+      return "";
+  }
+}
+
+export const generateResumeAIPromptText = `
+Given a JSON object with the following structure:
+
+*** Start of Resume JSON Structure ***
+| Field | Type | Description |
+|-------|------|-------------|
+| fullName | String | Full name of the user. |
+| contact | Object | User's contact details. |
+| contact.email | Array of Strings | Email addresses. |
+| contact.phone | Array of Strings | Phone numbers (optional; also should have the format: XXX-XXX-XXXX with X being a number from 0 to 9). |
+| contact.location | String | City and state or country (optional). |
+| summary | String | Professional summary (1-2 paragraphs). |
+| workExperience | Array of Objects | List of work experiences, ordered most recent first. |
+| workExperience[].jobTitle | String | Job title. |
+| workExperience[].company | String | Company name. |
+| workExperience[].startDate | String | Start date (format: YYYY-MM). |
+| workExperience[].endDate | String | End date (or \"Present\"). |
+| workExperience[].jobSummary | String | Summary of the job role. |
+| workExperience[].responsibilities | Array of Strings | Bullet points of responsibilities/accomplishments. |
+| education | Array of Objects | Educational qualifications, ordered by most recent first. |
+| education[].degree | String | Degree title (e.g., \"Bachelor of Science in Computer Science\"). |
+| education[].institution | String | Name of the school or university. |
+| education[].startDate | String | Start date (format: YYYY-MM). |
+| education[].endDate | String | End date (or \"Present\"). |
+| education[].gpa | String | GPA if available (optional). |
+| skills | Array of Strings | List of skills. |
+*** End of Resume JSON Structure ***
+
+Generate a resume in plain text. Do not include any explanation, markdown, rich text, or commentary in your response.
+
+Here is the JSON object:`;
+
+export async function getResumeAIResponseText(prompt: string, JSONText: string) {
+  // prompt: AI prompt
+  // JSONText: text of JSON generated resume
+  try {
+    const fullPrompt = prompt + `\n\n${JSONText}\n`;
+    console.log(fullPrompt);
+
+    const result = await model.generateContent(fullPrompt);
+    const response = result.response;
+    const finalResult = response.text();
+
+    console.log(finalResult);
+    return finalResult;
+  } catch (error) {
+    console.error("Error generating resume: ", error);
+    return "";
+  }
+}
+
+// export async function getResumeAIResponseText(prompt: string, resume: any, jobAd: string) {
+//   // prompt: AI prompt
+//   // resume: JSON object of the 'resumeFields' structure
+//   // jobAd: text from a job ad
+//   try {
+//     const JSONText = await getResumeAIResponseJSON(prompt, resume, jobAd);
+//     const fullPrompt = generateResumeAIPromptText + `\n\n${JSONText}\n`;
+//     console.log(fullPrompt);
+
+//     const result = await model.generateContent(fullPrompt);
+//     const response = result.response;
+//     const finalResult = response.text();
+
+//     console.log(finalResult);
+//     return finalResult;
+//   } catch (error) {
+//     console.error("Error generating resume: ", error);
+//     return "";
+//   }
+// }
+
 // Version of saveAIResponse() using individual writes.
 // If at least one write fails, other writes can continue.
 // export async function saveAIResponse(responseObj: any, user: any, db: any) {
@@ -225,27 +384,3 @@ export async function saveAIResponse(responseObj: any, user: any, db: any) {
 //         }
 //     }
 // }
-
-export const jobAdAIPrompt = `
-Extract the following information from the text of a job ad:
-- Company Name
-- Job Title
-- Job Description
-
-Return the result as a strict JSON object with the following structure:
-
-*** Start of Job Ad JSON Structure ***
-| Field | Type | Description |
-|-------|------|-------------|
-| companyName | String | The name of the company in the job ad. |
-| jobTitle | String | The job title of the job ad. |
-| jobDescription | String | The job description of the job ad. |
-*** End of Job Ad JSON Structure ***
-`;
-
-export async function getJobAdAIResponse(aiClient: any, jobAdText: string) {
-  // Replace with your actual AI call logic
-  const prompt = jobAdAIPrompt + "\n\nJob Ad:\n" + jobAdText;
-  const aiResponse = await aiClient(prompt);
-  return aiResponse;
-}

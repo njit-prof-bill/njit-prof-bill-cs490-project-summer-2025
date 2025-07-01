@@ -5,6 +5,12 @@ import { db } from "@/lib/firebase";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { Timestamp } from "firebase/firestore";
+import { 
+  getResumeAIResponseJSON, 
+  generateResumeAIPromptJSON, 
+  getResumeAIResponseText, 
+  generateResumeAIPromptText 
+} from "@/components/ai/aiPrompt";
 
 type JobAd = {
   companyName: string;
@@ -13,6 +19,48 @@ type JobAd = {
   dateSubmitted: Timestamp;
 };
 
+type DownloadResumeButtonProps = {
+  text: string;
+  fileName: string;
+};
+
+function DownloadResumeButton({text, fileName}: DownloadResumeButtonProps) {
+  // text: the text of the resume file
+  // fileName: self-explalnatory
+  function handleDownload() {
+    const blob = new Blob([text], { type: "text/plain" });
+    // The URL is temporary because it is only used to 
+    // download the generated resume (which can vary if 
+    // the user clicks "Generate Resume" multiple times 
+    // for the same job ad).
+    const url = URL.createObjectURL(blob);
+    const downloadLink = document.createElement("a"); // Anchor element
+    downloadLink.href = url;
+
+    // The filename can be optional for now, but I think it would be 
+    // a good idea to set this to a value related to the job ad 
+    // when calling this function (i.e. the job title)
+    // so the user doesn't have to manually rename 
+    // different generated resumes for different job ads.
+    downloadLink.download = fileName || "resume.txt";
+
+    document.body.appendChild(downloadLink);
+    // Simulating the click triggers the download programmatically
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+
+    // Free up memory
+    URL.revokeObjectURL(url);
+  }
+  
+  return (
+    <button
+      className="bg-blue-500 text-white px-4 py-2 rounded mr-2"
+      onClick={handleDownload}
+    >Download</button>
+  );
+}
+
 export default function ViewJobAdsPage() {
   const { user, loading } = useAuth();
   const [jobAds, setJobAds] = useState<JobAd[]>([]);
@@ -20,6 +68,14 @@ export default function ViewJobAdsPage() {
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [editData, setEditData] = useState<Partial<JobAd>>({});
   const [refresh, setRefresh] = useState(false);
+
+  const [generatingText, setGeneratingText] = useState(false); // Track whether plain text resume is being generated
+  const [generatingJSON, setGeneratingJSON] = useState(false); // Track whether JSON resume is being generated
+  const [generated, setGenerated] = useState(false); // Track whether resume was successfully generated
+  // const [error, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState<string | null>(null); // Track status message related to resume generation
+  const [newResume, setNewResume] = useState<string | null>(null);
+  const [resumeFormat, setResumeFormat] = useState<"text" | "json" | null>(null);
 
   useEffect(() => {
     if (!loading && user) {
@@ -32,6 +88,65 @@ export default function ViewJobAdsPage() {
       })();
     }
   }, [user, loading, refresh]);
+
+  const handleGenerateText = async (idx: number) => {
+    if (!user) return;
+    if (generatingText || generatingJSON) return; // Concurrency lock
+    setResumeFormat("text");
+    try {
+      setGeneratingJSON(false);
+      setGeneratingText(true);
+      setNewResume(null); // Clear any previous result
+      setStatus(null); // Clear any previous status message
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+      if (userSnap.exists() && userSnap.data().resumeFields) {
+        const resumeInfo = JSON.stringify(userSnap.data().resumeFields);
+        const jobAdText = jobAds[idx].jobDescription;
+        // const result = await getResumeAIResponseText(generateResumeAIPromptJSON, resumeInfo, jobAdText);
+        const JSONResume = await getResumeAIResponseJSON(generateResumeAIPromptJSON, resumeInfo, jobAdText);
+        const result = await getResumeAIResponseText(generateResumeAIPromptText, JSONResume);
+        setNewResume(result);
+        setStatus("Resume generated!");
+        setTimeout(() => setStatus(null), 3000);
+      }
+    } catch (error) {
+      setStatus(`Error occurred while generating resume: ${(error as Error).message || String(error)}`);
+      setNewResume(null);
+    } finally {
+      setGeneratingText(false);
+    }
+  };
+
+  const handleGenerateJSON = async (idx: number) => {
+    if (!user) return;
+    if (generatingText || generatingJSON) return; // Concurrency lock
+    setResumeFormat("json");
+    try {
+      setGeneratingText(false);
+      setGeneratingJSON(true);
+      // setError(null); // Clear any previous error message
+      setNewResume(null); // Clear any previous result
+      setStatus(null); // Clear any previous status message
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+      if (userSnap.exists() && userSnap.data().resumeFields) {
+        const resumeInfo = JSON.stringify(userSnap.data().resumeFields);
+        const jobAdText = jobAds[idx].jobDescription;
+        const result = await getResumeAIResponseJSON(generateResumeAIPromptJSON, resumeInfo, jobAdText);
+        setNewResume(result);
+        setStatus("Resume generated!");
+        setTimeout(() => setStatus(null), 3000);
+      }
+    } catch (error) {
+      setStatus(`Error occurred while generating resume: ${(error as Error).message || String(error)}`);
+      setNewResume(null);
+      // console.error("Error occurred while generating resume: ", error);
+      // setError((error as Error).message);
+    } finally {
+      setGeneratingJSON(false);
+    }
+  };
 
   const handleDelete = async (idx: number) => {
     if (!user) return;
@@ -74,7 +189,14 @@ export default function ViewJobAdsPage() {
             <div
               key={idx}
               className={`p-2 mb-2 rounded cursor-pointer ${selectedIndex === idx ? "bg-blue-100 dark:bg-stone-800" : "hover:bg-gray-100 dark:hover:bg-stone-800"}`}
-              onClick={() => setSelectedIndex(idx)}
+              onClick={() => {
+                // Don't remove the generated resume unless the user clicks on a different job ad
+                if (selectedIndex !== idx) {
+                  setNewResume(null);
+                  setResumeFormat(null);
+                };
+                setSelectedIndex(idx);
+              }}
             >
               <div className="font-semibold">{ad.jobTitle}</div>
               <div className="text-xs text-gray-500">
@@ -147,17 +269,47 @@ export default function ViewJobAdsPage() {
                 <div className="mt-1">{jobAds[selectedIndex].jobDescription}</div>
               </div>
               <button
+                className="bg-blue-500 text-white px-4 py-2 rounded mr-2"
+                disabled={generatingText || generatingJSON}
+                onClick={() => handleGenerateText(selectedIndex)}
+              >
+                {generatingText ? "Generating..." : "Generate Text Resume"}
+              </button>
+              <button
+                className="bg-blue-500 text-white px-4 py-2 rounded mr-2"
+                disabled={generatingJSON || generatingText}
+                onClick={() => handleGenerateJSON(selectedIndex)}
+              >
+                {generatingJSON ? "Generating..." : "Generate JSON Resume"}
+              </button>
+              <button
                 className="bg-yellow-500 text-white px-4 py-2 rounded mr-2"
                 onClick={() => handleEdit(selectedIndex)}
               >
                 Edit
               </button>
               <button
-                className="bg-red-600 text-white px-4 py-2 rounded"
+                className="bg-red-600 text-white px-4 py-2 rounded mr-2"
                 onClick={() => handleDelete(selectedIndex)}
               >
                 Delete
               </button>
+              <div>
+                {status && <p className="mt-2 text-sm text-green-700">{status}</p>}
+              </div>
+              <div>
+                {newResume && (
+                  <div>
+                    <div>
+                      <p>Your new generated resume:</p>
+                      <p className="font-mono">{newResume}</p>
+                    </div>
+                    <DownloadResumeButton 
+                      text={newResume} 
+                      fileName={`${jobAds[selectedIndex].jobTitle}.${resumeFormat === "json" ? "json" : "txt"}`} />
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
