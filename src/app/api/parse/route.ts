@@ -26,13 +26,14 @@ export async function POST(req: NextRequest) {
     // Not JSON, continue as normal
   }
 
-  const prompt = `
+const prompt = `
 You are a resume parsing assistant. Extract the following structured data in JSON format from the resume text:
 
 {
+  "name": string, // Full name of the person
   "emails": string[],
   "phones": string[],
-  "objective": string, // The career objective or summary statement, if present
+  "objective": string,
   "skills": string[],
   "jobHistory": [
     {
@@ -50,25 +51,22 @@ You are a resume parsing assistant. Extract the following structured data in JSO
       "degree": string,
       "certificateOrDiploma": string,
       "datesAttended": string,
-      "gpa": string // GPA should be extracted if present, in any of the following formats: "3.5", "3.50/4.00", "GPA: 3.7", etc. GPA may appear as a number, a fraction, or with the label 'GPA'.
+      "gpa": string
     }
   ]
 }
 
-If a career objective or summary statement is present, extract it as the value for "objective". Only extract what's available. If something is missing, return it as an empty string or empty array.
-
-For GPA extraction:
-- Look for GPA in both the education section and anywhere else in the resume text.
-- GPA may appear in formats such as: 3.5, 3.50/4.00, GPA: 3.7, GPA 3.8, etc.
-- If multiple GPAs are found, include the most relevant or recent one for each education entry.
-
-Return valid JSON only (no explanation or markdown).
+Guidelines:
+- If data is missing, return empty string or array.
+- Return only JSON (no explanation or markdown).
+- Extract "name" from the top of the resume or signature section.
 
 Resume text:
 ${text}
 
 Parsed JSON:
 `;
+
 
   try {
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });

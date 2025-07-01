@@ -37,6 +37,8 @@ export default function HomePage() {
   const [editableResume, setEditableResume] = useState<typeof parsedResume>(null);
 
   const [bio, setBio] = useState("");
+  const [jobText, setJobText] = useState("");
+  const [generating, setGenerating] = useState(false);
 
   const [resumeList, setResumeList] = useState<any[]>([]);
   const [selectedResumeId, setSelectedResumeId] = useState<string | null>(null);
@@ -81,10 +83,16 @@ export default function HomePage() {
     }
   };
 
-  const handleViewBreakdown = () => {
-    setEditableResume(parsedResume);
-    setUploaded(true);
-  };
+const handleViewBreakdown = () => {
+  if (!parsedResume) {
+    alert("No resume loaded.");
+    return;
+  }
+
+  setEditableResume(parsedResume);
+  setUploaded(true);
+  setBio(parsedResume.bio || "");
+};
 
   const handleReset = () => {
     setUploaded(false);
@@ -165,8 +173,52 @@ export default function HomePage() {
     window.addEventListener("force-home", handler);
     return () => window.removeEventListener("force-home", handler);
   }, []);
+  
+  useEffect(() => {
+  const handler = (e: Event) => {
+    const customEvent = e as CustomEvent;
+    if (customEvent.detail) {
+      setJobText(customEvent.detail);
+    }
+  };
+  window.addEventListener("set-job-text", handler);
+  return () => window.removeEventListener("set-job-text", handler);
+}, []);
+
 
   if (loading) return <p>Loading... This may take awhile!</p>;
+const handleGenerateResumeFromAI = async () => {
+  if (!editableResume || !bio || !jobText) {
+    alert("Missing required information to generate resume.");
+    return;
+  }
+
+  setGenerating(true);
+  try {
+    const res = await fetch("/api/generateResume", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ editableResume, bio, jobText }),
+    });
+
+    const data = await res.json();
+    if (data.resume) {
+      setEditableResume(prev => ({
+        ...prev,
+        ...data.resume
+      }));
+      alert("Resume generated successfully!");
+    } else {
+      console.error("AI generation failed:", data);
+      alert("Failed to generate resume.");
+    }
+  } catch (err) {
+    console.error("Resume generation error:", err);
+    alert("Error generating resume.");
+  } finally {
+    setGenerating(false);
+  }
+};
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-indigo-100 via-white to-blue-100 px-4 py-10">
@@ -186,7 +238,39 @@ export default function HomePage() {
                 <h2 className="text-xl font-bold text-indigo-700 dark:text-indigo-300 mb-4 text-center">
                   Upload Your Resume
                 </h2>
-                <FileUpload onParsed={setParsedResume} setAiLoading={setAiLoading} />
+                <FileUpload
+  onParsed={async (resume) => {
+    console.log("Parsed resume:", resume);
+
+    const res = await fetch("/api/saveResume", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...resume,
+        userId: user?.uid,
+        bio: "",  // bio is not known yet at this stage
+        displayName: resume.fileName || "Uploaded Resume",
+      }),
+    });
+
+    const data = await res.json();
+
+    if (res.ok && data.resumeId) {
+
+      const response = await fetch(`/api/saveResume?userId=${user?.uid}&resumeId=${data.resumeId}`);
+      const loaded = await response.json();
+      if (loaded.resume) {
+        setParsedResume(loaded.resume);
+        setEditableResume(loaded.resume);
+        setSelectedResumeId(data.resumeId);
+      }
+    } else {
+      console.error("Failed to save/upload resume.");
+    }
+  }}
+  setAiLoading={setAiLoading}
+/>
+
               </div>
               <div className="bg-white/80 dark:bg-gray-900/80 rounded-2xl shadow-xl p-8 flex flex-col items-center border border-indigo-200 dark:border-gray-700 w-full max-w-5xl">
                 <h2 className="text-2xl font-bold text-indigo-700 dark:text-indigo-300 mb-4 text-center">
@@ -217,6 +301,7 @@ export default function HomePage() {
                 Please upload or load a resume to enable this button.
               </div>
             )}
+            
           </>
         ) : (
           <div className="bg-white/90 dark:bg-gray-900/90 rounded-2xl shadow-2xl p-10 space-y-8 border border-indigo-200 dark:border-gray-700">
