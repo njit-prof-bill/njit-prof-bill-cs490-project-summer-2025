@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
 
-type ThemeType = "system" | "light" | "dark";
+type ThemeType = "system" | "light" | "dark" | "contrast";
 
 interface ThemeContextProps {
     theme: ThemeType;
@@ -71,19 +71,21 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         const root = window.document.documentElement;
 
         const applyTheme = (selectedTheme: ThemeType) => {
-            if (selectedTheme === "light") {
-                root.classList.remove("dark");
-            } else if (selectedTheme === "dark") {
-                root.classList.add("dark");
-            } else if (selectedTheme === "system") {
-                const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-                if (prefersDark) {
-                    root.classList.add("dark");
-                } else {
-                    root.classList.remove("dark");
-                }
-            }
-        };
+  root.classList.remove("dark", "contrast");
+
+  if (selectedTheme === "light") {
+    // Do nothing — light mode means no extra classes needed
+  } else if (selectedTheme === "dark") {
+    root.classList.add("dark");
+  } else if (selectedTheme === "contrast") {
+    root.classList.add("contrast");
+  } else if (selectedTheme === "system") {
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    if (prefersDark) {
+      root.classList.add("dark");
+    }
+  }
+};
 
         applyTheme(theme);
         localStorage.setItem("theme", theme);
