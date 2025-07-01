@@ -359,7 +359,7 @@ export default function ViewPastUploadsPage() {
           <AccordionItem key={i} value={`item-${i}`} className="flex flex-col justify-between mb-8">
             {/* <AccordionTrigger>{f.name} <GetFileDate fileRef={f}></GetFileDate></AccordionTrigger> */}
             <AccordionTrigger>
-              <div className="cursor-pointer text-lg transition-duration-400 hover:bg-muted-foreground">
+              <div className="cursor-pointer text-lg transition-duration-400 hover:bg-chart-2">
                 {f.name}
                 <GetFileDate fileRef={f}></GetFileDate>
               </div>
