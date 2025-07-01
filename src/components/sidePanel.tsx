@@ -56,6 +56,11 @@ export default function SidePanel({ isSidePanelOpen }: SidePanelProps) {
                             )}
                         </li>
                     ))}
+                    <li className="mb-2">
+                        <Link href="/home/job-ads" className="hover:underline">
+                            Job Ads
+                        </Link>
+                    </li>
                 </ul>
             </nav>
         </aside>
