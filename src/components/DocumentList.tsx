@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, deleteDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { db } from '@/lib/firebase'; // Adjust import path as needed
 
@@ -9,6 +9,7 @@ interface DocumentData {
   text: string;
   uploadedAt: any; // Firebase Timestamp or Date
   docType: string; // To identify which document type it is
+  docPath: string; // Store the document path for deletion
 }
 
 interface DocumentListProps {
@@ -19,6 +20,7 @@ const DocumentList: React.FC<DocumentListProps> = ({ className = '' }) => {
   const [documents, setDocuments] = useState<DocumentData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deletingDoc, setDeletingDoc] = useState<string | null>(null);
 
   // Document paths configuration
   const documentPaths = [
@@ -53,7 +55,8 @@ const DocumentList: React.FC<DocumentListProps> = ({ className = '' }) => {
                 fileType: data.fileType || type,
                 text: data.text || '',
                 uploadedAt: data.uploadedAt || null,
-                docType: type
+                docType: type,
+                docPath: path
               } as DocumentData;
             }
             return null;
@@ -114,6 +117,39 @@ const DocumentList: React.FC<DocumentListProps> = ({ className = '' }) => {
     }
   };
 
+  // Handle document deletion
+  const handleDeleteDocument = async (docPath: string, docType: string) => {
+    if (!confirm(`Are you sure you want to delete this ${docType} document? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const auth = getAuth();
+      const user = auth.currentUser;
+
+      if (!user) {
+        setError('User not authenticated');
+        return;
+      }
+
+      setDeletingDoc(docPath);
+      const uid = user.uid;
+      const docRef = doc(db, `users/${uid}/userDocuments/${docPath}`);
+      
+      await deleteDoc(docRef);
+      
+      // Remove the deleted document from the state
+      setDocuments(prev => prev.filter(doc => doc.docPath !== docPath));
+      
+      setError(null);
+    } catch (err) {
+      console.error('Error deleting document:', err);
+      setError('Failed to delete document');
+    } finally {
+      setDeletingDoc(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className={`p-4 ${className}`}>
@@ -152,7 +188,7 @@ const DocumentList: React.FC<DocumentListProps> = ({ className = '' }) => {
       </h2>
       
       {documents.length === 0 ? (
-        <div className="border border-gray-200 rounded-lg p-6 text-center">
+        <div className="border border-gray-200 rounded-lg p-6 text-center text-blue-400">
           <p>No documents found</p>
         </div>
       ) : (
@@ -179,12 +215,20 @@ const DocumentList: React.FC<DocumentListProps> = ({ className = '' }) => {
                   <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
                     {document.docType}
                   </span>
+                  <button
+                    onClick={() => handleDeleteDocument(document.docPath, document.docType)}
+                    disabled={deletingDoc === document.docPath}
+                    className="text-xs px-2 py-1 rounded border border-red-300 hover:bg-red-50 hover:border-red-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    title={`Delete ${document.docType} document`}
+                  >
+                    {deletingDoc === document.docPath ? 'Deleting...' : 'Delete'}
+                  </button>
                 </div>
               </div>
               
               {/* Text Preview */}
               <div className="rounded p-3 border border-gray-100">
-                <h4 className="text-xs font-medium mb-2 uppercase tracking-wide text-green-500">
+                <h4 className="text-xs font-medium mb-2 uppercase tracking-wide text-green-600">
                   Content Preview
                 </h4>
                 <pre className="text-sm whitespace-pre-wrap font-mono leading-relaxed overflow-hidden">
