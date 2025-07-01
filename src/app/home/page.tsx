@@ -70,6 +70,31 @@ export default function HomePage() {
         });
     }
   }, [user, loading]);
+useEffect(() => {
+  const storedJobText = localStorage.getItem("jobText");
+  const storedResumeId = localStorage.getItem("resumeId");
+  const aiResume = localStorage.getItem("aiResume");
+
+  if (storedJobText) {
+    setJobText(storedJobText);
+  }
+
+  if (storedResumeId && !aiResume) {
+    handleLoadResume(storedResumeId);
+  }
+}, []);
+
+
+useEffect(() => {
+  const storedAI = localStorage.getItem("aiResume");
+  if (storedAI) {
+    const parsed = JSON.parse(storedAI);
+    setParsedResume(parsed);
+    setEditableResume(parsed);
+    setBio(parsed.bio || "");
+    setUploaded(true);
+  }
+}, []);
 
   const handleLoadResume = async (resumeId: string) => {
     const res = await fetch(`/api/saveResume?userId=${user?.uid}&resumeId=${resumeId}`);

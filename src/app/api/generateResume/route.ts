@@ -11,10 +11,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing input data" }, { status: 400 });
     }
 
-    const prompt = `
-You are an AI resume writer. Your task is to rewrite the following resume to better match the job description and highlight relevant experience from the bio.
+const prompt = `
+You are an AI resume generator. Your task is to rewrite and enhance the resume below based on the given job description and the user's bio.
 
-Please return a JSON object in the following format:
+You must return ONLY valid JSON in the following format:
 {
   "emails": [...],
   "phones": [...],
@@ -25,21 +25,24 @@ Please return a JSON object in the following format:
   "bio": "..."
 }
 
-Requirements:
-- Match resume content to job description.
-- Enhance and clean up grammar.
-- DO NOT add Markdown, backticks, or explanations.
-- Return ONLY valid JSON.
+Specific requirements:
+- Tailor the content to better match the job description.
+- Improve grammar and formatting.
+- If any job in "jobHistory" is missing a "Role Summary", generate a professional Role Summary using the company name and job title.
+- The "objective" field must be customized based on the job description.
+- Keep the JSON structure exactly as shown above.
+- Do NOT include markdown, backticks, explanations, or formatting outside the JSON.
 
-Bio:
+Here is the user's bio:
 ${bio}
 
-Original Resume JSON:
+Here is their original resume:
 ${JSON.stringify(editableResume, null, 2)}
 
-Job Description:
+Here is the job description:
 ${jobText}
 `;
+
 
     const geminiRes = await fetch(GEMINI_URL, {
       method: "POST",
@@ -58,11 +61,11 @@ ${jobText}
       const parsed = JSON.parse(cleaned);
       return NextResponse.json({ resume: parsed });
     } catch (err) {
-      console.error("❌ Failed to parse Gemini response:", raw);
+      console.error("Failed to parse Gemini response:", raw);
       return NextResponse.json({ error: "Failed to parse AI response" }, { status: 500 });
     }
   } catch (err) {
-    console.error("❌ POST /api/generateResume error:", err);
+    console.error("POST /api/generateResume error:", err);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

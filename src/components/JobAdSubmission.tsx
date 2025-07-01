@@ -39,6 +39,8 @@ const JobAdSubmission: React.FC = () => {
   const [user, setUser] = useState<any>(null);
   const [resumeList, setResumeList] = useState<any[]>([]);
   const [selectedResumeId, setSelectedResumeId] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Get Firebase user
   useEffect(() => {
@@ -63,15 +65,36 @@ const JobAdSubmission: React.FC = () => {
     }
   }, [user]);
 
-  const handleGenerateAIResume = async () => {
-    if (!selectedResumeId) return alert("Please select a resume first.");
+const handleGenerateAIResume = async () => {
+  if (!selectedResumeId) return alert("Please select a resume first.");
+
+  setIsGenerating(true); 
+
+  try {
     const res = await fetch(`/api/saveResume?userId=${user.uid}&resumeId=${selectedResumeId}`);
     const data = await res.json();
-    if (!data.resume) return alert("Resume not found.");
+    if (!data.resume) {
+      setIsGenerating(false);
+      return alert("Resume not found.");
+    }
 
-    const jobText = adText;
+    const jobText = localStorage.getItem("jobText") || "";
     const bio = data.resume.bio || "";
     const editableResume = data.resume;
+
+    console.log("🔍 Generating AI Resume with:");
+    console.log("→ jobText:", jobText);
+    console.log("→ bio:", bio);
+    console.log("→ editableResume:", editableResume);
+
+    if (!editableResume || !bio || !jobText) {
+      console.warn("⚠️ Missing required fields", { editableResume, bio, jobText });
+    }
+
+    if (!jobText.trim()) {
+      setIsGenerating(false);
+      return alert("Job description is missing. Please submit a job ad.");
+    }
 
     const aiRes = await fetch("/api/generateResume", {
       method: "POST",
@@ -81,12 +104,26 @@ const JobAdSubmission: React.FC = () => {
 
     const result = await aiRes.json();
     console.log("AI Resume:", result);
-    if (result?.resume) {
-      alert("AI resume generated. Check console.");
-    } else {
+
+if (result?.resume) {
+  localStorage.setItem("aiResume", JSON.stringify(result.resume));
+  setIsGenerating(false);
+  setSuccessMessage(" AI resume generated successfully!");
+
+  setTimeout(() => {
+    window.location.href = "/"; // redirect after short delay
+  }, 1500);
+}
+ else {
+      setIsGenerating(false);
       alert("AI generation failed.");
     }
-  };
+  } catch (err) {
+    setIsGenerating(false);
+    alert("Error generating resume.");
+  }
+};
+
 
   // Load existing job ads from localStorage
   useEffect(() => {
@@ -95,37 +132,48 @@ const JobAdSubmission: React.FC = () => {
   }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!adText.trim()) {
-      setMessage("Please paste or type a job ad.");
-      return;
-    }
+  e.preventDefault();
+  if (!adText.trim()) {
+    setMessage("Please paste or type a job ad.");
+    return;
+  }
 
-    const parsedCompany = parseCompany(adText);
-    const parsedTitle = parseTitle(adText);
-    const parsedLocation = parseLocation(adText);
+  const parsedCompany = parseCompany(adText);
+  const parsedTitle = parseTitle(adText);
+  const parsedLocation = parseLocation(adText);
 
-    const newAd: JobAd = {
-      id: Date.now() + Math.random().toString(36).slice(2),
-      content: adText,
-      company: company.trim() || parsedCompany,
-      title: title.trim() || parsedTitle,
-      location: location.trim() || parsedLocation,
-      submittedAt: new Date().toISOString(),
-    };
-
-    const updated = [newAd, ...ads];
-    setAds(updated);
-    localStorage.setItem("jobAds", JSON.stringify(updated));
-    setAdText("");
-    setTitle("");
-    setCompany("");
-    setLocation("");
-    setMessage("Job ad submitted successfully!");
-    setTimeout(() => setMessage(null), 2000);
-
-    window.dispatchEvent(new CustomEvent("set-job-text", { detail: adText }));
+  const newAd: JobAd = {
+    id: Date.now() + Math.random().toString(36).slice(2),
+    content: adText,
+    company: company.trim() || parsedCompany,
+    title: title.trim() || parsedTitle,
+    location: location.trim() || parsedLocation,
+    submittedAt: new Date().toISOString(),
   };
+
+  const updated = [newAd, ...ads];
+  setAds(updated);
+  localStorage.setItem("jobAds", JSON.stringify(updated));
+  localStorage.setItem("jobText", adText);
+  if (selectedResumeId) {
+    localStorage.setItem("resumeId", selectedResumeId);
+  }
+
+  setAdText("");
+  setTitle("");
+  setCompany("");
+  setLocation("");
+  setMessage("Job ad submitted successfully!");
+  setTimeout(() => setMessage(null), 2000);
+
+  window.dispatchEvent(new CustomEvent("set-job-text", { detail: adText }));
+};
+
+const handleClearJobAds = () => {
+  localStorage.removeItem("jobAds");
+  setAds([]);
+};
+
 
   return (
     <>
@@ -173,6 +221,15 @@ const JobAdSubmission: React.FC = () => {
         </form>
 
         <h3 className="text-lg font-bold mb-2">Submitted Job Ads</h3>
+        {ads.length > 0 && (
+  <button
+    onClick={handleClearJobAds}
+    className="mb-4 px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+  >
+    Clear All Job Ads
+  </button>
+)}
+
         {ads.length === 0 ? (
           <div className="text-gray-500">No job ads submitted yet.</div>
         ) : (
@@ -217,7 +274,7 @@ const JobAdSubmission: React.FC = () => {
         )}
       </div>
 
-      {/* 🔵 Resume selection and AI generation */}
+      {/*  Resume selection and AI generation */}
       <div className="mt-6 max-w-2xl mx-auto p-4 border rounded dark:border-gray-600 dark:bg-gray-800">
         <label className="block mb-2 font-semibold text-indigo-700 dark:text-indigo-300">Choose a Resume:</label>
         <select
@@ -226,19 +283,27 @@ const JobAdSubmission: React.FC = () => {
           onChange={e => setSelectedResumeId(e.target.value)}
         >
           <option value="">Select a resume...</option>
-          {resumeList.map((resume) => (
-            <option key={resume.resumeId} value={resume.resumeId}>
-              {resume.displayName || resume.objective?.slice(0, 30) || resume.resumeId}
-            </option>
-          ))}
+{resumeList.map((resume) => (
+  <option key={resume.resumeId} value={resume.resumeId}>
+    {resume.customName || resume.objective?.slice(0, 30) || resume.resumeId}
+  </option>
+))}
         </select>
-
-        <button
-          onClick={handleGenerateAIResume}
-          className="mt-4 w-full bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 text-white font-bold py-2 px-4 rounded hover:from-purple-700 hover:to-blue-700"
-        >
-           Generate Resume with AI
-        </button>
+<button
+  onClick={handleGenerateAIResume}
+  disabled={isGenerating}
+  className={`mt-4 w-full text-white font-bold py-2 px-4 rounded 
+    bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 
+    hover:from-purple-700 hover:to-blue-700
+    ${isGenerating ? "opacity-60 cursor-not-allowed" : ""}`}
+>
+  {isGenerating ? "Processing..." : "Generate Resume with AI"}
+</button>
+{successMessage && (
+  <div className="mt-2 text-green-600 font-medium text-sm">
+    {successMessage}
+  </div>
+)}
       </div>
     </>
   );
