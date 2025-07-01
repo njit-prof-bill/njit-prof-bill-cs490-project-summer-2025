@@ -20,6 +20,11 @@ export default function SidePanel({ isSidePanelOpen, onForceHome }: SidePanelPro
                             Dashboard
                         </a>
                     </li>
+                    <li className="mb-2">
+                        <Link href="/home/job-ads" className="hover:underline">
+                            Job Ads
+                        </Link>
+                    </li>
                     <li>
                         <Link href="/home/settings" className="hover:underline">
                             Settings

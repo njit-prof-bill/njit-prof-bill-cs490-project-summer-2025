@@ -74,8 +74,8 @@ export default function TopBanner({ toggleSidePanel, onForceHome }: TopBannerPro
                     <Image
                         src="/logo.png"
                         alt="Polaris Home"
-                        width={48}
-                        height={48}
+                        width={150}
+                        height={150}
                         className="mr-2 cursor-pointer"
                     />
                 </a>
@@ -97,7 +97,7 @@ export default function TopBanner({ toggleSidePanel, onForceHome }: TopBannerPro
                     <DropdownMenuTrigger asChild>
                         <div className="relative cursor-pointer">
                             <Avatar className="w-10 h-10">
-                                <AvatarImage src="/path-to-avatar-image.jpg" alt="User Avatar" />
+                                {/* <AvatarImage src="/path-to-avatar-image.jpg" alt="User Avatar" /> */}
                                 <AvatarFallback className="bg-blue-500 w-full h-full flex items-center justify-center rounded-full">
                                     {initials || "?"}
                                 </AvatarFallback>
