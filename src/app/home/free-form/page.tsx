@@ -2,12 +2,19 @@
 import { useAuth } from "@/context/authContext";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import React from "react";
 import { db } from "@/lib/firebase";
 import { collection, doc, setDoc, addDoc, getDoc, updateDoc, serverTimestamp, Timestamp } from "firebase/firestore";
 import { getAIResponse, saveAIResponse, AIPrompt } from "@/components/ai/aiPrompt";
 import { User } from "firebase/auth";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogOverlay, DialogPortal, DialogTitle, DialogTrigger } from "@radix-ui/react-dialog";
 import { date } from "zod";
+import { Button } from "@/components/ui/button";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 type freeFormEntry = {
     text: string;
@@ -51,16 +58,20 @@ function DeleteButton({index, freeFormList, setFreeFormList, user}: DeleteButton
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <button type="button" disabled={deleting}>
+                <button
+                    type="button"
+                    disabled={deleting}
+                    className="bg-red-500 px-2 py-1 rounded mt-3" 
+                >
                     {deleting ? "Deleting..." : "Delete"}
                 </button>
             </DialogTrigger>
             <DialogPortal>
-                <DialogOverlay className="fixed inset-0 bg-black bg-opacity-50"></DialogOverlay>
-                <DialogContent className="fixed top-1/2 left-1/2 bg-white p-4 rounded shadow transform -translate-x-1/2 -translate-y-1/2">
-                    <DialogTitle>Confirm Delete</DialogTitle>
-                    <DialogDescription>
-                        Are you sure you want to delete <strong>{freeFormList[index].label}</strong>?;
+                <DialogOverlay className="fixed inset-0 backdrop-blur-md bg-opacity-50"></DialogOverlay>
+                <DialogContent className="fixed top-1/2 left-1/2 bg-background p-4 rounded shadow transform -translate-x-1/2 -translate-y-1/2 border border-foreground">
+                    <DialogTitle className="text-foreground"><strong><u>Confirm Delete</u></strong></DialogTitle>
+                    <DialogDescription className="text-foreground">
+                        Are you sure you want to delete <strong>{freeFormList[index].label}</strong>?
                     </DialogDescription>
                     <div className="mt-4 flex gap-2">
                         <button
@@ -71,7 +82,7 @@ function DeleteButton({index, freeFormList, setFreeFormList, user}: DeleteButton
                             {deleting ? "Deleting..." : "Yes, Delete"}
                         </button>
                         <DialogClose asChild>
-                            <button className="bg-gray-300 px-2 py-1 rounded" disabled={deleting}>
+                            <button className="bg-gray-600 px-2 py-1 rounded text-white" disabled={deleting}>
                                 Cancel
                             </button>
                         </DialogClose>
@@ -96,6 +107,8 @@ type LabelMenuProps = {
 function LabelMenu({freeFormList, setFreeFormList, text, setText, label, setLabel, user}: LabelMenuProps) {
     // Show a menu of the user's past free-form text submissions by their labels.
     // Clicking on a single label populates the free-form text field with that submission.
+    const [isOpen, setIsOpen] = React.useState(false);
+    
     async function handleClick(event: React.MouseEvent<HTMLButtonElement>, index: number) {
         // Prevent the browser from reloading the page
         event.preventDefault();
@@ -104,20 +117,36 @@ function LabelMenu({freeFormList, setFreeFormList, text, setText, label, setLabe
         setLabel(freeFormList[index].label);
     }
     return (
-        <div>
-            <h1 className="text-2xl font-bold mb-6">Load Past Submissions:</h1>
-            {freeFormList.map((submission, index) => (
-                <div key={index}>
-                    <button
-                        onClick={(event) => handleClick(event, index)}
-                    >
-                        {submission.label}
-                    </button>
-                    <SubmissionDate dateSubmitted={submission.dateSubmitted} />
-                    <DeleteButton index={index} freeFormList={freeFormList} setFreeFormList={setFreeFormList} user={user} />
+        <Collapsible
+            open={isOpen}
+            onOpenChange={setIsOpen}
+            className="flex max-w-lg flex-col gap-2 mx-12"
+        >
+            <div className="items-center justify-between gap-4 px-4 mt-4">
+                <h1 className="text-3xl m-auto font-bold mb-2 max-w-lg"><u>Load Past Submissions</u></h1>
+                <div>
+                    <CollapsibleTrigger asChild>
+                        {/*Click to Expand Button*/}
+                        <Button variant="ghost" className="bg-background text-foreground text-lg px-3 py-1 rounded hover:bg-chart-2 cursor-pointer">
+                            <span> {isOpen ? "Click to Close" : "Click to Expand"} </span>
+                        </Button>
+                    </CollapsibleTrigger>
                 </div>
-            ))}
-        </div>
+            </div>
+            <CollapsibleContent className="flex flex-col gap-2">    
+                {freeFormList.map((submission, index) => (
+                    <div key={index} className="rounded-md border px-4 py-2 font-mono text-sm">
+                        <button className="cursor-pointer text-base transition-duration-400 hover:bg-muted-foreground hover:text-white"
+                            onClick={(event) => handleClick(event, index)}
+                        >
+                            <strong><u>{submission.label}</u></strong>
+                        </button>
+                        <SubmissionDate dateSubmitted={submission.dateSubmitted} />
+                        <DeleteButton index={index} freeFormList={freeFormList} setFreeFormList={setFreeFormList} user={user} />
+                    </div>                    
+                ))}
+            </CollapsibleContent>
+        </Collapsible>
     );
 }
 
@@ -272,43 +301,50 @@ export default function FreeFormPage() {
 
     return (
         <div className="flex items-center justify-center min-h-screen text-gray-900 dark:text-gray-100">
-            <div className="w-full max-w-md">
-                <LabelMenu freeFormList={freeFormList} setFreeFormList={setFreeFormList} text={text} setText={setText} label={label} setLabel={setLabel} user={user}/>
-                <h1 className="text-2xl font-bold mb-6">Free-form Text</h1>
-                <form method="post" onSubmit={handleSubmit}>
-                    <p>Enter some text in the box below. <br></br>When you are done, hit 'Submit'.</p>
-                    <textarea
-                        name="text"
-                        // Using defaultValue since I just want to pre-fill the text field once
-                        // with whatever the user entered there in a past session,
-                        // instead of updating the field while the user is typing in it.
-                        value={text}
-                        onChange={(event) => setText(event.target.value)}
-                        placeholder="Start typing here"
-                        rows={15}
-                        className="w-full p-3 border border-gray-300 rounded-md mb-4"
-                    ></textarea>
-                    <input
-                        name="label"
-                        value={label}
-                        onChange={(event) => setLabel(event.target.value)}
-                        placeholder="Enter a label for this submission"
-                        className="w-full p-3 border border-gray-300 rounded-md mb-4"
-                        required
-                    ></input>
-                    <button
-                        type="submit"
-                        disabled={submitting}
-                        className={`px-4 py-2 rounded text-white font-semibold transition duration-300 ${submitted
-                                ? "bg-blue-600 cursor-not-allowed"
-                                : submitting
-                                    ? "bg-gray-500 cursor-wait"
-                                    : "bg-blue-600 hover:bg-blue-700 cursor-pointer"
-                            }`}
-                    >
-                        {submitting ? "Submitting..." : submitted ? "Submitted!" : "Submit"}
-                    </button>
-                </form>
+            <div className="flex flex-row items-stretch justify-center w-full text-center text-lg">
+                <div>
+                    <LabelMenu freeFormList={freeFormList} setFreeFormList={setFreeFormList} text={text} setText={setText} label={label} setLabel={setLabel} user={user}/>
+                </div>
+                <br />
+                <div>
+                    <h1 className="text-3xl font-bold mb-3"><u>Free-Form Text</u></h1>
+                    <form method="post" onSubmit={handleSubmit}>
+                        <p >Enter some text in the box below. When you are done, hit "Submit"</p>
+                        <br />
+                        <textarea
+                            name="text"
+                            // Using defaultValue since I just want to pre-fill the text field once
+                            // with whatever the user entered there in a past session,
+                            // instead of updating the field while the user is typing in it.
+                            value={text}
+                            onChange={(event) => setText(event.target.value)}
+                            placeholder="Start typing here"
+                            rows={15}
+                            className="w-full p-3 border border-gray-300 rounded-md mb-4"
+                        ></textarea>
+                        <input
+                            name="label"
+                            value={label}
+                            onChange={(event) => setLabel(event.target.value)}
+                            placeholder="Enter a label for this submission"
+                            className="w-full p-3 border border-gray-300 rounded-md mb-4"
+                            required
+                        ></input>
+                        <button
+                            type="submit"
+                            disabled={submitting}
+                            className={`px-4 py-2 rounded text-white font-semibold transition duration-300 ${submitted
+                                    ? "bg-blue-600 cursor-not-allowed"
+                                    : submitting
+                                        ? "bg-gray-500 cursor-wait"
+                                        : "bg-blue-600 hover:bg-blue-700 cursor-pointer"
+                                }`}
+                        >
+                            {submitting ? "Submitting..." : submitted ? "Submitted!" : "Submit"}
+                        </button>
+                    </form>
+                </div>
+                
             </div>
         </div>
     );
