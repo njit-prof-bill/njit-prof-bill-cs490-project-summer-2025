@@ -3,6 +3,7 @@
 import { useAuth } from "@/context/authContext";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
+import React from "react";
 
 import FileUpload from "@/components/FileUpload";
 import BioSubmission from "@/components/forms/BioSubmission";
@@ -41,6 +42,11 @@ export default function HomePage() {
   const [selectedResumeId, setSelectedResumeId] = useState<string | null>(null);
 
   const [aiLoading, setAiLoading] = useState(false);
+
+  const [showNameModal, setShowNameModal] = useState(false);
+  const [customResumeName, setCustomResumeName] = useState("");
+
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
 
   const breakdownRef = useRef<HTMLButtonElement | null>(null);
 
@@ -104,9 +110,12 @@ export default function HomePage() {
     }
   };
 
-  const handleSave = async () => {
+  const handleSave = () => {};
+
+  const handleConfirmSave = async () => {
+    setSaveStatus('saving');
     try {
-      const dataToSave = { ...editableResume, bio, userId: user?.uid, resumeId: selectedResumeId };
+      const dataToSave = { ...editableResume, bio, userId: user?.uid, resumeId: selectedResumeId, customName: customResumeName };
       const res = await fetch("/api/saveResume", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -117,7 +126,8 @@ export default function HomePage() {
       if (!selectedResumeId && result.resumeId) {
         setSelectedResumeId(result.resumeId);
       }
-      alert("Resume saved successfully!");
+      setSaveStatus('success');
+      setCustomResumeName("");
       // Refresh resume list
       if (user && user.uid) {
         fetch(`/api/saveResume?userId=${user.uid}`)
@@ -128,8 +138,13 @@ export default function HomePage() {
             }
           });
       }
+      setTimeout(() => {
+        setShowNameModal(false);
+        setSaveStatus('idle');
+      }, 1200);
     } catch (error) {
-      alert("Error saving resume");
+      setSaveStatus('error');
+      setTimeout(() => setSaveStatus('idle'), 1500);
     }
   };
 
@@ -164,7 +179,6 @@ export default function HomePage() {
           <p className="text-lg text-gray-700 dark:text-gray-300 font-medium text-center max-w-2xl">
             Build, edit, and manage your professional resumes with creativity and ease.
           </p>
-        </div>
         {!uploaded ? (
           <>
             <div className="flex flex-col gap-8 items-center w-full">
@@ -281,14 +295,53 @@ export default function HomePage() {
             </button>
 
             <button
-              onClick={handleSave}
+              onClick={() => setShowNameModal(true)}
               className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded"
             >
               Save Resume
             </button>
           </div>
-        </div>
-
+          {/* Modal for custom resume name */}
+          {showNameModal && (
+            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
+              <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-sm flex flex-col items-center">
+                <h3 className="text-2xl font-bold mb-2 text-indigo-700 dark:text-indigo-200">Save Resume As</h3>
+                <p className="text-gray-600 dark:text-gray-300 mb-4 text-center text-sm">Give your resume a custom name for easy management and retrieval.</p>
+                <input
+                  type="text"
+                  className="w-full p-2 border border-indigo-300 dark:border-gray-600 rounded mb-4 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-400"
+                  placeholder="Enter a name for your resume"
+                  value={customResumeName}
+                  onChange={e => setCustomResumeName(e.target.value)}
+                  autoFocus
+                  disabled={saveStatus === 'saving' || saveStatus === 'success'}
+                />
+                <div className="flex justify-end gap-2 w-full mt-2">
+                  <button
+                    onClick={() => { setShowNameModal(false); setSaveStatus('idle'); }}
+                    className="px-4 py-2 bg-gray-400 hover:bg-gray-500 text-white rounded"
+                    disabled={saveStatus === 'saving'}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleConfirmSave}
+                    className={`px-4 py-2 rounded text-white font-semibold transition-colors duration-150 ${saveStatus === 'success' ? 'bg-green-600' : 'bg-indigo-600 hover:bg-indigo-700'} ${saveStatus === 'saving' ? 'opacity-60 cursor-not-allowed' : ''}`}
+                    disabled={!customResumeName.trim() || saveStatus === 'saving' || saveStatus === 'success'}
+                  >
+                    {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'success' ? 'Saved!' : 'Save'}
+                  </button>
+                </div>
+                {saveStatus === 'success' && (
+                  <div className="mt-4 text-green-700 dark:text-green-400 font-medium text-center">Resume saved successfully!</div>
+                )}
+                {saveStatus === 'error' && (
+                  <div className="mt-4 text-red-600 dark:text-red-400 font-medium text-center">Error saving resume. Please try again.</div>
+                )}
+              </div>
+            </div>
+          )}
+          </div>
         )}
         {!uploaded && resumeList.length > 0 && (
           <div className="mb-4">
@@ -301,7 +354,7 @@ export default function HomePage() {
               <option value="">Select a resume...</option>
               {resumeList.map((resume) => (
                 <option key={resume.resumeId} value={resume.resumeId}>
-                  {resume.objective?.slice(0, 30) || resume.resumeId}
+                  {resume.customName || resume.objective?.slice(0, 30) || resume.resumeId}
                 </option>
               ))}
             </select>
@@ -312,6 +365,7 @@ export default function HomePage() {
                 Uploaded File: <span className="font-semibold">{parsedResume.fileName}</span>
               </div>
             )}
+      </div>
       </div>
     </main>
   );
