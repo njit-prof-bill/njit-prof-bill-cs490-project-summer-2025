@@ -84,6 +84,7 @@ export default function ViewJobAdsPage() {
 
   const handleGenerateText = async (idx: number) => {
     if (!user) return;
+    if (generatingText || generatingJSON) return; // Concurrency lock
     try {
       setGeneratingJSON(false);
       setGeneratingText(true);
@@ -111,6 +112,7 @@ export default function ViewJobAdsPage() {
 
   const handleGenerateJSON = async (idx: number) => {
     if (!user) return;
+    if (generatingText || generatingJSON) return; // Concurrency lock
     try {
       setGeneratingText(false);
       setGeneratingJSON(true);
