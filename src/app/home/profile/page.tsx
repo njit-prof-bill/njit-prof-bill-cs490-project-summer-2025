@@ -1,3 +1,4 @@
+// src/app/home/profile/page.tsx
 "use client";
 
 import React, { useCallback, useState } from 'react';
@@ -8,6 +9,8 @@ import { useProfile } from "@/context/profileContext";
 import ContactInfoSection from '@/components/profile/contactInfoSection';
 import CareerObjectiveSection from '@/components/profile/careerObjectiveSection';
 import SkillsSection from '@/components/profile/skillsSection';
+import JobHistorySection from '@/components/profile/jobHistorySection';
+import EducationSection from '@/components/profile/educationSection';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -161,6 +164,12 @@ export default function ProfilePage() {
                 </TabsContent>
                 <TabsContent value="skills" className="mt-6">
                   <SkillsSection />
+                </TabsContent>
+                <TabsContent value="jobs" className="mt-6">
+                  <JobHistorySection />
+                </TabsContent>
+                <TabsContent value="education" className="mt-6">
+                  <EducationSection />
                 </TabsContent>
               </Tabs>
             </CardContent>
