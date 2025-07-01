@@ -1,8 +1,13 @@
 // src/components/UploadedItems.tsx
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  } from "react";
 import { useAuth } from "@/context/authContext";
+import { useProfile } from "@/context/profileContext";
 import { Button } from "@/components/ui/button";
 import {
   List,
@@ -11,11 +16,10 @@ import {
   FileText,
   X,
   GripVertical,
-  } from "lucide-react";
+} from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import * as mammoth from "mammoth";
 
-// dnd-kit imports
 import {
   DndContext,
   closestCenter,
@@ -31,7 +35,6 @@ import {
   arrayMove,
   useSortable,
 } from "@dnd-kit/sortable";
-// CSS helper lives here:
 import { CSS } from "@dnd-kit/utilities";
 
 type UploadedRecord = {
@@ -45,9 +48,6 @@ type UploadedRecord = {
 type SortBy = "order" | "name" | "date" | "type";
 type SortDir = "asc" | "desc";
 
-// -----------------------------------------------
-// SortableTile: a little wrapper for each item
-// -----------------------------------------------
 function SortableTile(props: {
   record: UploadedRecord;
   fmt: (iso: string) => string;
@@ -56,8 +56,20 @@ function SortableTile(props: {
   getTypeLabel: (m: string) => string;
   viewMode: "list" | "icon";
   token: string;
+  onParse: (id: string) => void;
+  isParsing: boolean;
 }) {
-  const { record: it, fmt, onClick, onDelete, getTypeLabel, viewMode, token } = props;
+  const {
+    record: it,
+    fmt,
+    onClick,
+    onDelete,
+    getTypeLabel,
+    viewMode,
+    token,
+    onParse,
+    isParsing,
+  } = props;
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: it.id });
 
@@ -72,7 +84,6 @@ function SortableTile(props: {
     `/api/download?id=${encodeURIComponent(it.id)}` +
     `&type=upload&token=${encodeURIComponent(token)}`;
 
-  // common delete‐button
   const deleteBtn = (
     <button
       onClick={(e) => {
@@ -85,6 +96,20 @@ function SortableTile(props: {
     </button>
   );
 
+  const parseBtn = (
+    <Button
+      size="sm"
+      variant="outline"
+      disabled={isParsing}
+      onClick={(e) => {
+        e.stopPropagation();
+        onParse(it.id);
+      }}
+    >
+      {isParsing ? "Parsing…" : "Parse"}
+    </Button>
+  );
+
   if (viewMode === "list") {
     return (
       <li
@@ -95,12 +120,7 @@ function SortableTile(props: {
         style={style}
         className="flex items-center justify-between p-2.5 bg-neutral-800 rounded hover:bg-neutral-700 cursor-pointer"
       >
-        {/* drag handle */}
-        <div
-          {...attributes}
-          {...listeners}
-          className="p-1 cursor-grab hover:text-blue-400"
-        >
+        <div {...attributes} {...listeners} className="p-1 cursor-grab hover:text-blue-400">
           <GripVertical className="h-4 w-4 text-neutral-400" />
         </div>
         <div className="flex items-center space-x-2 flex-1 min-w-0">
@@ -117,12 +137,14 @@ function SortableTile(props: {
         <span className="ml-4 text-sm text-neutral-400 whitespace-nowrap flex-shrink-0">
           {fmt(it.createdAt)}
         </span>
-        {deleteBtn}
+        <div className="ml-4 flex items-center space-x-2">
+          {parseBtn}
+          {deleteBtn}
+        </div>
       </li>
     );
   }
 
-  // icon / thumbnail view
   return (
     <div
       ref={setNodeRef}
@@ -148,9 +170,7 @@ function SortableTile(props: {
         <FileIcon className="h-8 w-8 text-neutral-200" />
       )}
       <div className="mt-2 text-center w-full">
-        <span className="block text-sm text-neutral-100 truncate">
-          {it.filename}
-        </span>
+        <span className="block text-sm text-neutral-100 truncate">{it.filename}</span>
         <span className="block text-xs uppercase bg-neutral-700 text-neutral-300 inline-block px-1 rounded truncate">
           {getTypeLabel(it.type)}
         </span>
@@ -158,15 +178,27 @@ function SortableTile(props: {
           {new Date(it.createdAt).toLocaleDateString()}
         </span>
       </div>
-
-      { /* delete in corner */ }
-      <div className="absolute top-1 right-1">{deleteBtn}</div>
+      <div className="absolute top-1 right-1 flex space-x-1">
+        <Button
+          size="icon"
+          variant="outline"
+          disabled={isParsing}
+          onClick={(e) => {
+            e.stopPropagation();
+            onParse(it.id);
+          }}
+        >
+          {isParsing ? "…" : "⟳"}
+        </Button>
+        {deleteBtn}
+      </div>
     </div>
   );
 }
 
 export default function UploadedItems() {
   const { user, loading } = useAuth();
+  const { parseFile } = useProfile();
   const [items, setItems] = useState<UploadedRecord[]>([]);
   const [viewMode, setViewMode] = useState<"list" | "icon">("list");
   const [token, setToken] = useState<string>("");
@@ -182,45 +214,62 @@ export default function UploadedItems() {
   const [textContent, setTextContent] = useState<string | null>(null);
   const [loadingContent, setLoadingContent] = useState(false);
 
+  // track which file is currently being parsed
+  const [parsingId, setParsingId] = useState<string | null>(null);
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
-      activationConstraint: {
-        delay: 200,     // hold for 200ms
-        tolerance: 5,   // can move up to 5px before it cancels
-      }
+      activationConstraint: { delay: 200, tolerance: 5 },
     })
   );
 
-  // helper to turn MIME into a short label
   const getTypeLabel = (mime: string) =>
-    mime ===
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    mime === "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
       ? "docx"
       : mime.split("/")[1] || mime;
-    const fmt = (iso: string) => new Date(iso).toLocaleString();
+  const fmt = (iso: string) => new Date(iso).toLocaleString();
 
-  // sorting
-  const sortedItems = React.useMemo(() => {
-    if (sortBy === "order") {
-      return sortDir === "asc" ? items : [...items].reverse();
+  // Fetch uploads
+  useEffect(() => {
+    if (!user) {
+      setItems([]);
+      return;
     }
+    if (!token) return;
+    let tried = false;
+    const fetchUploads = async () => {
+      const res = await fetch("/api/uploads", { headers: { Authorization: `Bearer ${token}` } });
+      if (res.status === 401 && !tried) {
+        tried = true;
+        const fresh = await user.getIdToken(true);
+        setToken(fresh);
+        return;
+      }
+      if (!res.ok) return console.error("fetchUploads failed", res.status);
+      const data = (await res.json()) as UploadedRecord[];
+      setItems(data.map((f) => ({ ...f, createdAt: new Date(f.createdAt).toISOString() })));
+    };
+    fetchUploads();
+    const iv = setInterval(fetchUploads, 5000);
+    return () => clearInterval(iv);
+  }, [user, token]);
+
+  useEffect(() => {
+    if (user) user.getIdToken().then(setToken);
+  }, [user]);
+
+  const sortedItems = React.useMemo(() => {
+    if (sortBy === "order") return sortDir === "asc" ? items : [...items].reverse();
     const arr = [...items];
     let cmp: (a: UploadedRecord, b: UploadedRecord) => number;
-    if (sortBy === "name") {
-      cmp = (a, b) => a.filename.localeCompare(b.filename);
-    } else if (sortBy === "type") {
-      cmp = (a, b) =>
-        getTypeLabel(a.type).localeCompare(getTypeLabel(b.type));
-    } else {
-      cmp = (a, b) =>
-        new Date(a.createdAt).getTime() -
-        new Date(b.createdAt).getTime();
-    }
+    if (sortBy === "name") cmp = (a, b) => a.filename.localeCompare(b.filename);
+    else if (sortBy === "type")
+      cmp = (a, b) => getTypeLabel(a.type).localeCompare(getTypeLabel(b.type));
+    else cmp = (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
     arr.sort((a, b) => (sortDir === "asc" ? cmp(a, b) : -cmp(a, b)));
     return arr;
   }, [items, sortBy, sortDir]);
 
-  // drag-end handler
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
       const { active, over } = event;
@@ -229,13 +278,9 @@ export default function UploadedItems() {
         const newIndex = sortedItems.findIndex((i) => i.id === over.id);
         const next = arrayMove(sortedItems, oldIndex, newIndex);
         setItems(next);
-        // persist order
         fetch("/api/uploads/reorder", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
           body: JSON.stringify({ orderedIds: next.map((i) => i.id) }),
         }).catch(console.error);
       }
@@ -243,58 +288,28 @@ export default function UploadedItems() {
     [sortedItems, token]
   );
 
-  // delete handler
-  const handleDelete = useCallback((id: string) => {
-    fetch(`/api/uploads?id=${encodeURIComponent(id)}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    }).then((res) => {
-      if (res.ok) setItems((prev) => prev.filter((f) => f.id !== id));
-      else console.error("delete failed", res.status);
-    });
-  }, [token]);  
+  const handleDelete = useCallback(
+    (id: string) => {
+      fetch(`/api/uploads?id=${encodeURIComponent(id)}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      }).then((res) => {
+        if (res.ok) setItems((prev) => prev.filter((f) => f.id !== id));
+      });
+    },
+    [token]
+  );
 
-  // grab a fresh Firebase ID token once on mount
-  useEffect(() => {
-    if (!user) return;
-    user.getIdToken().then(setToken);
-  }, [user]);
+  const handleParse = useCallback(
+    (id: string) => {
+      setParsingId(id);
+      parseFile(id)
+        .catch((err) => alert(`Parse failed: ${err.message}`))
+        .finally(() => setParsingId(null));
+    },
+    [parseFile]
+  );
 
-  // poll the list every 5s
-  useEffect(() => {
-    if (!user) {
-      setItems([]);
-      return;
-    }
-    const fetchUploads = async () => {
-      try {
-        const res = await fetch("/api/uploads", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) {
-          console.error("fetchUploads failed:", res.status);
-          return;
-        }
-        const data = (await res.json()) as UploadedRecord[];
-        setItems(
-          data.map((f) => ({
-            ...f,
-            createdAt: new Date(f.createdAt).toISOString(),
-          }))
-        );
-      } catch (err) {
-        console.error("Error in fetchUploads:", err);
-      }
-    };
-    fetchUploads();
-    const h = setInterval(fetchUploads, 5_000);
-    return () => clearInterval(h);
-  }, [user, token]);
-
-  // **all hooks are now above this point**  
-  if (loading) return null;
-
-  // when you click a thumbnail or list item
   const openItem = async (it: UploadedRecord) => {
     if (!user) return;
     setSelected(it);
@@ -302,44 +317,27 @@ export default function UploadedItems() {
     setTextContent(null);
     setContentUrl(null);
 
-    // download + preview URL
-    const downloadUrl =
-      `/api/download?id=${encodeURIComponent(it.id)}` +
-      `&type=upload&token=${encodeURIComponent(token)}`;
+    const downloadUrl = `/api/download?id=${encodeURIComponent(it.id)}&type=upload&token=${encodeURIComponent(token)}`;
     setContentUrl(downloadUrl);
-
-    const res = await fetch(downloadUrl, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (!res.ok) {
-      console.error("download failed", res.status);
-      setLoadingContent(false);
-      return;
-    }
-
-    // pick preview mode
-    const previewModeMap = {
-      "application/pdf": "pdf",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-        "docx",
-      "text/markdown": "md",
-      "text/*": "text",
-    } as const;
+    const res = await fetch(downloadUrl, { headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) return setLoadingContent(false);
 
     const blob = await res.blob();
-    const mode =
-      previewModeMap[it.type as keyof typeof previewModeMap] ||
-      (it.type.startsWith("text/") ? "text" : "other");
+    const previewMap: Record<string, "pdf" | "docx" | "md" | "text"> = {
+      "application/pdf": "pdf",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
+      "text/markdown": "md",
+      "text/plain": "text",
+    };
+    const mode = previewMap[it.type] ?? (it.type.startsWith("text/") ? "text" : "other");
     setPreviewMode(mode);
 
     if (mode === "docx") {
-      const arrayBuffer = await blob.arrayBuffer();
-      const { value: html } = await mammoth.convertToHtml({ arrayBuffer });
-      setTextContent(html);
+      const { value } = await mammoth.convertToHtml({ arrayBuffer: await blob.arrayBuffer() });
+      setTextContent(value);
     } else if (mode === "md" || mode === "text") {
       setTextContent(await blob.text());
     }
-
     setLoadingContent(false);
   };
 
@@ -347,41 +345,23 @@ export default function UploadedItems() {
     setSelected(null);
     setPreviewMode(null);
     setTextContent(null);
-    if (contentUrl) {
-      URL.revokeObjectURL(contentUrl);
-      setContentUrl(null);
-    }
+    if (contentUrl) URL.revokeObjectURL(contentUrl);
+    setContentUrl(null);
   };
+
+  if (loading) return null;
 
   return (
     <div>
       {/* header + toggle */}
       <div className="flex items-center justify-between mb-2">
-        <h4 className="text-lg font-semibold text-neutral-100">
-          Your Uploads
-        </h4>
+        <h4 className="text-lg font-semibold text-neutral-100">Your Uploads</h4>
         <div className="flex space-x-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setViewMode("list")}
-          >
-            <List
-              className={`h-5 w-5 ${
-                viewMode === "list" ? "text-blue-400" : "text-neutral-400"
-              }`}
-            />
+          <Button variant="ghost" size="icon" onClick={() => setViewMode("list")}>
+            <List className={`h-5 w-5 ${viewMode === "list" ? "text-blue-400" : "text-neutral-400"}`} />
           </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setViewMode("icon")}
-          >
-            <GridIcon
-              className={`h-5 w-5 ${
-                viewMode === "icon" ? "text-blue-400" : "text-neutral-400"
-              }`}
-            />
+          <Button variant="ghost" size="icon" onClick={() => setViewMode("icon")}>
+            <GridIcon className={`h-5 w-5 ${viewMode === "icon" ? "text-blue-400" : "text-neutral-400"}`} />
           </Button>
         </div>
       </div>
@@ -399,29 +379,14 @@ export default function UploadedItems() {
           <option value="date">Date</option>
           <option value="type">Type</option>
         </select>
-        <button
-          onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))}
-          className="bg-neutral-800 text-neutral-100 text-sm rounded px-2 py-1"
-        >
+        <button onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))} className="bg-neutral-800 text-neutral-100 text-sm rounded px-2 py-1">
           {sortDir === "asc" ? "↑" : "↓"}
         </button>
       </div>
 
-      {/* DnD context & sortable area */}
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext
-          items={sortedItems.map((i) => i.id)}
-          strategy={
-            viewMode === "list"
-              ? verticalListSortingStrategy
-              : rectSortingStrategy
-          }
-        >
-          {viewMode==="list" ? (
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={sortedItems.map((i) => i.id)} strategy={viewMode === "list" ? verticalListSortingStrategy : rectSortingStrategy}>
+          {viewMode === "list" ? (
             <ul className="space-y-2">
               {sortedItems.map((it) => (
                 <SortableTile
@@ -430,9 +395,11 @@ export default function UploadedItems() {
                   fmt={fmt}
                   onClick={openItem}
                   onDelete={handleDelete}
+                  onParse={handleParse}
                   getTypeLabel={getTypeLabel}
                   viewMode="list"
                   token={token}
+                  isParsing={parsingId === it.id}
                 />
               ))}
             </ul>
@@ -445,9 +412,11 @@ export default function UploadedItems() {
                   fmt={fmt}
                   onClick={openItem}
                   onDelete={handleDelete}
+                  onParse={handleParse}
                   getTypeLabel={getTypeLabel}
                   viewMode="icon"
                   token={token}
+                  isParsing={parsingId === it.id}
                 />
               ))}
             </div>
@@ -455,23 +424,15 @@ export default function UploadedItems() {
         </SortableContext>
       </DndContext>
 
-      {/* MODAL POPUP */}
       {selected && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-neutral-900 max-w-3xl w-full max-h-[80vh] overflow-auto rounded-lg p-6 relative">
-            <button
-              onClick={closeModal}
-              className="absolute top-4 right-4 p-1 text-neutral-400 hover:text-white"
-            >
+            <button onClick={closeModal} className="absolute top-4 right-4 p-1 text-neutral-400 hover:text-white">
               <X className="h-6 w-6" />
             </button>
 
             <h2 className="text-xl font-semibold text-neutral-100 mb-4">
-              <a
-                href={contentUrl!}
-                download={selected.filename}
-                className="text-blue-400 underline"
-              >
+              <a href={contentUrl!} download={selected.filename} className="text-blue-400 underline">
                 {selected.filename}
               </a>
             </h2>
@@ -479,24 +440,15 @@ export default function UploadedItems() {
             {loadingContent ? (
               <p className="text-neutral-400">Loading…</p>
             ) : previewMode === "pdf" ? (
-              <iframe
-                src={contentUrl!}
-                className="w-full h-[70vh] border"
-                title={selected.filename}
-              />
+              <iframe src={contentUrl!} className="w-full h-[70vh] border" title={selected.filename} />
             ) : previewMode === "docx" ? (
-              <div
-                className="prose prose-invert max-w-none text-neutral-200"
-                dangerouslySetInnerHTML={{ __html: textContent! }}
-              />
+              <div className="prose prose-invert max-w-none text-neutral-200" dangerouslySetInnerHTML={{ __html: textContent! }} />
             ) : previewMode === "md" ? (
               <div className="prose prose-invert overflow-auto text-neutral-200">
                 <ReactMarkdown>{textContent!}</ReactMarkdown>
               </div>
             ) : previewMode === "text" ? (
-              <pre className="whitespace-pre-wrap text-neutral-200">
-                {textContent}
-              </pre>
+              <pre className="whitespace-pre-wrap text-neutral-200">{textContent}</pre>
             ) : (
               <p className="text-neutral-400">No preview available.</p>
             )}

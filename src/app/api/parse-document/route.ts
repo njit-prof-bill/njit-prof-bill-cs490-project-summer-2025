@@ -4,112 +4,98 @@ import fs from "fs";
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 import mammoth from "mammoth";
-import { ProfileData, ContactInfo } from "@/context/profileContext";
+import type { ProfileData, ContactInfo } from "@/context/profileContext";
 
-// 1) Stub pdf-parse’s test-data load before any import of pdf-parse
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const fsAny = fs as any;
-const originalReadFileSync = fsAny.readFileSync;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-fsAny.readFileSync = (path: any, options?: any) => {
+// 1) Capture the original
+const originalReadFileSync = fs.readFileSync;
+
+// 2) Stub that matches an overload returning Buffer|string
+const stubbedReadFileSync: (
+  path: fs.PathOrFileDescriptor,
+  options?: BufferEncoding | fs.ObjectEncodingOptions | null
+) => Buffer | string = (path, options) => {
+  // intercept pdf-parse’s test-data load
   if (typeof path === "string" && path.includes("/test/data/")) {
     return Buffer.alloc(0);
   }
-  return originalReadFileSync(path, options);
+  // delegate everything else
+  return originalReadFileSync(path, options as fs.ObjectEncodingOptions);
 };
 
-// 2) Next.js API config
+// 3) Install the stub
+fs.readFileSync = stubbedReadFileSync as typeof fs.readFileSync;
+
+// 4) Turn off Next’s built-in body parser
 export const config = { api: { bodyParser: false } };
 
-// 3) OpenAI client
+// 5) OpenAI client
 const TOKEN = process.env.GITHUB_TOKEN;
 if (!TOKEN) throw new Error("Missing GITHUB_TOKEN");
-const client = new OpenAI({
-  baseURL: "https://models.github.ai/inference",
-  apiKey: TOKEN,
-});
+const client = new OpenAI({ baseURL: "https://models.github.ai/inference", apiKey: TOKEN });
 const MODEL = "openai/gpt-4o-mini";
 
-// 4) Merge helper
-function mergeProfiles(
-  a: Partial<ProfileData>,
-  b: Partial<ProfileData>
-): Partial<ProfileData> {
+// 6) Merge helper
+function mergeProfiles(a: Partial<ProfileData>, b: Partial<ProfileData>): Partial<ProfileData> {
   const result: Partial<ProfileData> = {};
+
   if (a.contactInfo || b.contactInfo) {
     const email = b.contactInfo?.email ?? a.contactInfo?.email ?? "";
     const phone = b.contactInfo?.phone ?? a.contactInfo?.phone ?? "";
-    const extraEmails = Array.from(
-      new Set([
-        ...(a.contactInfo?.additionalEmails ?? []),
-        ...(b.contactInfo?.additionalEmails ?? []),
-      ])
-    );
-    const extraPhones = Array.from(
-      new Set([
-        ...(a.contactInfo?.additionalPhones ?? []),
-        ...(b.contactInfo?.additionalPhones ?? []),
-      ])
-    );
+    const extraEmails = Array.from(new Set([...(a.contactInfo?.additionalEmails ?? []), ...(b.contactInfo?.additionalEmails ?? [])]));
+    const extraPhones = Array.from(new Set([...(a.contactInfo?.additionalPhones ?? []), ...(b.contactInfo?.additionalPhones ?? [])]));
     const ci: ContactInfo = { email, phone };
     if (extraEmails.length) ci.additionalEmails = extraEmails;
     if (extraPhones.length) ci.additionalPhones = extraPhones;
     result.contactInfo = ci;
   }
+
   if (a.careerObjective || b.careerObjective) {
-    result.careerObjective = a.careerObjective ?? b.careerObjective;
+    result.careerObjective = b.careerObjective ?? a.careerObjective;
   }
+
   if ((a.skills?.length ?? 0) + (b.skills?.length ?? 0) > 0) {
-    result.skills = Array.from(
-      new Set([...(a.skills ?? []), ...(b.skills ?? [])])
-    );
+    result.skills = Array.from(new Set([...(a.skills ?? []), ...(b.skills ?? [])]));
   }
+
   if ((a.jobHistory?.length ?? 0) + (b.jobHistory?.length ?? 0) > 0) {
-    result.jobHistory = [
-      ...(a.jobHistory ?? []),
-      ...(b.jobHistory ?? []),
-    ];
+    result.jobHistory = [...(a.jobHistory ?? []), ...(b.jobHistory ?? [])];
   }
+
   if ((a.education?.length ?? 0) + (b.education?.length ?? 0) > 0) {
-    result.education = [
-      ...(a.education ?? []),
-      ...(b.education ?? []),
-    ];
+    result.education = [...(a.education ?? []), ...(b.education ?? [])];
   }
+
   return result;
 }
 
+// 7) The handler
 export async function POST(request: Request) {
   // a) parse FormData
   const form = await request.formData();
-  const file = form.get("file") as Blob | null;
+  const file = form.get("file");
   const type = form.get("type");
   if (!(file instanceof Blob) || (type !== "document" && type !== "biography")) {
     return NextResponse.json({ error: "Missing file or invalid type" }, { status: 400 });
   }
 
-  // b) read into Uint8Array
+  // b) into Uint8Array
   const arrayBuffer = await file.arrayBuffer();
   const uint8 = new Uint8Array(arrayBuffer);
 
   // c) extract text
   let text: string;
   if (file.type === "application/pdf") {
-    // dynamic import **after** stub
     const { default: pdfParse } = await import("pdf-parse");
-    const buffer = Buffer.from(uint8);
-    const { text: pdfText } = await pdfParse(buffer);
+    const { text: pdfText } = await pdfParse(Buffer.from(uint8));
     text = pdfText;
-  } else if (
-    file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-  ) {
+  } else if (file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
     const { value } = await mammoth.extractRawText({ buffer: Buffer.from(uint8) });
     text = value;
   } else {
     text = new TextDecoder("utf-8").decode(uint8);
   }
 
-  // d) strict JSON-only prompt
+  // d) prompt
   const systemPrompt = `
 You are an expert resume parser.
 Respond with NOTHING but a single, valid JSON object matching this interface exactly:
@@ -125,7 +111,7 @@ interface ProfileData {
 Output only the JSON, no explanation.
   `.trim();
 
-  // e) call GPT-4o-mini
+  // e) call model
   const ai = await client.chat.completions.create({
     model: MODEL,
     temperature: 0,
@@ -137,7 +123,7 @@ Output only the JSON, no explanation.
     ],
   });
 
-  // f) extract and parse JSON
+  // f) parse JSON
   const raw = ai.choices[0].message.content ?? "";
   const match = raw.match(/\{[\s\S]*\}$/);
   if (!match) {
@@ -150,7 +136,7 @@ Output only the JSON, no explanation.
     return NextResponse.json({ error: "JSON.parse failed", raw }, { status: 502 });
   }
 
-  // g) merge & respond
+  // g) merge & return
   const merged = mergeProfiles({}, parsed);
   return NextResponse.json(merged);
 }
