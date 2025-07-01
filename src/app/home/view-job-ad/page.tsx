@@ -5,7 +5,12 @@ import { db } from "@/lib/firebase";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { Timestamp } from "firebase/firestore";
-import { getResumeAIResponseJSON, generateResumeAIPromptJSON, getResumeAIResponseText, generateResumeAIPromptText } from "@/components/ai/aiPrompt";
+import { 
+  getResumeAIResponseJSON, 
+  generateResumeAIPromptJSON, 
+  getResumeAIResponseText, 
+  generateResumeAIPromptText 
+} from "@/components/ai/aiPrompt";
 
 type JobAd = {
   companyName: string;
@@ -63,12 +68,14 @@ export default function ViewJobAdsPage() {
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [editData, setEditData] = useState<Partial<JobAd>>({});
   const [refresh, setRefresh] = useState(false);
+
   const [generatingText, setGeneratingText] = useState(false); // Track whether plain text resume is being generated
   const [generatingJSON, setGeneratingJSON] = useState(false); // Track whether JSON resume is being generated
   const [generated, setGenerated] = useState(false); // Track whether resume was successfully generated
   // const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null); // Track status message related to resume generation
   const [newResume, setNewResume] = useState<string | null>(null);
+  const [resumeFormat, setResumeFormat] = useState<"text" | "json" | null>(null);
 
   useEffect(() => {
     if (!loading && user) {
@@ -85,6 +92,7 @@ export default function ViewJobAdsPage() {
   const handleGenerateText = async (idx: number) => {
     if (!user) return;
     if (generatingText || generatingJSON) return; // Concurrency lock
+    setResumeFormat("text");
     try {
       setGeneratingJSON(false);
       setGeneratingText(true);
@@ -113,6 +121,7 @@ export default function ViewJobAdsPage() {
   const handleGenerateJSON = async (idx: number) => {
     if (!user) return;
     if (generatingText || generatingJSON) return; // Concurrency lock
+    setResumeFormat("json");
     try {
       setGeneratingText(false);
       setGeneratingJSON(true);
@@ -182,7 +191,10 @@ export default function ViewJobAdsPage() {
               className={`p-2 mb-2 rounded cursor-pointer ${selectedIndex === idx ? "bg-blue-100 dark:bg-stone-800" : "hover:bg-gray-100 dark:hover:bg-stone-800"}`}
               onClick={() => {
                 // Don't remove the generated resume unless the user clicks on a different job ad
-                if (selectedIndex !== idx) setNewResume(null);
+                if (selectedIndex !== idx) {
+                  setNewResume(null);
+                  setResumeFormat(null);
+                };
                 setSelectedIndex(idx);
               }}
             >
@@ -292,7 +304,9 @@ export default function ViewJobAdsPage() {
                       <p>Your new generated resume:</p>
                       <p className="font-mono">{newResume}</p>
                     </div>
-                    <DownloadResumeButton text={newResume} fileName={`${jobAds[selectedIndex].jobTitle}.txt`} />
+                    <DownloadResumeButton 
+                      text={newResume} 
+                      fileName={`${jobAds[selectedIndex].jobTitle}.${resumeFormat === "json" ? "json" : "txt"}`} />
                   </div>
                 )}
               </div>
