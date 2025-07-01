@@ -9,6 +9,7 @@ import mammoth from "mammoth";
 import JSZip from "jszip";
 import DocumentList from "./DocumentList";
 import { marked } from "marked";
+import { useAuth } from "@/context/authContext";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
@@ -28,6 +29,7 @@ interface FileUploadProps {
 }
 
 export default function FileUpload({ onParsed, setAiLoading }: FileUploadProps) {
+  const { user } = useAuth();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [parsingNew, setParsingNew] = useState(false); // NEW: track parsing for new upload
@@ -92,9 +94,9 @@ export default function FileUpload({ onParsed, setAiLoading }: FileUploadProps) 
         setParsingNew(true); // Start parsing spinner for new upload
         setUploading(false); // Hide upload spinner, but keep parsing spinner
         // Do NOT clear selectedFile here! Wait until parsing is done.
-        if (onParsed) {
-          onParsed({ fileName: selectedFile.name });
-        }
+
+
+
       };
       reader.onerror = () => {
         setError("Failed to read file.");
@@ -251,9 +253,39 @@ export default function FileUpload({ onParsed, setAiLoading }: FileUploadProps) 
         if (!res.ok) throw new Error('Failed to parse with AI');
         const data = await res.json();
         setAiResult(data);
-        if (onParsed) {
-          onParsed(data); // Pass the full parsed resume up
-        }
+const fullResume = {
+  emails: [],
+  phones: [],
+  objective: "",
+  skills: [],
+  education: [],
+  jobHistory: [],
+  bio: "",
+  ...data,
+};
+
+setAiResult(fullResume);
+if (onParsed) {
+  onParsed({ ...fullResume, fileName: doc.name });
+}// Save parsed resume to backend
+if (user?.uid && doc) {
+  try {
+    await fetch("/api/saveResume", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...fullResume,
+        userId: user.uid,
+        bio: "", // no bio at this point
+        displayName: doc.name || "Uploaded Resume",
+      }),
+    });
+  } catch (err) {
+    console.error(" Failed to save parsed resume after upload:", err);
+  }
+}
+
+
       } catch (err: any) {
         setAiError(err.message || 'Error parsing with AI');
       } finally {
