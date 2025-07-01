@@ -9,13 +9,21 @@ export async function POST(req: Request) {
     return NextResponse.json({ message: "Missing uid or text" }, { status: 400 });
   }
 
+  // Generate fileName as first 40 characters of text
+  const fileName = text.substring(0, 40);
+
   try {
     await adminDB
       .collection("users")
       .doc(uid)
       .collection("userDocuments")
       .doc("documentTextFreeformText")
-      .set({ text: text });
+      .set({ 
+        text: text,
+        uploadedAt: new Date(),
+        fileName: fileName,
+        fileType: 'free-form-text',
+      });
 
     return NextResponse.json({ message: "Biography saved successfully!" });
   } catch (error) {
