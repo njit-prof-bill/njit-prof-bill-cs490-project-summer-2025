@@ -13,6 +13,9 @@ import { UserNameAddUpdate } from '@/components/userNameAddUpdate';
 import Spinner, { spinnerStyles } from '../../components/ui/Spinner';
 
 
+import DocumentList from '@/components/DocumentList';
+
+
 
 // import JobDescriptionsList from "@/components/JobDescriptionsList";
 
@@ -63,12 +66,14 @@ export default function HomePage() {
    
 
                 <CardHeader>
-                    <CardTitle>Placeholder: recent activity </CardTitle>
+                    {/* <CardTitle>Placeholder: recent activity </CardTitle> */}
                 </CardHeader>
 
                 <CardContent>
 
-                
+                 <div>
+      <DocumentList className="max-w-4xl mx-auto" />
+    </div>
 
 {/* 
                 <JobDescriptionUpload />
