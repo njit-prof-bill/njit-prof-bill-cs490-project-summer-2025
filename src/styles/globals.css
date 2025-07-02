@@ -111,7 +111,25 @@
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.553 0.013 58.071);
 }
+.nick {
+  --background: #eeac1d;
+  --foreground: #e0a635;
+  /* You can add additional overrides here as needed */
+  --card: #25be3f;
+  --card-foreground: #e0a635;
+  --sidebar: #25be53;
+  --sidebar-foreground: #e0a635;
+  /* Continue with other variables if desired */
+}
 
+.solarized {
+  --background: #051013;
+  --foreground: #839496;
+  --card: #002b36;
+  --card-foreground: #839496;
+  --sidebar: #002b36;
+  --sidebar-foreground: #839496;
+}
 @layer base {
   * {
     @apply border-border outline-ring/50;
