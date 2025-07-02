@@ -3,7 +3,7 @@ import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
 import LoadingLayout from "@/components/LoadingLayout";
 
-type ThemeType = "system" | "light" | "dark";
+type ThemeType = "system" | "light" | "dark" | "solarized" | "nick";
 
 interface ThemeContextProps {
     theme: ThemeType;
@@ -69,13 +69,21 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }, []);
 
     useEffect(() => {
-        const root = window.document.documentElement;
 
         const applyTheme = (selectedTheme: ThemeType) => {
+            const root = window.document.documentElement;
+
+            // Remove all known theme classes
+            root.classList.remove("dark", "solarized", "nick");
+
             if (selectedTheme === "light") {
                 root.classList.remove("dark");
             } else if (selectedTheme === "dark") {
                 root.classList.add("dark");
+            }else if (selectedTheme === "solarized") {
+                root.classList.add("solarized");
+            }else if (selectedTheme === "nick") {
+                root.classList.add("nick");
             } else if (selectedTheme === "system") {
                 const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
                 if (prefersDark) {
