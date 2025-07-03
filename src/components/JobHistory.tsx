@@ -1,10 +1,10 @@
 interface Job {
   company: string;
   jobTitle: string;
-  responsibilities?: string;
+  summary: string;
+  responsibilities?: string[];
   startDate?: string;
   endDate?: string;
-  accomplishments?: string[];
 }
 
 interface JobHistoryProps {
@@ -19,10 +19,10 @@ export default function JobHistory({ jobs, onChange }: JobHistoryProps) {
       {
         company: "",
         jobTitle: "",
-        responsibilities: "",
+        summary: "",
+        responsibilities: [""],
         startDate: "",
         endDate: "",
-        accomplishments: [""],
       },
     ]);
 
@@ -32,29 +32,29 @@ export default function JobHistory({ jobs, onChange }: JobHistoryProps) {
     onChange(newJobs);
   };
 
-  const updateAccomplishment = (
+  const updateResponsibility = (
     jobIndex: number,
-    accIndex: number,
+    respIndex: number,
     value: string
   ) => {
     const newJobs = [...jobs];
-    const accs = newJobs[jobIndex].accomplishments || [];
-    accs[accIndex] = value;
-    newJobs[jobIndex].accomplishments = accs;
+    const resps = newJobs[jobIndex].responsibilities || [];
+    resps[respIndex] = value;
+    newJobs[jobIndex].responsibilities = resps;
     onChange(newJobs);
   };
 
-  const addAccomplishment = (jobIndex: number) => {
+  const addResponsibility = (jobIndex: number) => {
     const newJobs = [...jobs];
-    const accs = newJobs[jobIndex].accomplishments || [];
-    newJobs[jobIndex].accomplishments = [...accs, ""];
+    const resps = newJobs[jobIndex].responsibilities || [];
+    newJobs[jobIndex].responsibilities = [...resps, ""];
     onChange(newJobs);
   };
 
-  const removeAccomplishment = (jobIndex: number, accIndex: number) => {
+  const removeResponsibility = (jobIndex: number, respIndex: number) => {
     const newJobs = [...jobs];
-    const accs = newJobs[jobIndex].accomplishments || [];
-    newJobs[jobIndex].accomplishments = accs.filter((_, i) => i !== accIndex);
+    const resps = newJobs[jobIndex].responsibilities || [];
+    newJobs[jobIndex].responsibilities = resps.filter((_, i) => i !== respIndex);
     onChange(newJobs);
   };
 
@@ -123,9 +123,9 @@ export default function JobHistory({ jobs, onChange }: JobHistoryProps) {
           <label className="block">
             Role Summary:
             <textarea
-              value={job.responsibilities || ""}
+              value={job.summary}
               onChange={(e) =>
-                updateJobField(idx, "responsibilities", e.target.value)
+                updateJobField(idx, "summary", e.target.value)
               }
               className="mt-1 block w-full border border-gray-600 rounded bg-gray-600 text-white px-3 py-3"
               placeholder="Brief summary"
@@ -159,32 +159,32 @@ export default function JobHistory({ jobs, onChange }: JobHistoryProps) {
           </div>
 
           <div>
-            <h4 className="font-semibold">Accomplishments:</h4>
-            {job.accomplishments?.map((acc, aidx) => (
+            <h4 className="font-semibold">Responsibilities:</h4>
+            {job.responsibilities?.map((resp, aidx) => (
               <div key={aidx} className="flex gap-2 items-center mt-1">
                 <input
                   type="text"
-                  value={acc}
+                  value={resp}
                   onChange={(e) =>
-                    updateAccomplishment(idx, aidx, e.target.value)
+                    updateResponsibility(idx, aidx, e.target.value)
                   }
                   className="flex-grow border border-gray-600 rounded bg-gray-600 text-white px-3 py-2"
-                  placeholder="Accomplishment"
+                  placeholder="Responsibility"
                 />
                 <button
-                  onClick={() => removeAccomplishment(idx, aidx)}
+                  onClick={() => removeResponsibility(idx, aidx)}
                   className="text-red-400 hover:text-red-300 text-xl"
-                  aria-label="Remove accomplishment"
+                  aria-label="Remove responsibility"
                 >
                   &times;
                 </button>
               </div>
             ))}
             <button
-              onClick={() => addAccomplishment(idx)}
+              onClick={() => addResponsibility(idx)}
               className="mt-2 px-4 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded"
             >
-              Add Accomplishment
+              Add Responsibility
             </button>
           </div>
 

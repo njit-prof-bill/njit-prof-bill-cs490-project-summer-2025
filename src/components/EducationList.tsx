@@ -1,7 +1,7 @@
 interface Education {
   school: string;
   degree?: string;
-  certificateOrDiploma?: string;
+  certificate?: string;
   datesAttended?: string;
   gpa?: string;
 }
@@ -18,7 +18,7 @@ export default function EducationList({
   const addEducation = () =>
     onChange([
       ...education,
-      { school: "", degree: "", certificateOrDiploma: "", datesAttended: "", gpa: "" },
+      { school: "", degree: "", certificate: "", datesAttended: "", gpa: "" },
     ]);
 
   const updateEducation = (
@@ -90,13 +90,13 @@ export default function EducationList({
             />
           </label>
           <label className="block">
-            Diploma/Certificate:
+            Certificate:
             <input
               type="text"
-              value={edu.certificateOrDiploma || ""}
-              onChange={(e) => updateEducation(idx, "certificateOrDiploma", e.target.value)}
+              value={edu.certificate || ""}
+              onChange={(e) => updateEducation(idx, "certificate", e.target.value)}
               className="mt-1 block w-full border border-gray-600 rounded bg-gray-600 text-white px-3 py-2"
-              placeholder="Diploma or Certificate (optional)"
+              placeholder="Certificate (optional)"
             />
           </label>
           <label className="block">

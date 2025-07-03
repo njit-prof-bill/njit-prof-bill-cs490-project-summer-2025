@@ -49,7 +49,7 @@ You are a resume parsing assistant. Extract the following structured data in JSO
     {
       "school": string,
       "degree": string,
-      "certificateOrDiploma": string,
+      "certificate": string,
       "datesAttended": string,
       "gpa": string
     }

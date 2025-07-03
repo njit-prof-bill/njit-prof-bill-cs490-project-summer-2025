@@ -8,10 +8,10 @@ import React from "react";
 import FileUpload from "@/components/FileUpload";
 import BioSubmission from "@/components/forms/BioSubmission";
 
-import SkillsList from "@/components/ui/SkillsList";
+import SkillsList from "@/components/SkillsList";
 import ContactCard from "@/components/ContactCard";
 import EducationList from "@/components/EducationList";
-import JobHistory from "@/components/ui/JobHistory";
+import JobHistory from "@/components/JobHistory";
 import RawToggle from "@/components/ui/RawToggle";
 import ThemeToggle from "@/components/ThemeToggle";
 
@@ -213,17 +213,19 @@ const handleViewBreakdown = () => {
 
   if (loading) return <p>Loading... This may take awhile!</p>;
 const handleGenerateResumeFromAI = async () => {
-  if (!editableResume || !bio || !jobText) {
+  if (!editableResume || !jobText) {
     alert("Missing required information to generate resume.");
     return;
   }
 
   setGenerating(true);
   try {
+    // Remove bio from editableResume before sending
+    const { bio, ...resumeWithoutBio } = editableResume || {};
     const res = await fetch("/api/generateResume", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ editableResume, bio, jobText }),
+      body: JSON.stringify({ editableResume: resumeWithoutBio, jobText }),
     });
 
     const data = await res.json();
