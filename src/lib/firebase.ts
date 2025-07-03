@@ -1,6 +1,9 @@
 // Import the functions you need from the Firebase SDKs
+console.log("🔥 FIREBASE API KEY:", process.env.NEXT_PUBLIC_FIREBASE_API_KEY);
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
+import { getStorage } from "firebase/storage";
+import { getFirestore } from "firebase/firestore";
 
 // Firebase configuration using environment variables
 const firebaseConfig = {
@@ -17,3 +20,6 @@ const app = initializeApp(firebaseConfig);
 
 // Initialize Firebase Authentication
 export const auth = getAuth(app);
+export const storage = getStorage(app);
+export const db = getFirestore(app);
+
