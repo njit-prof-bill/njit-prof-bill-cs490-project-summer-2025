@@ -1,13 +1,9 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, forwardRef, useImperativeHandle } from "react";
 import { useAuth } from "@/context/authContext";
 import { collection, query, orderBy, getDocs, DocumentData, doc, deleteDoc } from "firebase/firestore";
 import { firestore } from "@/lib/firebase";
-
-
 import JobDescriptionPreview from "./JobDescriptionPreview";
-
-
 
 interface JobDescription {
   id: string;
@@ -18,7 +14,12 @@ interface JobDescription {
   createdAt: any;
 }
 
-export default function JobDescriptionsList() {
+// Define the ref methods that will be exposed
+export interface JobDescriptionsListRef {
+  fetchJobDescriptions: () => void;
+}
+
+const JobDescriptionsList = forwardRef<JobDescriptionsListRef>((props, ref) => {
   const [jobDescriptions, setJobDescriptions] = useState<JobDescription[]>([]);
   const [selectedJob, setSelectedJob] = useState<JobDescription | null>(null);
   const [loading, setLoading] = useState(true);
@@ -69,6 +70,11 @@ export default function JobDescriptionsList() {
       setLoading(false);
     }
   };
+
+  // Expose the fetchJobDescriptions method to parent components via ref
+  useImperativeHandle(ref, () => ({
+    fetchJobDescriptions,
+  }));
 
   useEffect(() => {
     fetchJobDescriptions();
@@ -141,9 +147,6 @@ export default function JobDescriptionsList() {
       setDeletingId(null);
     }
   };
-
-  // Import the preview component at the top of the file
-  // import JobDescriptionPreview from "./JobDescriptionPreview";
 
   if (loading) {
     return (
@@ -240,8 +243,6 @@ export default function JobDescriptionsList() {
           ))}
         </div>
 
-
-
         {/* Right side - Job Details */}
         <div className="lg:sticky lg:top-4 lg:self-start">
           <JobDescriptionPreview 
@@ -249,14 +250,12 @@ export default function JobDescriptionsList() {
             onDelete={handleDelete}
             isDeletingFromPreview={deletingId === selectedJob?.id}
           />
-
-
-          
         </div>
-
-
-
       </div>
     </div>
   );
-}
+});
+
+JobDescriptionsList.displayName = "JobDescriptionsList";
+
+export default JobDescriptionsList;

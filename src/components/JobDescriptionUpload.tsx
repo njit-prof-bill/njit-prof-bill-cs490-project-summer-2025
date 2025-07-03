@@ -4,8 +4,6 @@ import { useAuth } from "@/context/authContext";
 import { collection, addDoc } from "firebase/firestore";
 import { firestore } from "@/lib/firebase";
 
-
-
 interface ExtractedJobData {
   jobTitle: string;
   companyName: string;
@@ -13,7 +11,11 @@ interface ExtractedJobData {
   timestamp: string;
 }
 
-export default function JobDescriptionUpload() {
+interface JobDescriptionUploadProps {
+  onJobAdded?: () => void; // Callback function to refresh the list
+}
+
+export default function JobDescriptionUpload({ onJobAdded }: JobDescriptionUploadProps) {
   const [jobText, setJobText] = useState("");
   const [status, setStatus] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -68,6 +70,11 @@ export default function JobDescriptionUpload() {
 
       setStatus("Job description processed and saved successfully.");
       setJobText(""); // Clear the textarea after successful submission
+      
+      // Call the callback function to refresh the list
+      if (onJobAdded) {
+        onJobAdded();
+      }
     } catch (err) {
       console.error("Error processing job description:", err);
       setStatus("Error processing job description. Please try again.");

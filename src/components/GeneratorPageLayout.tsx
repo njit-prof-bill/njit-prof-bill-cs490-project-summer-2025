@@ -1,4 +1,5 @@
 import { useState } from "react";
+
 import Reorder from "./Reorder";
 import ReorderEducation from "./ReorderEducation";
 import ReorderWorkExperience from "@/components/ReorderWorkExperience";
@@ -9,13 +10,13 @@ import SummaryEditor from "@/components/SummaryEditor";
 
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 
-
-import JobDescriptionsList from "@/components/JobDescriptionsList";
-
-import JobDescriptionUpload from "@/components/JobDescriptionUpload";
-
+// import JobDescriptionsList from "@/components/JobDescriptionsList";
+// import JobDescriptionUpload from "@/components/JobDescriptionUpload";
 
 import GenerateCard from "@/components/GenerateCard";
+
+// import { useRef } from "react";
+import JobDescUploadAndListPrev from "@/components/JobDescUploadAndListPrev";
 
 
 
@@ -26,6 +27,19 @@ export default function GeneratorPageLayout() {
   const [activeTab, setActiveTab] = useState("generate");
 
 
+  // The parent component ref to the List and the Upload for job Desc.:
+  // allows it to refresh when the upload is a success:
+  // const listRef = useRef<{ fetchJobDescriptions: () => void }>(null);
+
+
+  // ------The function to refresh the List and the Upload for job Desc.:--------------
+  // const handleJobAdded = () => {
+  //   if (listRef.current) {
+  //     listRef.current.fetchJobDescriptions();
+  //   }
+  // };
+// -----------------------------------------
+
 
   const tabLabels: { [key: string]: string } = {
    
@@ -34,8 +48,6 @@ export default function GeneratorPageLayout() {
     // experience: "Experience",
 
   };
-
-
 
 
   return (
@@ -58,92 +70,46 @@ export default function GeneratorPageLayout() {
       </div>
 
 
-
-
       {/* Tab Panel Container */}
       <div className="relative min-h-[300px] bg-[#2A2A2E] rounded-b-xl p-2 transition-all duration-300">
         {activeTab === "jobs" && (
           <div className="animate-fade-in space-y-6 max-w-4xl mx-auto mt-2">
 
 
+            {/*------- Job Description Components: ----------*/}
+              <JobDescUploadAndListPrev />
 
-               <Card className="w-full max-w shadow-lg">
+
+                          {/* <JobDescriptionUpload onJobAdded={handleJobAdded} />
           
-                          <CardHeader>
-                              <CardTitle> </CardTitle>
-                          </CardHeader>
-          
-                          <CardContent>
-          
-          {/*------- Job Description Components: ----------*/}
-                          <JobDescriptionUpload />
-          
-                          <JobDescriptionsList />
+                          <JobDescriptionsList ref={listRef} /> */}
           {/* ---------------------- */}
 
 
-
+               {/* <Card className="w-full max-w shadow-lg">       
+                          <CardHeader>
+                              <CardTitle> </CardTitle>
+                          </CardHeader>      
+                          <CardContent>
                               <CardDescription>
                       
                               </CardDescription>
-                          </CardContent>
-          
-                      </Card>
+                          </CardContent>        
+                      </Card> */}
 
 
           </div>
         )}
-
-
 
 
         {activeTab === "generate" && (
           <div className="animate-fade-in w-full max-w mx-auto mt-2">
 
-            {/* <h2 className="text-2xl font-bold mb-4 text-white">
-              Placeholder, will change these.
-            </h2> */}
-          
-
-
            < GenerateCard    />
-
-
-
-     
-            {/* < GenerateCard      
-            // leftContent={<JobDescriptionsList />}
-
-
-
-            // middleContent={<div>middle Sidebar</div>}
-            /> */}
-
-
-
-
-
 
           </div>
         )}
-{/* 
-        {activeTab === "experience" && (
-          <div className="animate-fade-in mt-2">
-            <ReorderWorkExperience />
-          </div>
-        )} */}
 
-        {/* {activeTab === "education" && (
-          <div className="animate-fade-in mt-2">
-            <ReorderEducation />
-          </div>
-        )} */}
-
-        {/* {activeTab === "skills" && (
-          <div className="animate-fade-in w-full max-w-4xl mx-auto mt-2">
-            <Reorder tag="skills" />
-          </div>
-        )} */}
       </div>
     </div>
   );

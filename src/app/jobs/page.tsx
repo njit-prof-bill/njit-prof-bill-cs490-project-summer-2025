@@ -14,12 +14,18 @@ import Spinner, { spinnerStyles } from '../../components/ui/Spinner';
 
 
 
-import JobDescriptionsList from "@/components/JobDescriptionsList";
+// import JobDescriptionsList from "@/components/JobDescriptionsList";
 
-import JobDescriptionUpload from "@/components/JobDescriptionUpload";
+// import JobDescriptionUpload from "@/components/JobDescriptionUpload";
+
+
+// import { useRef } from "react";
 
 
 // import BaseLayout from "@/components/BaseLayout";
+
+
+import JobDescUploadAndListPrev from "@/components/JobDescUploadAndListPrev";
 
 
 
@@ -30,8 +36,23 @@ export default function HomePage() {
     const router = useRouter();
 
 
+    // Job List and Upload reference for refreshing the list when an upload is successful:
+    // const listRef = useRef<{ fetchJobDescriptions: () => void }>(null);
+
+
+
     // Debugging:
     const [message, setMessage] = useState('');
+
+
+
+    // Function to refresh the job descriptions list
+//   const handleJobAdded = () => {
+//     if (listRef.current) {
+//       listRef.current.fetchJobDescriptions();
+//     }
+//   };
+
 
 
 
@@ -50,8 +71,25 @@ export default function HomePage() {
  
     return (
         <div className="flex flex-col items-center">
-         
 
+
+          
+
+
+{/* -----------Job Description Listings display UI and Upload ------------*/}
+
+       <JobDescUploadAndListPrev />
+
+{/* 
+                <JobDescriptionUpload onJobAdded={handleJobAdded} />
+                 <JobDescriptionsList ref={listRef} /> */}
+{/* ---------------------------------------------- */}
+
+
+
+
+
+{/* 
          <Card className="w-full max-w shadow-lg">
 
                 <CardHeader>
@@ -59,30 +97,18 @@ export default function HomePage() {
                 </CardHeader>
 
                 <CardContent>
-
-
-{/* -----------Job Description Listings display UI and Upload ------------*/}
-                <JobDescriptionUpload />
-
-                <JobDescriptionsList />
-{/* ---------------------------------------------- */}
-
-
                     <CardDescription>
             
                     </CardDescription>
                 </CardContent>
 
-
-{/* 
-
                 <CardFooter>
                     <CardDescription>
-                        stuff
+                 
                     </CardDescription>
-                </CardFooter> */}
+                </CardFooter>
 
-            </Card>
+            </Card> */}
 
 
 

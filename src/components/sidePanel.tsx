@@ -36,7 +36,7 @@ export default function SidePanel({ isSidePanelOpen }: SidePanelProps) {
                     <li className="mb-6"></li>
                     <li>
                         <Link href="/recentActivity" className="hover:underline">
-                            Recent Activity
+                            File & Text Preview
                         </Link>
                     </li>
                     <li className="mb-6"></li>
