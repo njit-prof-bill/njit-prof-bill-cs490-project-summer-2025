@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
 import { doc, getDoc, updateDoc, Timestamp } from "firebase/firestore";
-import { jobAdAIPrompt, getAIResponse } from "@/components/ai/aiPrompt";
+import { jobAdAIPrompt, getAIResponse, AIParseJobAdJSON, parseJobAdJSONPrompt } from "@/components/ai/aiPrompt";
 
 type JobAdEntry = {
   description: string;
@@ -33,7 +33,12 @@ export default function UploadJobAdPage() {
 
     try {
       // Use Gemini AI to extract structured info
-      const aiResponse = await getAIResponse(jobAdAIPrompt + "\n\nJob Ad:\n", jobDescription);
+      const aiResponse = await AIParseJobAdJSON(parseJobAdJSONPrompt, jobDescription);
+      if (!aiResponse) {
+        throw new Error("AI returned empty response when parsing job ad");
+      }
+      console.log(aiResponse);
+      // const aiResponse = await getAIResponse(jobAdAIPrompt + "\n\nJob Ad:\n", jobDescription);
       const { companyName, jobTitle, jobDescription: desc } = JSON.parse(aiResponse);
 
       const userRef = doc(db, "users", user.uid);

@@ -1,6 +1,6 @@
 "use client";
 
-import { model } from "@/lib/firebase";
+import { model, jobAdParseModel } from "@/lib/firebase";
 import { doc, getDoc, updateDoc, writeBatch, arrayUnion } from "firebase/firestore";
 
 export const AIPrompt = `Please take this text corpus submitted by a user and parse the following information from it:
@@ -282,6 +282,35 @@ export async function getResumeAIResponseText(prompt: string, JSONText: string) 
     console.error("Error generating resume: ", error);
     return "";
   }
+}
+
+export const parseJobAdJSONPrompt = `
+Parse the following information from the text of a job ad:
+- The name of the company in the job ad.
+- The job title of the job ad.
+- The full job description of the job ad.
+
+Return the result as a strict JSON object with the following structure:
+
+*** Start of Job Ad JSON Structure ***
+| Field | Type | Description |
+|-------|------|-------------|
+| companyName | String | The name of the company in the job ad. |
+| jobTitle | String | The job title of the job ad. |
+| jobDescription | String | The full job description of the job ad. |
+*** End of Job Ad JSON Structure ***
+`
+
+export async function AIParseJobAdJSON(prompt: string, jobAdText: string) {
+    try {
+        const fullPrompt = prompt + `\nText of the job ad:\n` + `\n${jobAdText}\n`;
+        const result = await jobAdParseModel.generateContent(fullPrompt);
+        const response = result.response.text();
+        return response;
+    } catch (error) {
+        console.error("Error parsing job ad: ", error);
+        return "";
+    }
 }
 
 // export async function getResumeAIResponseText(prompt: string, resume: any, jobAd: string) {
