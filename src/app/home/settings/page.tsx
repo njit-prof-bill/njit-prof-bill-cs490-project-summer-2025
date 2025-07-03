@@ -216,6 +216,8 @@ export default function SettingsPage() {
                                             <SelectContent>
                                                 <SelectItem value="light">Light</SelectItem>
                                                 <SelectItem value="dark">Dark</SelectItem>
+                                                <SelectItem value="nick">nick</SelectItem>
+                                                <SelectItem value="solarized">Solarized</SelectItem>
                                                 <SelectItem value="system">System</SelectItem>
                                             </SelectContent>
                                         </Select>
