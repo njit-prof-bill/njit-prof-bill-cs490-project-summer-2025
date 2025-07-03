@@ -7,7 +7,9 @@ class jobAdObj {
     public dateSubmitted: Timestamp = new Timestamp(0,0);
     public jobDescription: string = "";
     public jobTitle: string = "";
-    public jobID: string = "";
+    // Used to associate generated resumes with job ads.
+    // Should be set using a document reference.
+    public jobID: string = ""; 
 
     // Setter functions
     // public updateCompany(newCompany: string) {
@@ -177,6 +179,7 @@ class contactObj {
     // }
 }
 
+// Used to store all the info parsed from the user's multiple resumes into a single profile
 class resume {
     public fullName: string = "";
     public contact: contactObj = new contactObj;
@@ -321,6 +324,19 @@ class resume {
     // }
 }
 
+// Represents a single generated resume by the AI
+class generatedResume {
+    public fullName: string = "";
+    public contact: contactObj = new contactObj;
+    public summary: string = "";
+    public workExperience: jobObj[] = [];
+    public education: eduObj[] = [];
+    public skills: string[] = [];
+    // Used to associate generated resumes with job ads.
+    // Should be set using a document reference.
+    public resumeID: string = "";
+}
+
 // For unstructured, biographical text submitted directly by the user.
 class freeFormSubmission {
     public text: string = "";
@@ -337,7 +353,7 @@ class freeFormSubmission {
     // public updateDate(newDate: Timestamp) {
     //     this.dateSubmitted = newDate;
     // }
-    
+
     // Getter functions
     // public getText() {
     //     return this.text;
@@ -357,4 +373,5 @@ export class userProfile {
     freeFormText: freeFormSubmission[] = [];
     jobAds: jobAdObj[] = [];
     resumeFields: resume = new resume;
+    generatedResumes: generatedResume[] = [];
 }
