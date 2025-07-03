@@ -45,3 +45,6 @@ next-env.d.ts
 *Zone.Identifier
 
 /src/serviceAccountKey.json
+src/serviceAccountKey.json
+src\serviceAccountKey.json
+\src\serviceAccountKey.json
