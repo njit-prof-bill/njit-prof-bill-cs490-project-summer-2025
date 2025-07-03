@@ -28,7 +28,7 @@ export async function POST() {
     `;
 
     const result = await model.generateContent({
-      contents: [{ parts: [{ text: inputText }] }],
+      contents: [{ role: "user", parts: [{ text: inputText }] }],
     });
 
     const response = await result.response;
