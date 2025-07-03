@@ -229,19 +229,21 @@ const handleClearJobAds = () => {
 )}
 
         {ads.length === 0 ? (
-          <div className="text-gray-500">No job ads submitted yet.</div>
+          <div className="text-gray-500 dark:text-gray-400 text-center py-8 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg bg-white/60 dark:bg-gray-900/60">
+            No job ads submitted yet.
+          </div>
         ) : (
           <div className="space-y-3">
             {ads.map(ad => (
-              <div key={ad.id} className="p-3 bg-gray-100 dark:bg-gray-800 rounded shadow flex flex-col md:flex-row md:items-center md:justify-between">
+              <div key={ad.id} className="p-4 bg-gradient-to-br from-indigo-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 rounded-xl shadow flex flex-col md:flex-row md:items-center md:justify-between border border-indigo-100 dark:border-gray-700 transition-all">
                 <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-indigo-700 dark:text-indigo-300">{ad.title}</div>
-                  <div className="text-sm text-gray-700 dark:text-gray-300">Company: <span className="font-medium">{ad.company}</span></div>
-                  <div className="text-sm text-gray-700 dark:text-gray-300">Location: <span className="font-medium">{ad.location}</span></div>
+                  <div className="font-semibold text-indigo-700 dark:text-indigo-300 text-lg mb-1">{ad.title}</div>
+                  <div className="text-sm text-gray-700 dark:text-gray-300 mb-1">Company: <span className="font-medium">{ad.company}</span></div>
+                  <div className="text-sm text-gray-700 dark:text-gray-300 mb-1">Location: <span className="font-medium">{ad.location}</span></div>
                   <div className="text-xs text-gray-500 dark:text-gray-400">Submitted: {new Date(ad.submittedAt).toLocaleString()}</div>
                 </div>
                 <button
-                  className="mt-2 md:mt-0 md:ml-4 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                  className="mt-2 md:mt-0 md:ml-4 px-4 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-blue-500 text-white rounded-lg font-semibold shadow hover:from-indigo-600 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
                   onClick={() => setPreviewAd(ad)}
                 >
                   Preview
