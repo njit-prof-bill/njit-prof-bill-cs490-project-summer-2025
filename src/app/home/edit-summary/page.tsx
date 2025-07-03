@@ -12,6 +12,8 @@ export default function EditSummaryPage() {
   const [summary, setSummary] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [formChanged, setFormChanged] = useState(false); //for unsaved changes check
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && user) {
@@ -59,7 +61,56 @@ export default function EditSummaryPage() {
     const text = (formObj.summary as string).trim();
     setSummary(text);
     submitSummary(text);
+    setFormChanged(false);  // Lets page know change has been saved
+    setTimeout(() => setStatusMessage(null), 1); // Removes "unsaved change" from page
   }
+
+  useEffect(() => {
+    //handles reload and close tab if there are unsaved changes
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (formChanged) {
+        event.preventDefault();
+        event.returnValue = ''; //is deprecated but might be necessary to prompt on Chrome
+      }
+    };
+
+    //handles (most) clicks on links within the page if there are unsaved changes
+    const handleClick = (event: MouseEvent) => {
+      if (!formChanged) return;
+
+      const nav = document.querySelector('nav');
+      if (nav && nav.contains(event.target as Node)) {
+        const target = (event.target as HTMLElement).closest('a');
+        if (target && target instanceof HTMLAnchorElement) {
+          const confirmed = window.confirm('You have unsaved changes. Leave this page?');
+          if (!confirmed) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+          }
+        }
+      }
+
+      const header = document.querySelector('header');
+      if (header && header.contains(event.target as Node)) {
+        const target = (event.target as HTMLElement).closest('a');
+        if (target && target instanceof HTMLAnchorElement) {
+          const confirmed = window.confirm('You have unsaved changes. Leave this page?');
+          if (!confirmed) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+          }
+        }
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('click', handleClick, true);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('click', handleClick, true);
+    };
+  }, [formChanged]);
 
   if (loading) {
     return <p>Loading...</p>;
@@ -74,10 +125,16 @@ export default function EditSummaryPage() {
             name="summary"
             placeholder="Enter your professional summary (or your career objectives) here"
             value={summary}
-            onChange={(e) => setSummary(e.target.value)}
+            onChange={(e) => {
+              setSummary(e.target.value);
+              setFormChanged(true);
+              setStatusMessage("There has been a change. Don't forget to save!");
+            }}
             rows={6}
             className="w-full p-3 border border-gray-300 rounded-md mb-4"
           />
+          {statusMessage == "There has been a change. Don't forget to save!" && <p className="mt-2 text-sm text-yellow-400">{statusMessage}</p>}
+          <br />
           <button
                 type="submit"
                 disabled={submitting}

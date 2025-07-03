@@ -2,6 +2,7 @@
 import { useAuth } from "@/context/authContext";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
+import React from "react";
 import { ref, list, getDownloadURL, StorageReference, deleteObject, getMetadata, FullMetadata } from "firebase/storage";
 import { storage } from "@/lib/firebase";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@radix-ui/react-accordion";
@@ -9,6 +10,7 @@ import { renderAsync } from "docx-preview";
 import JSZip from "jszip";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogOverlay, DialogPortal, DialogTitle, DialogTrigger } from "@radix-ui/react-dialog";
 import { metadata } from "@/app/server-layout";
+import { Button } from "@/components/ui/button";
 
 // Types
 
@@ -261,15 +263,19 @@ function DeleteFileButton({fileRef, fileRefs, setFileRefs}: DeleteFileButtonProp
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button type="button" disabled={deleting}>
+        <button
+          type="button"
+          disabled={deleting}
+          className="bg-red-500 px-2 py-1 rounded mt-3"
+        >
           {deleting ? "Deleting..." : "Delete"}
         </button>
       </DialogTrigger>
       <DialogPortal>
-          <DialogOverlay className="fixed inset-0 bg-black bg-opacity-50"></DialogOverlay>
-            <DialogContent className="fixed top-1/2 left-1/2 bg-white p-4 rounded shadow transform -translate-x-1/2 -translate-y-1/2">
-              <DialogTitle>Confirm Delete</DialogTitle>
-              <DialogDescription>
+          <DialogOverlay className="fixed inset-0 backdrop-blur-md bg-opacity-50"></DialogOverlay>
+            <DialogContent className="fixed top-1/2 left-1/2 bg-background p-4 rounded shadow transform -translate-x-1/2 -translate-y-1/2 border border-foreground">
+              <DialogTitle className="text-foreground"><strong><u>Confirm Delete</u></strong></DialogTitle>
+              <DialogDescription className="text-foreground">
                 Are you sure you want to delete <strong>{fileRef.name}</strong>?
               </DialogDescription>
               <div className="mt-4 flex gap-2">
@@ -281,7 +287,9 @@ function DeleteFileButton({fileRef, fileRefs, setFileRefs}: DeleteFileButtonProp
                   {deleting ? "Deleting..." : "Yes, Delete"}
                 </button>
                 <DialogClose asChild>
-                  <button className="bg-gray-300 px-2 py-1 rounded" disabled={deleting}>Cancel</button>
+                  <button className="bg-gray-600 px-2 py-1 rounded text-white" disabled={deleting}>
+                    Cancel
+                  </button>
                 </DialogClose>
               </div>
               {error && <div className="mt-2 text-red-500">{error}</div>}
@@ -344,20 +352,23 @@ export default function ViewPastUploadsPage() {
   }, [user, loading, router]);
 
   return (
-    <div>
-      <h1>View Past Uploads</h1>
+    <div className="flex flex-col items-center">
+      <h1 className="text-3xl m-auto font-bold mb-5"><u>View Past Uploads</u></h1>
       <Accordion type="single" collapsible className="w-full">
         {fileRefs.map((f, i) => (
-          <AccordionItem key={i} value={`item-${i}`}>
+          <AccordionItem key={i} value={`item-${i}`} className="flex flex-col justify-between mb-8">
             {/* <AccordionTrigger>{f.name} <GetFileDate fileRef={f}></GetFileDate></AccordionTrigger> */}
             <AccordionTrigger>
-              <div>{f.name}</div>
-              <GetFileDate fileRef={f}></GetFileDate>
+              <div className="cursor-pointer text-lg transition-duration-400 hover:bg-chart-2">
+                {f.name}
+                <GetFileDate fileRef={f}></GetFileDate>
+              </div>
             </AccordionTrigger>
-            <AccordionContent>
+            <AccordionContent className="flex flex-col gap-4 text-balance">
               <PreviewFile fileRef={f} />
               <DeleteFileButton fileRef={f} fileRefs={fileRefs} setFileRefs={setFileRefs} />
             </AccordionContent>
+            <hr className="mt-2 bg-foreground"/>
           </AccordionItem>
         ))}
       </Accordion>
