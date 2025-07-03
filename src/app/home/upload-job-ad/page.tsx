@@ -6,9 +6,13 @@ import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
 import { doc, getDoc, updateDoc, Timestamp } from "firebase/firestore";
 import { jobAdAIPrompt, getAIResponse, AIParseJobAdJSON, parseJobAdJSONPrompt } from "@/components/ai/aiPrompt";
+import { v4 as uuidv4 } from "uuid";
 
 type JobAdEntry = {
-  description: string;
+  jobID: string;
+  companyName: string;
+  jobTitle: string;
+  jobDescription: string;
   dateSubmitted: Timestamp;
 };
 
@@ -48,6 +52,7 @@ export default function UploadJobAdPage() {
         jobAds = userSnap.data().jobAds;
       }
       const newJobAd = {
+        jobID: uuidv4(), // Generate a unique ID
         companyName,
         jobTitle,
         jobDescription: desc,
