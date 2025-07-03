@@ -5,14 +5,14 @@ const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemi
 
 export async function POST(req: NextRequest) {
   try {
-    const { jobText, bio, editableResume } = await req.json();
+    const { jobText, editableResume } = await req.json();
 
-    if (!jobText || !bio || !editableResume) {
+    if (!jobText || !editableResume) {
       return NextResponse.json({ error: "Missing input data" }, { status: 400 });
     }
 
 const prompt = `
-You are an AI resume generator. Your task is to rewrite and enhance the resume below based on the given job description and the user's bio.
+You are an AI resume generator. Your task is to rewrite and enhance the resume below based on the given job description.
 
 You must return ONLY valid JSON in the following format:
 {
@@ -32,9 +32,6 @@ Specific requirements:
 - The "objective" field must be customized based on the job description.
 - Keep the JSON structure exactly as shown above.
 - Do NOT include markdown, backticks, explanations, or formatting outside the JSON.
-
-Here is the user's bio:
-${bio}
 
 Here is their original resume:
 ${JSON.stringify(editableResume, null, 2)}
