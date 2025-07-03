@@ -27,8 +27,8 @@ interface FileUploadProps {
   setAiLoading?: (loading: boolean) => void; // optional callback to control spinner from parent
   onPreview?: (url: string, name: string) => void; // callback to trigger preview modal in parent
   onUploadSuccess?: () => void; // NEW: callback to refresh resume list
+  onBack?: () => void; // NEW: callback for back navigation
 }
-
 export default function FileUpload({ onParsed, setAiLoading, onPreview, onUploadSuccess }: FileUploadProps) {
   const { user } = useAuth();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -152,6 +152,7 @@ export default function FileUpload({ onParsed, setAiLoading, onPreview, onUpload
         if (contentXml) {
           const matches = contentXml.match(/<text:p[^>]*>(.*?)<\/text:p>/g);
           const paragraphs = matches ? matches.map(p => p.replace(/<[^>]+>/g, '').trim()) : [];
+          text = paragraphs.join('\n\n') || '';
           text = paragraphs.join('\n\n') || '';
         } else {
           text = '';
@@ -286,6 +287,16 @@ export default function FileUpload({ onParsed, setAiLoading, onPreview, onUpload
               >
                 Preview
               </button>
+              {onBack && (
+                <button
+                  onClick={onBack}
+                  disabled={uploading || parsingNew}
+                  className="px-4 py-2 bg-gradient-to-r from-gray-500 via-gray-600 to-gray-700 text-white rounded hover:from-gray-600 hover:to-gray-800 disabled:opacity-50 font-semibold flex items-center gap-2"
+                >
+                  <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  Back
+                </button>
+              )}
             </div>
             {/* Show parsing spinner/message */}
             {(parsingNew || aiLoading) && (

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useAuth } from "@/context/authContext";
 
 type BioSubmissionProps = {
   bio: string;
@@ -29,6 +30,7 @@ export default function BioSubmission({
   >("idle");
   const [aiResult, setAiResult] = useState<any | null>(null);
   const [aiError, setAiError] = useState<string | null>(null);
+  const { user } = useAuth(); // Get the authenticated user
 
   const MIN_LENGTH = 20;
   const MAX_LENGTH = 10000;
@@ -73,14 +75,16 @@ export default function BioSubmission({
         const data = await res.json();
         setAiResult(data);
         // Save bio and AI result to backend
+        // Use first 6 words of bio as displayName
+        const firstWords = trimmed.split(/\s+/).slice(0, 6).join(' ');
         const saveRes = await fetch('/api/saveResume', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             ...data,
             bio: trimmed,
-            userId: typeof window !== 'undefined' ? localStorage.getItem('userId') : undefined,
-            displayName: 'Bio Submission',
+            userId: user?.uid, // Use userId from authenticated user
+            displayName: firstWords,
           }),
         });
         if (!saveRes.ok) throw new Error('Failed to save bio and AI result');

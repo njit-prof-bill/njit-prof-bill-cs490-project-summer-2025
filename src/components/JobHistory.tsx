@@ -37,25 +37,47 @@ export default function JobHistory({ jobs, onChange }: JobHistoryProps) {
     respIndex: number,
     value: string
   ) => {
-    const newJobs = [...jobs];
-    const resps = newJobs[jobIndex].responsibilities || [];
-    resps[respIndex] = value;
-    newJobs[jobIndex].responsibilities = resps;
-    onChange(newJobs);
+    // Immutably update the nested responsibility
+    onChange(
+      jobs.map((job, i) =>
+        i === jobIndex
+          ? {
+              ...job,
+              responsibilities: (job.responsibilities || []).map((resp, j) =>
+                j === respIndex ? value : resp
+              ),
+            }
+          : job
+      )
+    );
   };
 
   const addResponsibility = (jobIndex: number) => {
-    const newJobs = [...jobs];
-    const resps = newJobs[jobIndex].responsibilities || [];
-    newJobs[jobIndex].responsibilities = [...resps, ""];
-    onChange(newJobs);
+    // Immutably add a new responsibility
+    onChange(
+      jobs.map((job, i) =>
+        i === jobIndex
+          ? {
+              ...job,
+              responsibilities: [...(job.responsibilities || []), ""],
+            }
+          : job
+      )
+    );
   };
 
   const removeResponsibility = (jobIndex: number, respIndex: number) => {
-    const newJobs = [...jobs];
-    const resps = newJobs[jobIndex].responsibilities || [];
-    newJobs[jobIndex].responsibilities = resps.filter((_, i) => i !== respIndex);
-    onChange(newJobs);
+    // Immutably remove a responsibility
+    onChange(
+      jobs.map((job, i) =>
+        i === jobIndex
+          ? {
+              ...job,
+              responsibilities: (job.responsibilities || []).filter((_, j) => j !== respIndex),
+            }
+          : job
+      )
+    );
   };
 
   const removeJob = (index: number) => {

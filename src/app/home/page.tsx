@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/context/authContext";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import React from "react";
 
 import FileUpload, { DocxPreview, OdtPreview, MarkdownPreview } from "@/components/FileUpload";
@@ -55,6 +55,8 @@ export default function HomePage() {
 
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewName, setPreviewName] = useState<string | null>(null);
+
+  const [showUnsavedModal, setShowUnsavedModal] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -178,6 +180,9 @@ const handleViewBreakdown = () => {
             }
           });
       }
+      // Update both parsedResume and editableResume to the latest saved data
+      setParsedResume(dataToSave);
+      setEditableResume(dataToSave);
       setTimeout(() => {
         setShowNameModal(false);
         setSaveStatus('idle');
@@ -254,6 +259,29 @@ const handleViewBreakdown = () => {
       setGenerating(false);
     }
   };
+
+  // Modified back button handler
+  const handleBack = () => {
+    if (hasUnsavedChanges) {
+      setShowUnsavedModal(true);
+    } else {
+      handleReset();
+    }
+  };
+
+  // Helper to check for unsaved changes (same logic as UnsavedChangesIndicator)
+  const hasUnsavedChanges = React.useMemo(() => {
+    if (!editableResume || !parsedResume) return false;
+    const fields = ['emails', 'phones', 'objective', 'skills', 'education', 'jobHistory', 'bio'] as const;
+    type ResumeField = typeof fields[number];
+    const a: any = {};
+    const b: any = {};
+    for (const field of fields) {
+      a[field] = field === 'bio' ? bio : (editableResume as any)[field];
+      b[field] = (parsedResume as any)[field];
+    }
+    return !deepEqual(a, b);
+  }, [editableResume, parsedResume, bio]);
 
   return (
     <main className="relative min-h-screen bg-gradient-to-br from-indigo-100 via-white to-blue-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 px-2 md:px-6 py-8 md:py-12 font-sans overflow-x-hidden">
@@ -362,6 +390,7 @@ const handleViewBreakdown = () => {
                     });
                 }
               }}
+              onBack={handleBack}
             />
           </div>
           <div className="bg-white/95 dark:bg-gray-900/95 rounded-3xl shadow-2xl p-8 flex flex-col items-center border-2 border-pink-200 dark:border-pink-700 w-full max-w-4xl mx-auto transition-all hover:scale-[1.025] hover:shadow-2xl duration-200 relative overflow-hidden">
@@ -439,7 +468,7 @@ const handleViewBreakdown = () => {
         />
         <div className="bg-gray-800 text-white p-6 rounded-lg shadow-md w-full mb-6">
           <h3 className="text-xl font-semibold mb-2 tracking-tight flex items-center gap-2">
-            <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" stroke="#38bdf8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#f59e42" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
             Career Objective
           </h3>
           <textarea
@@ -476,12 +505,19 @@ const handleViewBreakdown = () => {
           }
         />
         <RawToggle label="Raw Resume Data" data={editableResume} />
+        {/* Unsaved changes indicator - moved directly above Save Changes button and always visible while editing */}
+        {editableResume && (
+          <div className="flex flex-col items-center w-full">
+            <UnsavedChangesIndicator editableResume={editableResume} parsedResume={parsedResume} bio={bio} alwaysShow={true} />
+          </div>
+        )}
         <div className="flex flex-col md:flex-row gap-4 mt-6 max-w-3xl mx-auto">
           <button
-            onClick={handleReset}
-            className="px-4 py-2 bg-gradient-to-r from-gray-500 via-gray-600 to-gray-700 hover:from-gray-600 hover:to-gray-800 text-white rounded font-semibold shadow-md transition-all"
+            onClick={handleBack}
+            className="px-4 py-2 bg-gradient-to-r from-gray-500 via-gray-600 to-gray-700 hover:from-gray-600 hover:to-gray-800 text-white rounded font-semibold shadow-md transition-all flex items-center gap-2"
           >
-            Upload Different Resume
+            <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            Back
           </button>
           <button
             onClick={handleConfirmSave}
@@ -580,6 +616,77 @@ const handleViewBreakdown = () => {
           </div>
         </div>
       )}
+      {/* Unsaved Changes Modal */}
+      {showUnsavedModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl max-w-md w-full mx-4 p-6 border border-yellow-300 dark:border-yellow-700">
+            <h2 className="text-lg font-bold text-yellow-800 dark:text-yellow-200 mb-4 flex items-center gap-2">
+              <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#f59e42" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              Unsaved Changes
+            </h2>
+            <p className="mb-6 text-gray-700 dark:text-gray-200">You have unsaved changes. Are you sure you want to go back? All unsaved changes will be lost.</p>
+            <div className="flex gap-4 justify-end">
+              <button
+                onClick={() => setShowUnsavedModal(false)}
+                className="px-4 py-2 rounded bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-semibold hover:bg-gray-400 dark:hover:bg-gray-600 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => { setShowUnsavedModal(false); handleReset(); }}
+                className="px-4 py-2 rounded bg-yellow-500 text-white font-semibold hover:bg-yellow-600 transition-all"
+              >
+                Discard Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
+  );
+}
+
+function deepEqual(a: any, b: any): boolean {
+  if (a === b) return true;
+  if (typeof a !== typeof b) return false;
+  if (typeof a !== 'object' || a === null || b === null) return false;
+  if (Array.isArray(a) !== Array.isArray(b)) return false;
+  if (Array.isArray(a)) {
+    // Treat [] and [""] as different
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) {
+      if (!deepEqual(a[i], b[i])) return false;
+    }
+    return true;
+  }
+  const aKeys = Object.keys(a);
+  const bKeys = Object.keys(b);
+  if (aKeys.length !== bKeys.length) return false;
+  for (const key of aKeys) {
+    if (!deepEqual(a[key], b[key])) return false;
+  }
+  return true;
+}
+
+function UnsavedChangesIndicator({ editableResume, parsedResume, bio, alwaysShow = false }: { editableResume: any, parsedResume: any, bio: string, alwaysShow?: boolean }) {
+  const isDirty = React.useMemo(() => {
+    if (!editableResume || !parsedResume) return false;
+    // Build a comparable object for both
+    const fields = ['emails', 'phones', 'objective', 'skills', 'education', 'jobHistory', 'bio'];
+    const a: any = {};
+    const b: any = {};
+    for (const field of fields) {
+      a[field] = field === 'bio' ? bio : editableResume[field];
+      b[field] = parsedResume[field];
+    }
+    return !deepEqual(a, b);
+  }, [editableResume, parsedResume, bio]);
+
+  if (!isDirty && !alwaysShow) return null;
+  return (
+    <div className={`flex items-center gap-2 mb-2 px-4 py-2 rounded shadow font-semibold transition-all duration-300 ${isDirty ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 animate-pulse' : 'bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-300 opacity-70'}`}>
+      <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#f59e42" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+      {isDirty ? 'You have unsaved changes' : 'No unsaved changes'}
+    </div>
   );
 }
