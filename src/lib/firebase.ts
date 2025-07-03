@@ -4,6 +4,7 @@ import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { HarmBlockThreshold, HarmCategory, getAI, getGenerativeModel, GoogleAIBackend } from "firebase/ai";
 import { getStorage } from "firebase/storage";
+import { jobAdObjSchema, resumeSchema } from "@/components/objects/userProfile";
 
 // Firebase configuration using environment variables
 const firebaseConfig = {
@@ -44,3 +45,24 @@ export const model = getGenerativeModel(ai, { model: "gemini-2.0-flash-001", saf
 
 // Initialize Cloud Storage and get a reference to the service
 export const storage = getStorage(app);
+
+// For parsing user-submitted job ads
+export const jobAdParseModel = getGenerativeModel(ai, { 
+    model: "gemini-2.0-flash-001", 
+    safetySettings,
+    generationConfig: {
+        responseMimeType: "application/json",
+        responseSchema: jobAdObjSchema
+    }
+ });
+
+ // For parsing user-submitted resume files or free-form text,
+ // as well as generating new resumes in JSON format
+ export const resumeModel = getGenerativeModel(ai, {
+    model: "gemini-2.0-flash-001",
+    safetySettings,
+    generationConfig: {
+        responseMimeType: "application/json",
+        responseSchema: resumeSchema
+    }
+ });

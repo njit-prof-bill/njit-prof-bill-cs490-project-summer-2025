@@ -14,7 +14,7 @@ class jobAdObj {
 };
 
 // Format of AI's response when parsing a user-submitted job ad
-const jobAdObjSchema = Schema.object({
+export const jobAdObjSchema = Schema.object({
     properties: {
         companyName: Schema.string({
             description: "The name of the company in the job ad.",
@@ -134,7 +134,7 @@ class resume {
 }
 
 // Format of AI response when parsing all relevant fields from the user's uploaded resume
-const resumeSchema = Schema.object({
+export const resumeSchema = Schema.object({
     properties: {
         fullName: Schema.string({
             description: "The person's full name on the resume."
