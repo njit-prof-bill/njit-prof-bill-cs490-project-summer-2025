@@ -7,12 +7,12 @@ export async function POST(req: NextRequest) {
   try {
     const { jobText, bio, editableResume } = await req.json();
 
-    if (!jobText || !editableResume) {
+    if (!jobText || !bio || !editableResume) {
       return NextResponse.json({ error: "Missing input data" }, { status: 400 });
     }
 
-    const prompt = `
-You are an AI resume generator. Your task is to rewrite and enhance the resume below based on the given job description${bio ? " and the user's bio." : "."}
+const prompt = `
+You are an AI resume generator. Your task is to rewrite and enhance the resume below based on the given job description and the user's bio.
 
 You must return ONLY valid JSON in the following format:
 {
@@ -33,7 +33,15 @@ Specific requirements:
 - Keep the JSON structure exactly as shown above.
 - Do NOT include markdown, backticks, explanations, or formatting outside the JSON.
 
-${bio ? `Here is the user's bio:\n${bio}\n` : ''}Here is their original resume:\n${JSON.stringify(editableResume, null, 2)}\n\nHere is the job description:\n${jobText}\n`;
+Here is the user's bio:
+${bio}
+
+Here is their original resume:
+${JSON.stringify(editableResume, null, 2)}
+
+Here is the job description:
+${jobText}
+`;
 
 
     const geminiRes = await fetch(GEMINI_URL, {
@@ -61,4 +69,3 @@ ${bio ? `Here is the user's bio:\n${bio}\n` : ''}Here is their original resume:\
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
-

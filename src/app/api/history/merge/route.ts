@@ -42,5 +42,3 @@ export async function POST() {
     return NextResponse.json({ status: "error", message: "Gemini call failed." }, { status: 500 });
   }
 }
-
-
