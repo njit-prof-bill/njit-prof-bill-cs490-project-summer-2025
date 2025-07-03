@@ -159,9 +159,9 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen text-gray-900 dark:text-gray-100">
-      <div className="w-full max-w-md">
-        <h1 className="text-2xl font-bold mb-6">Settings</h1>
+    <div className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-br from-indigo-100 via-white to-blue-100 dark:from-gray-900 dark:via-gray-950 dark:to-gray-900 transition-colors duration-500">
+      <div className="w-full max-w-md bg-white/90 dark:bg-gray-900/90 rounded-2xl shadow-2xl p-8 border border-indigo-100 dark:border-gray-800 backdrop-blur-md">
+        <h1 className="text-3xl font-extrabold text-indigo-700 dark:text-indigo-300 mb-8 text-center tracking-tight drop-shadow-lg">Settings</h1>
         <Form {...form}>
           <form className="space-y-6" onSubmit={handleSave}>
             <FormField
@@ -316,23 +316,23 @@ export default function SettingsPage() {
                 </FormItem>
               )}
             />
-            <div className="flex justify-end space-x-4">
+            <div className="flex justify-end space-x-4 mt-8">
               <Button
                 type="submit"
                 disabled={isSaving}
-                className="w-32 bg-blue-500 hover:bg-blue-600 text-white"
+                className="w-32 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-bold shadow"
               >
                 {isSaving ? "Saving..." : "Save"}
               </Button>
               <Button
                 type="button"
                 onClick={handleCancel}
-                className="w-32 bg-gray-500 hover:bg-gray-600 text-white"
+                className="w-32 bg-gray-400 hover:bg-gray-500 text-white font-bold shadow"
               >
                 Cancel
               </Button>
             </div>
-            {error && <p className="text-red-500 mt-2">{error}</p>}
+            {error && <p className="text-red-500 mt-2 text-center font-semibold">{error}</p>}
           </form>
         </Form>
       </div>
