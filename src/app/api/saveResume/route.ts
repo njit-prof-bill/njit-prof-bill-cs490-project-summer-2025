@@ -25,10 +25,38 @@ export async function POST(req: NextRequest) {
     if (!resumeId) {
       resumeId = uuidv4();
     }
+
+    // Determine if this is a file upload or a bio upload
+    let type = "file";
+    let label = "";
+    let fileType = "";
+    if (resume.fileName) {
+      // File upload
+      label = resume.fileName;
+      const extMatch = resume.fileName.match(/\.([a-zA-Z0-9]+)$/);
+      fileType = extMatch ? extMatch[1].toLowerCase() : "unknown";
+    } else if (resume.bio && typeof resume.bio === "string" && resume.bio.trim().length > 0) {
+      // Bio upload
+      type = "bio";
+      // Use first 6 words of bio as label
+      label = resume.bio.trim().split(/\s+/).slice(0, 6).join(" ") + (resume.bio.trim().split(/\s+/).length > 6 ? "..." : "");
+      fileType = "bio";
+    } else {
+      // Fallback
+      label = resume.displayName || "Resume";
+      fileType = "unknown";
+    }
+
+    const timestamp = new Date().toISOString();
+
     await db.collection("resumes").doc(resumeId).set({
       ...resume,
       resumeId,
-      updatedAt: new Date().toISOString(),
+      updatedAt: timestamp,
+      type,
+      label,
+      fileType,
+      timestamp,
     }, { merge: true });
     return NextResponse.json({ success: true, resumeId });
   } catch (error: any) {
@@ -59,5 +87,26 @@ export async function GET(req: NextRequest) {
     }
   } catch (error: any) {
     return NextResponse.json({ error: "Failed to fetch resume(s)" }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const userId = searchParams.get("userId");
+    const resumeId = searchParams.get("resumeId");
+    if (!userId || !resumeId) {
+      return NextResponse.json({ error: "Missing userId or resumeId" }, { status: 400 });
+    }
+    // Check if the resume exists and belongs to the user
+    const doc = await db.collection("resumes").doc(resumeId).get();
+    const docData = doc.data();
+    if (!doc.exists || !docData || docData.userId !== userId) {
+      return NextResponse.json({ error: "Resume not found or unauthorized" }, { status: 404 });
+    }
+    await db.collection("resumes").doc(resumeId).delete();
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    return NextResponse.json({ error: "Failed to delete resume" }, { status: 500 });
   }
 }

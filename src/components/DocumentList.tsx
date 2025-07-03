@@ -31,33 +31,32 @@ const Spinner = () => (
 
 const DocumentList: React.FC<DocumentListProps> = ({ documents, selectedId, onSelect, aiLoading, hideTitle }) => {
   return (
-    <div className="max-h-96 overflow-y-auto bg-gray-800 dark:bg-gray-200 rounded-lg shadow-md p-4 space-y-2 max-w-4xl w-full mx-auto">
+    <div className="max-h-96 overflow-y-auto bg-white dark:bg-gray-900 rounded-xl shadow-lg p-6 space-y-3 max-w-4xl w-full mx-auto border border-indigo-100 dark:border-gray-700">
       {!hideTitle && (
-        <h3 className="text-xl font-semibold text-white dark:text-gray-900 mb-2">Uploaded Documents</h3>
+        <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 tracking-tight">Your Uploaded Resumes</h3>
       )}
       {documents.length === 0 ? (
-        <div className="text-gray-400">No documents uploaded yet.</div>
+        <div className="text-gray-400 text-center py-8">No documents uploaded yet.</div>
       ) : (
         documents.map((doc, idx) => {
           const isSelected = doc.id === selectedId;
           return (
             <div
               key={doc.id || doc.name + idx}
-              className={`flex items-center justify-between rounded p-4 mb-2 transition cursor-pointer ${isSelected ? 'bg-green-200 dark:bg-green-900 border-2 border-green-500' : 'bg-gray-700 dark:bg-gray-200 hover:bg-gray-600 dark:hover:bg-gray-300'}`}
+              className={`flex flex-col md:flex-row md:items-center justify-between rounded-xl p-4 mb-2 transition cursor-pointer border-2 ${isSelected ? 'bg-indigo-50 dark:bg-indigo-900 border-indigo-500 shadow-lg' : 'bg-gray-50 dark:bg-gray-800 border-transparent hover:border-indigo-300 dark:hover:border-indigo-600 hover:shadow-md'}`}
               onClick={() => onSelect && onSelect(doc)}
             >
               <div className="flex-1 min-w-0">
-                <div className="break-all text-white dark:text-gray-900 font-medium flex items-center gap-2">
-                  <span className="inline-block px-2 py-0.5 rounded bg-gray-900 dark:bg-gray-300 text-xs font-bold text-blue-300 dark:text-blue-700 border border-blue-400 dark:border-blue-600 mr-2 whitespace-nowrap">
+                <div className="flex flex-wrap items-center gap-2 mb-1">
+                  <span className="inline-block px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-700 text-xs font-bold text-indigo-700 dark:text-indigo-200 border border-indigo-300 dark:border-indigo-600 mr-2 whitespace-nowrap">
                     {doc.type || 'FILE'}
                   </span>
-                  {doc.name}
-                  {/* Inline spinner for selected doc while AI is loading */}
+                  <span className="font-semibold text-lg text-gray-900 dark:text-white break-all">{doc.name}</span>
                   {(isSelected && aiLoading) ? <Spinner /> : null}
                 </div>
                 {doc.createdAt && (
-                  <div className="mt-1 text-xs text-gray-400 dark:text-gray-600 font-mono">
-                    {typeof doc.createdAt === 'string' ? new Date(doc.createdAt).toLocaleString() : doc.createdAt.toLocaleString()}
+                  <div className="mt-1 text-xs text-gray-500 dark:text-gray-400 font-mono">
+                    Uploaded: {typeof doc.createdAt === 'string' ? new Date(doc.createdAt).toLocaleString() : doc.createdAt.toLocaleString()}
                   </div>
                 )}
                 {doc.previewText && doc.previewText.startsWith('data:image') ? (
@@ -68,18 +67,18 @@ const DocumentList: React.FC<DocumentListProps> = ({ documents, selectedId, onSe
                     style={{ objectFit: 'contain' }}
                   />
                 ) : doc.previewText ? (
-                  <div className="mt-2 text-xs text-gray-300 dark:text-gray-700 bg-gray-900 dark:bg-gray-100 bg-opacity-60 rounded p-2 max-h-16 overflow-hidden whitespace-pre-line">
+                  <div className="mt-2 text-xs text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-900 bg-opacity-60 rounded p-2 max-h-16 overflow-hidden whitespace-pre-line border border-gray-200 dark:border-gray-700">
                     {doc.previewText.length > 120
                       ? doc.previewText.slice(0, 120) + '...'
                       : doc.previewText}
                   </div>
                 ) : null}
               </div>
-              <div className="flex flex-col gap-2 ml-4">
+              <div className="flex flex-row md:flex-col gap-2 mt-4 md:mt-0 md:ml-4">
                 {doc.onPreview && (
                   <button
                     onClick={e => { e.stopPropagation(); doc.onPreview && doc.onPreview(); }}
-                    className="px-3 py-1 bg-indigo-600 dark:bg-indigo-500 text-white dark:text-gray-100 rounded shadow hover:bg-indigo-700 dark:hover:bg-indigo-600 focus:outline-none mb-1"
+                    className="px-4 py-1.5 bg-indigo-600 dark:bg-indigo-500 text-white dark:text-gray-100 rounded-lg shadow hover:bg-indigo-700 dark:hover:bg-indigo-600 focus:outline-none font-semibold transition"
                   >
                     Preview
                   </button>
@@ -87,7 +86,7 @@ const DocumentList: React.FC<DocumentListProps> = ({ documents, selectedId, onSe
                 {doc.onDelete && (
                   <button
                     onClick={e => { e.stopPropagation(); doc.onDelete && doc.onDelete(); }}
-                    className="px-3 py-1 bg-red-600 dark:bg-red-500 text-white dark:text-gray-100 rounded shadow hover:bg-red-700 dark:hover:bg-red-600 focus:outline-none"
+                    className="px-4 py-1.5 bg-red-600 dark:bg-red-500 text-white dark:text-gray-100 rounded-lg shadow hover:bg-red-700 dark:hover:bg-red-600 focus:outline-none font-semibold transition"
                   >
                     Delete
                   </button>

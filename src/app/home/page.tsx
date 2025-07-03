@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import React from "react";
 
-import FileUpload from "@/components/FileUpload";
+import FileUpload, { DocxPreview, OdtPreview, MarkdownPreview } from "@/components/FileUpload";
 import BioSubmission from "@/components/forms/BioSubmission";
 
 import SkillsList from "@/components/SkillsList";
@@ -14,6 +14,7 @@ import EducationList from "@/components/EducationList";
 import JobHistory from "@/components/JobHistory";
 import RawToggle from "@/components/ui/RawToggle";
 import ThemeToggle from "@/components/ThemeToggle";
+import DocumentList from "@/components/DocumentList";
 
 
 export default function HomePage() {
@@ -51,6 +52,9 @@ export default function HomePage() {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
 
   const breakdownRef = useRef<HTMLButtonElement | null>(null);
+
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewName, setPreviewName] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -148,6 +152,12 @@ const handleViewBreakdown = () => {
   const handleConfirmSave = async () => {
     setSaveStatus('saving');
     try {
+      // Only save if there is a selected resume (i.e., editing an existing one)
+      if (!selectedResumeId || !editableResume) {
+        setSaveStatus('error');
+        setTimeout(() => setSaveStatus('idle'), 1500);
+        return;
+      }
       const dataToSave = { ...editableResume, bio, userId: user?.uid, resumeId: selectedResumeId, customName: customResumeName };
       const res = await fetch("/api/saveResume", {
         method: "POST",
@@ -156,12 +166,9 @@ const handleViewBreakdown = () => {
       });
       if (!res.ok) throw new Error("Save failed");
       const result = await res.json();
-      if (!selectedResumeId && result.resumeId) {
-        setSelectedResumeId(result.resumeId);
-      }
       setSaveStatus('success');
       setCustomResumeName("");
-      // Refresh resume list
+      // Refresh resume list after save
       if (user && user.uid) {
         fetch(`/api/saveResume?userId=${user.uid}`)
           .then(res => res.json())
@@ -303,8 +310,8 @@ const handleViewBreakdown = () => {
         </div>
         {!uploaded ? (
           <>
-        <div className="flex flex-col md:flex-row gap-8 items-stretch w-full">
-          <div className="bg-white/95 dark:bg-gray-900/95 rounded-3xl shadow-2xl p-8 flex flex-col items-center border-2 border-indigo-200 dark:border-indigo-700 w-full max-w-md transition-all hover:scale-[1.025] hover:shadow-2xl duration-200 relative overflow-hidden">
+        <div className="flex flex-col gap-8 items-stretch w-full max-w-7xl mx-auto">
+          <div className="bg-white/95 dark:bg-gray-900/95 rounded-3xl shadow-2xl p-8 flex flex-col items-center border-2 border-indigo-200 dark:border-indigo-700 w-full max-w-md mx-auto transition-all hover:scale-[1.025] hover:shadow-2xl duration-200 relative overflow-hidden">
             <div className="absolute -top-6 -right-6 opacity-30 pointer-events-none">
               <svg width="80" height="80" viewBox="0 0 80 80"><circle cx="40" cy="40" r="36" fill="url(#upload-grad)" /><defs><linearGradient id="upload-grad" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#6366f1"/><stop offset="1" stopColor="#38bdf8"/></linearGradient></defs></svg>
             </div>
@@ -315,37 +322,49 @@ const handleViewBreakdown = () => {
             <FileUpload
               onParsed={async (resume) => {
                 console.log("Parsed resume:", resume);
-
                 const res = await fetch("/api/saveResume", {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({
-                ...resume,
-                userId: user?.uid,
-                bio: "",  // bio is not known yet at this stage
-                displayName: resume.fileName || "Uploaded Resume",
+                    ...resume,
+                    userId: user?.uid,
+                    bio: "",  // bio is not known yet at this stage
+                    displayName: resume.fileName || "Uploaded Resume",
                   }),
                 });
-
                 const data = await res.json();
-
                 if (res.ok && data.resumeId) {
-
                   const response = await fetch(`/api/saveResume?userId=${user?.uid}&resumeId=${data.resumeId}`);
                   const loaded = await response.json();
                   if (loaded.resume) {
-                setParsedResume(loaded.resume);
-                setEditableResume(loaded.resume);
-                setSelectedResumeId(data.resumeId);
+                    setParsedResume(loaded.resume);
+                    setEditableResume(loaded.resume);
+                    setSelectedResumeId(data.resumeId);
                   }
                 } else {
                   console.error("Failed to save/upload resume.");
                 }
               }}
               setAiLoading={setAiLoading}
+              onPreview={(url, name) => {
+                setPreviewUrl(url);
+                setPreviewName(name);
+              }}
+              onUploadSuccess={() => {
+                // Always refresh resume list after upload
+                if (user && user.uid) {
+                  fetch(`/api/saveResume?userId=${user.uid}`)
+                    .then(res => res.json())
+                    .then(data => {
+                      if (data.resumes) {
+                        setResumeList(data.resumes);
+                      }
+                    });
+                }
+              }}
             />
           </div>
-          <div className="bg-white/95 dark:bg-gray-900/95 rounded-3xl shadow-2xl p-8 flex flex-col items-center border-2 border-pink-200 dark:border-pink-700 w-full max-w-md transition-all hover:scale-[1.025] hover:shadow-2xl duration-200 relative overflow-hidden">
+          <div className="bg-white/95 dark:bg-gray-900/95 rounded-3xl shadow-2xl p-8 flex flex-col items-center border-2 border-pink-200 dark:border-pink-700 w-full max-w-4xl mx-auto transition-all hover:scale-[1.025] hover:shadow-2xl duration-200 relative overflow-hidden">
             <div className="absolute -top-6 -right-6 opacity-30 pointer-events-none">
               <svg width="80" height="80" viewBox="0 0 80 80"><circle cx="40" cy="40" r="36" fill="url(#bio-grad)" /><defs><linearGradient id="bio-grad" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#f472b6"/><stop offset="1" stopColor="#a78bfa"/></linearGradient></defs></svg>
             </div>
@@ -358,6 +377,18 @@ const handleViewBreakdown = () => {
           setBio={setBio}
           onSubmitSuccess={(submitted) => setSubmittedBio(submitted)}
           showSubmitButton={true}
+          onUploadSuccess={() => {
+            // Refresh resume list after bio submission
+            if (user && user.uid) {
+              fetch(`/api/saveResume?userId=${user.uid}`)
+                .then(res => res.json())
+                .then(data => {
+                  if (data.resumes) {
+                    setResumeList(data.resumes);
+                  }
+                });
+            }
+          }}
             />
           </div>
         </div>
@@ -370,8 +401,8 @@ const handleViewBreakdown = () => {
           `}
           style={{ letterSpacing: '0.05em', opacity: 1, visibility: 'visible' }}
         >
-          <span role="img" aria-label="eye" className="mr-2">👁️</span>
-          View Resume Breakdown
+          <span role="img" aria-label="edit" className="mr-2">✏️</span>
+          Edit Uploaded Resume/Bio
         </button>
         {!parsedResume && (
           <div className="text-center text-gray-500 text-sm mt-2">
@@ -426,25 +457,6 @@ const handleViewBreakdown = () => {
             }}
           />
         </div>
-        <div className="bg-gray-800 text-white p-6 rounded-lg shadow-md w-full mb-6 max-w-5xl mx-auto">
-          <h3 className="text-xl font-semibold mb-2 tracking-tight flex items-center gap-2">
-            <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path d="M12 4a8 8 0 100 16 8 8 0 000-16zm0 0v8l4 2" stroke="#f472b6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            Biography
-          </h3>
-          <textarea
-            className="w-full bg-gray-700 text-white rounded p-2 border border-gray-600 focus:outline-none focus:bg-gray-600 resize-y transition-all"
-            style={{ minHeight: '100px', height: 'auto', overflow: 'hidden' }}
-            value={bio}
-            onChange={e => setBio(e.target.value)}
-            placeholder="Enter your biography (optional)"
-            rows={1}
-            onInput={e => {
-          const target = e.target as HTMLTextAreaElement;
-          target.style.height = 'auto';
-          target.style.height = target.scrollHeight + 'px';
-            }}
-          />
-        </div>
         <SkillsList
           skills={editableResume?.skills || []}
           onChange={(newSkills) =>
@@ -472,71 +484,46 @@ const handleViewBreakdown = () => {
             Upload Different Resume
           </button>
           <button
-            onClick={() => setShowNameModal(true)}
+            onClick={handleConfirmSave}
             className="px-4 py-2 bg-gradient-to-r from-green-500 via-teal-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white rounded font-semibold shadow-md transition-all"
+            disabled={saveStatus === 'saving'}
           >
-            Save Resume
+            {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'success' ? 'Saved!' : 'Save Changes'}
           </button>
         </div>
-        {/* Modal for custom resume name */}
-        {showNameModal && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50 backdrop-blur-sm transition-all">
-            <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-sm flex flex-col items-center animate-fade-in">
-          <h3 className="text-2xl font-bold mb-2 text-indigo-700 dark:text-indigo-200">Save Resume As</h3>
-          <p className="text-gray-600 dark:text-gray-300 mb-4 text-center text-sm">Give your resume a custom name for easy management and retrieval.</p>
-          <input
-            type="text"
-            className="w-full p-2 border border-indigo-300 dark:border-gray-600 rounded mb-4 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-400 transition"
-            placeholder="Enter a name for your resume"
-            value={customResumeName}
-            onChange={e => setCustomResumeName(e.target.value)}
-            autoFocus
-            disabled={saveStatus === 'saving' || saveStatus === 'success'}
+          </div>
+        )}
+        {/* DocumentList UI for all resumes */}
+        {!uploaded && (
+          <DocumentList
+            documents={resumeList.map(r => ({
+              id: r.resumeId,
+              name: r.label || r.fileName || r.customName || r.resumeId,
+              type: r.fileType || r.type || 'FILE',
+              createdAt: r.updatedAt || r.timestamp,
+              // Optionally add previewText, onPreview, onDelete, etc.
+              onDelete: async () => {
+                if (!user?.uid || !r.resumeId) return;
+                if (!window.confirm('Are you sure you want to delete this resume?')) return;
+                const res = await fetch(`/api/saveResume?userId=${user.uid}&resumeId=${r.resumeId}`, { method: 'DELETE' });
+                if (res.ok) {
+                  setResumeList(resumeList.filter(x => x.resumeId !== r.resumeId));
+                  if (selectedResumeId === r.resumeId) setSelectedResumeId(null);
+                } else {
+                  alert('Failed to delete resume.');
+                }
+              },
+              onPreview: () => {
+                if (r.base64) {
+                  setPreviewUrl(r.base64);
+                  setPreviewName(r.label || r.fileName || r.customName || r.resumeId);
+                }
+              },
+            }))}
+            selectedId={selectedResumeId || undefined}
+            onSelect={doc => handleLoadResume(doc.id)}
+            aiLoading={aiLoading}
           />
-          <div className="flex justify-end gap-2 w-full mt-2">
-            <button
-              onClick={() => { setShowNameModal(false); setSaveStatus('idle'); }}
-              className="px-4 py-2 bg-gray-400 hover:bg-gray-500 text-white rounded font-semibold transition-all"
-              disabled={saveStatus === 'saving'}
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleConfirmSave}
-              className={`px-4 py-2 rounded text-white font-semibold transition-colors duration-150 ${saveStatus === 'success' ? 'bg-green-600' : 'bg-indigo-600 hover:bg-indigo-700'} ${saveStatus === 'saving' ? 'opacity-60 cursor-not-allowed' : ''}`}
-              disabled={!customResumeName.trim() || saveStatus === 'saving' || saveStatus === 'success'}
-            >
-              {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'success' ? 'Saved!' : 'Save'}
-            </button>
-          </div>
-          {saveStatus === 'success' && (
-            <div className="mt-4 text-green-700 dark:text-green-400 font-medium text-center">Resume saved successfully!</div>
-          )}
-          {saveStatus === 'error' && (
-            <div className="mt-4 text-red-600 dark:text-red-400 font-medium text-center">Error saving resume. Please try again.</div>
-          )}
-            </div>
-          </div>
-        )}
-          </div>
-        )}
-        {/* Resume selector and file name chip */}
-        {!uploaded && resumeList.length > 0 && (
-          <div className="mb-4">
-        <label className="block mb-2 font-semibold text-indigo-700 dark:text-indigo-300">Load a Saved Resume:</label>
-        <select
-          className="w-full p-2 rounded border border-indigo-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-white transition"
-          value={selectedResumeId || ""}
-          onChange={e => handleLoadResume(e.target.value)}
-        >
-          <option value="">Select a resume...</option>
-          {resumeList.map((resume) => (
-            <option key={resume.resumeId} value={resume.resumeId}>
-          {resume.customName || resume.objective?.slice(0, 30) || resume.resumeId}
-            </option>
-          ))}
-        </select>
-          </div>
         )}
         {parsedResume && parsedResume.fileName && (
           <div className="text-center bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-medium mt-2 px-3 py-1 rounded shadow inline-block">
@@ -544,6 +531,55 @@ const handleViewBreakdown = () => {
           </div>
         )}
       </div>
+      {/* Preview Modal */}
+      {previewUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="relative bg-white dark:bg-gray-900 rounded-xl shadow-2xl max-w-2xl w-full mx-4 p-6 overflow-auto max-h-[90vh]">
+            <button
+              onClick={() => { setPreviewUrl(null); setPreviewName(null); }}
+              className="absolute top-3 right-4 text-2xl text-gray-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 font-bold z-10"
+              aria-label="Close preview"
+            >
+              ×
+            </button>
+            <div className="mb-4 font-semibold text-lg text-gray-700 dark:text-gray-200">Preview: {previewName}</div>
+            <div className="overflow-auto max-h-[70vh]">
+              {(() => {
+                const fileName = previewName || '';
+                const lowerName = fileName.toLowerCase();
+                const isMarkdown = lowerName.endsWith('.md');
+                if (!previewUrl) return null;
+                if (previewUrl.startsWith('data:application/pdf')) {
+                  return <iframe src={previewUrl} title="PDF Preview" className="w-full h-[50vh] bg-white dark:bg-gray-900" />;
+                } else if (previewUrl.startsWith('data:image')) {
+                  return <img src={previewUrl} alt="Preview" className="max-w-full max-h-[50vh] mx-auto bg-white dark:bg-gray-900" />;
+                } else if (previewUrl.startsWith('data:application/vnd.openxmlformats-officedocument.wordprocessingml.document')) {
+                  return <DocxPreview base64={previewUrl} />;
+                } else if (previewUrl.startsWith('data:application/vnd.oasis.opendocument.text')) {
+                  return <OdtPreview base64={previewUrl} />;
+                } else if (isMarkdown) {
+                  return <MarkdownPreview base64={previewUrl} />;
+                } else if (previewUrl.startsWith('data:text')) {
+                  try {
+                    const base64 = previewUrl.split(',')[1];
+                    const text = atob(base64);
+                    return <div className="whitespace-pre-wrap text-gray-800 dark:text-gray-200 text-sm">{text}</div>;
+                  } catch {
+                    return <div className="whitespace-pre-wrap text-gray-800 dark:text-gray-200 text-sm">Unable to preview this file type.</div>;
+                  }
+                } else {
+                  return (
+                    <div className="flex flex-col items-center">
+                      <span className="text-gray-600 dark:text-gray-300 mb-2">Unable to preview this file type.</span>
+                      <a href={previewUrl} download className="text-blue-600 dark:text-blue-400 underline">Download file</a>
+                    </div>
+                  );
+                }
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
