@@ -16,9 +16,10 @@ import { auth } from "@/lib/firebase";
 
 interface TopBannerProps {
     toggleSidePanel: () => void;
+    onForceHome: () => void;
 }
 
-export default function TopBanner({ toggleSidePanel }: TopBannerProps) {
+export default function TopBanner({ toggleSidePanel, onForceHome }: TopBannerProps) {
     const router = useRouter();
     const pathname = usePathname(); // Get the current path
 
@@ -53,6 +54,12 @@ export default function TopBanner({ toggleSidePanel }: TopBannerProps) {
         }
     };
 
+    // Helper: always scroll to top when clicking home/logo
+    const handleHomeClick = (e: React.MouseEvent) => {
+        e.preventDefault();
+        onForceHome();
+    };
+
     return (
         <header className="bg-stone-200 dark:bg-stone-800 p-4 shadow border-b border-stone-600 flex items-center justify-between">
             {/* Left Section: Hamburger Menu, Logo, and Breadcrumb */}
@@ -63,23 +70,25 @@ export default function TopBanner({ toggleSidePanel }: TopBannerProps) {
                 >
                     <Bars3Icon className="h-9 w-9 text-gray-800 dark:text-gray-200" />
                 </button>
-                <Link href="/" className="flex items-center">
+                <a href="/home" className="flex items-center cursor-pointer" onClick={handleHomeClick}>
                     <Image
                         src="/logo.png"
-                        alt="Marcus Home"
-                        width={48}
-                        height={48}
-                        className="mr-2"
+                        alt="Polaris Home"
+                        width={150}
+                        height={150}
+                        className="mr-2 cursor-pointer"
                     />
-                </Link>
+                </a>
                 <div className="flex space-x-2 text-md">
-                    <p>{pageTitle}</p> {/* Dynamically display the page title */}
+                    <a href="/home" className="hover:underline text-indigo-700 dark:text-indigo-300 font-semibold cursor-pointer" onClick={handleHomeClick}>
+                        {pageTitle}
+                    </a>
                 </div>
             </div>
 
             {/* Center Section: Title */}
             <div className="flex-grow flex justify-center">
-                <h1 className="text-xl font-semibold">Marcus</h1>
+                <h1 className="text-xl font-semibold">Polaris Resume Builder</h1>
             </div>
 
             {/* Right Section: Avatar with Dropdown */}
@@ -88,7 +97,7 @@ export default function TopBanner({ toggleSidePanel }: TopBannerProps) {
                     <DropdownMenuTrigger asChild>
                         <div className="relative cursor-pointer">
                             <Avatar className="w-10 h-10">
-                                <AvatarImage src="/path-to-avatar-image.jpg" alt="User Avatar" />
+                                {/* <AvatarImage src="/path-to-avatar-image.jpg" alt="User Avatar" /> */}
                                 <AvatarFallback className="bg-blue-500 w-full h-full flex items-center justify-center rounded-full">
                                     {initials || "?"}
                                 </AvatarFallback>

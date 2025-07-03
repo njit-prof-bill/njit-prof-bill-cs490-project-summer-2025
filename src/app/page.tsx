@@ -8,6 +8,7 @@ import { RegistrationForm } from "@/components/forms/registrationForm";
 import { ResetPasswordForm } from "@/components/forms/resetPasswordForm";
 import Image from "next/image";
 
+
 export default function LandingPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -40,7 +41,7 @@ export default function LandingPage() {
                 height={60} // Increased size
               />
               <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-                Marcus
+                The Polaris AI Resume Builder
               </h2>
             </div>
           </div>
