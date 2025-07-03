@@ -61,22 +61,23 @@ export default function TopBanner({ toggleSidePanel, onForceHome }: TopBannerPro
     };
 
     return (
-        <header className="bg-stone-200 dark:bg-stone-800 p-4 shadow border-b border-stone-600 flex items-center justify-between">
+        <header className="sticky top-0 z-30 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-md rounded-b-2xl mb-4 flex items-center justify-between px-4 md:px-8 py-3 md:py-5 border-b border-indigo-200 dark:border-gray-800">
             {/* Left Section: Hamburger Menu, Logo, and Breadcrumb */}
             <div className="flex items-center space-x-4">
                 <button
                     onClick={toggleSidePanel}
-                    className="p-2 rounded-md border-none hover:bg-stone-300 dark:hover:bg-stone-700"
+                    className="p-2 rounded-md border-none hover:bg-indigo-100 dark:hover:bg-indigo-900 transition"
                 >
-                    <Bars3Icon className="h-9 w-9 text-gray-800 dark:text-gray-200" />
+                    <Bars3Icon className="h-8 w-8 text-indigo-700 dark:text-indigo-300" />
                 </button>
-                <a href="/home" className="flex items-center cursor-pointer" onClick={handleHomeClick}>
+                <a href="/home" className="flex items-center cursor-pointer group" onClick={handleHomeClick}>
                     <Image
                         src="/logo.png"
                         alt="Polaris Home"
-                        width={150}
-                        height={150}
-                        className="mr-2 cursor-pointer"
+                        width={200}
+                        height={200}
+                        className="mr-4 rounded-full shadow-md border-2 border-indigo-200 dark:border-indigo-700 bg-white dark:bg-gray-900"
+                        priority
                     />
                 </a>
                 <div className="flex space-x-2 text-md">
@@ -88,7 +89,9 @@ export default function TopBanner({ toggleSidePanel, onForceHome }: TopBannerPro
 
             {/* Center Section: Title */}
             <div className="flex-grow flex justify-center">
-                <h1 className="text-xl font-semibold">Polaris Resume Builder</h1>
+                <h1 className="text-xl md:text-2xl font-bold dark:text-gray-100 tracking-tight bg-gradient-to-r from-indigo-500 via-blue-400 to-teal-400 bg-clip-text text-transparent drop-shadow-md">
+                    Polaris Resume Builder
+                </h1>
             </div>
 
             {/* Right Section: Avatar with Dropdown */}
@@ -96,29 +99,31 @@ export default function TopBanner({ toggleSidePanel, onForceHome }: TopBannerPro
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <div className="relative cursor-pointer">
-                            <Avatar className="w-10 h-10">
+                            <Avatar className="w-10 h-10 shadow-lg border-2 border-indigo-200 dark:border-indigo-700">
                                 {/* <AvatarImage src="/path-to-avatar-image.jpg" alt="User Avatar" /> */}
-                                <AvatarFallback className="bg-blue-500 w-full h-full flex items-center justify-center rounded-full">
+                                <AvatarFallback className="bg-gradient-to-br from-indigo-400 to-blue-400 w-full h-full flex items-center justify-center rounded-full text-lg font-bold text-white">
                                     {initials || "?"}
                                 </AvatarFallback>
                             </Avatar>
                             {/* Down Arrow Indicator */}
                             <span
-                                className="absolute text-gray-800 dark:text-gray-200 text-xs"
+                                className="absolute text-indigo-700 dark:text-indigo-200 text-xs"
                                 style={{
-                                    bottom: "-4px", // Move the arrow slightly lower
-                                    right: "-4px",  // Move the arrow slightly to the right
+                                    bottom: "-4px",
+                                    right: "-4px",
                                 }}
                             >
                                 ▼
                             </span>
                         </div>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48">
-                        <DropdownMenuItem onClick={() => router.push("/home/settings")}>
+                    <DropdownMenuContent align="end" className="w-48 rounded-xl shadow-xl border border-indigo-100 dark:border-indigo-700 bg-white/95 dark:bg-gray-900/95">
+                        <DropdownMenuItem onClick={() => router.push("/home/settings")}
+                            className="hover:bg-indigo-100 dark:hover:bg-indigo-800 rounded-lg transition">
                             Settings
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={handleLogout}>
+                        <DropdownMenuItem onClick={handleLogout}
+                            className="hover:bg-pink-100 dark:hover:bg-pink-800 rounded-lg transition">
                             Logout
                         </DropdownMenuItem>
                     </DropdownMenuContent>

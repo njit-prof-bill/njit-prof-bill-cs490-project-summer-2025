@@ -3,7 +3,10 @@ import type { Config } from "tailwindcss";
 
 const config: Config = {
     content: [
-        "./src/**/*.{js,ts,jsx,tsx}", // Include all files in the src directory
+        "./src/**/*.{js,ts,jsx,tsx,mdx}",
+        "./components/**/*.{js,ts,jsx,tsx,mdx}",
+        "./pages/**/*.{js,ts,jsx,tsx,mdx}",
+        "./app/**/*.{js,ts,jsx,tsx,mdx}",
     ],
     theme: {
         extend: {
@@ -20,7 +23,12 @@ const config: Config = {
         },
     },
     darkMode: "class", // Enable dark mode using the "class" strategy
-    plugins: [],
+    plugins: [
+        // require("daisyui"), // Removed DaisyUI
+        function ({ addVariant }: { addVariant: any }) {
+            // No pink variant
+        },
+    ],
 };
 
 export default config;

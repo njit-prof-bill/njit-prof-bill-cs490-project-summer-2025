@@ -212,272 +212,337 @@ const handleViewBreakdown = () => {
 
 
   if (loading) return <p>Loading... This may take awhile!</p>;
-const handleGenerateResumeFromAI = async () => {
-  if (!editableResume || !jobText) {
-    alert("Missing required information to generate resume.");
-    return;
-  }
 
-  setGenerating(true);
-  try {
-    // Remove bio from editableResume before sending
-    const { bio, ...resumeWithoutBio } = editableResume || {};
-    const res = await fetch("/api/generateResume", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ editableResume: resumeWithoutBio, jobText }),
-    });
-
-    const data = await res.json();
-    if (data.resume) {
-      setEditableResume(prev => ({
-        ...prev,
-        ...data.resume
-      }));
-      alert("Resume generated successfully!");
-    } else {
-      console.error("AI generation failed:", data);
-      alert("Failed to generate resume.");
+  const handleGenerateResumeFromAI = async () => {
+    if (!editableResume || !jobText) {
+      alert("Missing required information to generate resume.");
+      return;
     }
-  } catch (err) {
-    console.error("Resume generation error:", err);
-    alert("Error generating resume.");
-  } finally {
-    setGenerating(false);
-  }
-};
+
+    setGenerating(true);
+    try {
+      // Remove bio from editableResume before sending
+      const { bio, ...resumeWithoutBio } = editableResume || {};
+      const res = await fetch("/api/generateResume", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ editableResume: resumeWithoutBio, jobText }),
+      });
+
+      const data = await res.json();
+      if (data.resume) {
+        setEditableResume(prev => ({
+          ...prev,
+          ...data.resume
+        }));
+        alert("Resume generated successfully!");
+      } else {
+        console.error("AI generation failed:", data);
+        alert("Failed to generate resume.");
+      }
+    } catch (err) {
+      console.error("Resume generation error:", err);
+      alert("Error generating resume.");
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-indigo-100 via-white to-blue-100 px-4 py-10">
-      <ThemeToggle />
-      <div className="mx-auto max-w-5xl space-y-12">
+    <main className="relative min-h-screen bg-gradient-to-br from-indigo-100 via-white to-blue-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 px-2 md:px-6 py-8 md:py-12 font-sans overflow-x-hidden">
+      {/* Animated SVG background */}
+      <svg className="absolute top-0 left-0 w-full h-full pointer-events-none z-0 opacity-60" style={{filter:'blur(2px)'}} aria-hidden="true">
+        <defs>
+          <linearGradient id="bg-grad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#a5b4fc" />
+            <stop offset="100%" stopColor="#38bdf8" />
+          </linearGradient>
+        </defs>
+        <circle cx="20%" cy="20%" r="180" fill="url(#bg-grad)" opacity="0.18">
+          <animate attributeName="cx" values="20%;80%;20%" dur="12s" repeatCount="indefinite" />
+        </circle>
+        <circle cx="80%" cy="80%" r="140" fill="#818cf8" opacity="0.12">
+          <animate attributeName="cy" values="80%;30%;80%" dur="14s" repeatCount="indefinite" />
+        </circle>
+        <rect x="60%" y="10%" width="200" height="200" rx="80" fill="#f472b6" opacity="0.08">
+          <animate attributeName="x" values="60%;10%;60%" dur="16s" repeatCount="indefinite" />
+        </rect>
+      </svg>
+      <header className="sticky top-0 z-30 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-md rounded-b-2xl mb-8 flex items-center justify-between px-4 md:px-8 py-3 md:py-5 border-b border-indigo-200 dark:border-gray-800">
+        <div className="flex items-center gap-2 min-h-[40px]">{/* whitespace for alignment */}</div>
+        <ThemeToggle />
+      </header>
+      {/* Stepper/Progress Bar */}
+      <div className="relative z-10 flex items-center justify-center mb-10">
+        <div className="flex items-center gap-0 md:gap-4 w-full max-w-2xl">
+          <div className="flex flex-col items-center flex-1">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-400 to-blue-400 text-white flex items-center justify-center shadow-lg border-4 border-white dark:border-gray-900 text-xl font-bold">1</div>
+            <span className="mt-2 text-xs font-semibold text-indigo-700 dark:text-indigo-300">Upload</span>
+          </div>
+          <div className="flex-1 h-1 bg-gradient-to-r from-indigo-300 via-blue-300 to-teal-200 dark:from-indigo-700 dark:via-blue-800 dark:to-teal-700 rounded-full mx-1 md:mx-2" />
+          <div className="flex flex-col items-center flex-1">
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-lg border-4 border-white dark:border-gray-900 text-xl font-bold ${uploaded ? 'bg-gradient-to-br from-pink-400 to-fuchsia-400 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-400'}`}>2</div>
+            <span className="mt-2 text-xs font-semibold text-pink-700 dark:text-pink-300">Edit</span>
+          </div>
+          <div className="flex-1 h-1 bg-gradient-to-r from-pink-200 via-fuchsia-200 to-green-200 dark:from-pink-800 dark:via-fuchsia-800 dark:to-green-700 rounded-full mx-1 md:mx-2" />
+          <div className="flex flex-col items-center flex-1">
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-lg border-4 border-white dark:border-gray-900 text-xl font-bold ${uploaded ? 'bg-gradient-to-br from-green-400 to-teal-400 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-400'}`}>3</div>
+            <span className="mt-2 text-xs font-semibold text-green-700 dark:text-green-300">Save</span>
+          </div>
+        </div>
+      </div>
+      <div className="mx-auto max-w-5xl space-y-12 relative z-10">
         <div className="flex flex-col items-center mb-8">
-          <h1 className="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-blue-500 to-teal-400 mb-2 drop-shadow-lg">
-            Polaris Resume Builder
-          </h1>
-          <p className="text-lg text-gray-700 dark:text-gray-300 font-medium text-center max-w-2xl">
-            Build, edit, and manage your professional resumes with creativity and ease.
+          <p className="text-lg md:text-xl text-gray-700 dark:text-gray-300 font-medium text-center max-w-2xl mb-2 md:mb-4">
+        Build, edit, and manage your professional resumes with creativity and ease.
           </p>
+        </div>
+        {/* Decorative divider */}
+        <div className="w-full flex justify-center mb-8">
+          <svg width="180" height="16" viewBox="0 0 180 16" fill="none" className="opacity-70"><path d="M0 8 Q45 0 90 8 T180 8" stroke="#818cf8" strokeWidth="2" fill="none"/></svg>
+        </div>
         {!uploaded ? (
           <>
-            <div className="flex flex-col gap-8 items-center w-full">
-              <div className="bg-white/80 dark:bg-gray-900/80 rounded-2xl shadow-xl p-6 flex flex-col items-center border border-indigo-200 dark:border-gray-700 w-full max-w-md">
-                <h2 className="text-xl font-bold text-indigo-700 dark:text-indigo-300 mb-4 text-center">
-                  Upload Your Resume
-                </h2>
-                <FileUpload
-  onParsed={async (resume) => {
-    console.log("Parsed resume:", resume);
-
-    const res = await fetch("/api/saveResume", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...resume,
-        userId: user?.uid,
-        bio: "",  // bio is not known yet at this stage
-        displayName: resume.fileName || "Uploaded Resume",
-      }),
-    });
-
-    const data = await res.json();
-
-    if (res.ok && data.resumeId) {
-
-      const response = await fetch(`/api/saveResume?userId=${user?.uid}&resumeId=${data.resumeId}`);
-      const loaded = await response.json();
-      if (loaded.resume) {
-        setParsedResume(loaded.resume);
-        setEditableResume(loaded.resume);
-        setSelectedResumeId(data.resumeId);
-      }
-    } else {
-      console.error("Failed to save/upload resume.");
-    }
-  }}
-  setAiLoading={setAiLoading}
-/>
-
-              </div>
-              <div className="bg-white/80 dark:bg-gray-900/80 rounded-2xl shadow-xl p-8 flex flex-col items-center border border-indigo-200 dark:border-gray-700 w-full max-w-5xl">
-                <h2 className="text-2xl font-bold text-indigo-700 dark:text-indigo-300 mb-4 text-center">
-                  Your Bio
-                </h2>
-                <BioSubmission
-                  bio={bio}
-                  setBio={setBio}
-                  onSubmitSuccess={(submitted) => setSubmittedBio(submitted)}
-                  showSubmitButton={true}
-                />
-              </div>
+        <div className="flex flex-col md:flex-row gap-8 items-stretch w-full">
+          <div className="bg-white/95 dark:bg-gray-900/95 rounded-3xl shadow-2xl p-8 flex flex-col items-center border-2 border-indigo-200 dark:border-indigo-700 w-full max-w-md transition-all hover:scale-[1.025] hover:shadow-2xl duration-200 relative overflow-hidden">
+            <div className="absolute -top-6 -right-6 opacity-30 pointer-events-none">
+              <svg width="80" height="80" viewBox="0 0 80 80"><circle cx="40" cy="40" r="36" fill="url(#upload-grad)" /><defs><linearGradient id="upload-grad" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#6366f1"/><stop offset="1" stopColor="#38bdf8"/></linearGradient></defs></svg>
             </div>
-            <button
-              ref={breakdownRef}
-              onClick={handleViewBreakdown}
-              disabled={!parsedResume}
-              className={`w-full px-6 py-3 rounded-lg text-lg font-bold shadow-lg transition-colors duration-200 border-2 border-indigo-500 mt-8 mb-2
-                ${parsedResume ? "bg-gradient-to-r from-indigo-500 via-blue-500 to-teal-400 text-white hover:from-indigo-600 hover:to-teal-500" : "bg-gray-300 text-gray-400 cursor-not-allowed"}
-              `}
-              style={{ letterSpacing: '0.05em', opacity: 1, visibility: 'visible' }}
-            >
-              <span role="img" aria-label="eye" className="mr-2">👁️</span>
-              View Resume Breakdown
-            </button>
-            {!parsedResume && (
-              <div className="text-center text-gray-500 text-sm mt-2">
-                Please upload or load a resume to enable this button.
-              </div>
-            )}
-            
+            <h2 className="text-xl font-bold text-indigo-700 dark:text-indigo-300 mb-4 text-center tracking-tight flex items-center gap-2">
+              <svg width="24" height="24" fill="none" viewBox="0 0 24 24"><path d="M12 17V7M12 7l-5 5m5-5l5 5" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              Upload Your Resume
+            </h2>
+            <FileUpload
+              onParsed={async (resume) => {
+                console.log("Parsed resume:", resume);
+
+                const res = await fetch("/api/saveResume", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                ...resume,
+                userId: user?.uid,
+                bio: "",  // bio is not known yet at this stage
+                displayName: resume.fileName || "Uploaded Resume",
+                  }),
+                });
+
+                const data = await res.json();
+
+                if (res.ok && data.resumeId) {
+
+                  const response = await fetch(`/api/saveResume?userId=${user?.uid}&resumeId=${data.resumeId}`);
+                  const loaded = await response.json();
+                  if (loaded.resume) {
+                setParsedResume(loaded.resume);
+                setEditableResume(loaded.resume);
+                setSelectedResumeId(data.resumeId);
+                  }
+                } else {
+                  console.error("Failed to save/upload resume.");
+                }
+              }}
+              setAiLoading={setAiLoading}
+            />
+          </div>
+          <div className="bg-white/95 dark:bg-gray-900/95 rounded-3xl shadow-2xl p-8 flex flex-col items-center border-2 border-pink-200 dark:border-pink-700 w-full max-w-md transition-all hover:scale-[1.025] hover:shadow-2xl duration-200 relative overflow-hidden">
+            <div className="absolute -top-6 -right-6 opacity-30 pointer-events-none">
+              <svg width="80" height="80" viewBox="0 0 80 80"><circle cx="40" cy="40" r="36" fill="url(#bio-grad)" /><defs><linearGradient id="bio-grad" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#f472b6"/><stop offset="1" stopColor="#a78bfa"/></linearGradient></defs></svg>
+            </div>
+            <h2 className="text-xl font-bold text-pink-700 dark:text-pink-300 mb-4 text-center tracking-tight flex items-center gap-2">
+              <svg width="24" height="24" fill="none" viewBox="0 0 24 24"><path d="M12 4a8 8 0 100 16 8 8 0 000-16zm0 0v8l4 2" stroke="#f472b6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              Your Bio
+            </h2>
+            <BioSubmission
+          bio={bio}
+          setBio={setBio}
+          onSubmitSuccess={(submitted) => setSubmittedBio(submitted)}
+          showSubmitButton={true}
+            />
+          </div>
+        </div>
+        <button
+          ref={breakdownRef}
+          onClick={handleViewBreakdown}
+          disabled={!parsedResume}
+          className={`w-full px-6 py-3 rounded-lg text-lg font-bold shadow-lg transition-all duration-200 border-2 border-indigo-500 mt-8 mb-2
+            ${parsedResume ? "bg-gradient-to-r from-indigo-500 via-blue-500 to-teal-400 text-white hover:from-indigo-600 hover:to-teal-500 scale-[1.02]" : "bg-gray-300 text-gray-400 cursor-not-allowed"}
+          `}
+          style={{ letterSpacing: '0.05em', opacity: 1, visibility: 'visible' }}
+        >
+          <span role="img" aria-label="eye" className="mr-2">👁️</span>
+          View Resume Breakdown
+        </button>
+        {!parsedResume && (
+          <div className="text-center text-gray-500 text-sm mt-2">
+            Please upload or load a resume to enable this button.
+          </div>
+        )}
+        {/* Floating Action Button for Upload/Top */}
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          className="fixed bottom-8 right-8 z-50 bg-gradient-to-br from-indigo-500 via-blue-500 to-teal-400 text-white rounded-full shadow-2xl p-4 hover:scale-110 hover:shadow-3xl transition-all duration-200 border-4 border-white dark:border-gray-900 flex items-center gap-2 group"
+          aria-label="Back to Top"
+        >
+          <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path d="M12 19V5M12 5l-7 7m7-7l7 7" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          <span className="hidden md:inline font-bold text-lg group-hover:opacity-100 opacity-80">Top</span>
+        </button>
           </>
         ) : (
-          <div className="bg-white/90 dark:bg-gray-900/90 rounded-2xl shadow-2xl p-10 space-y-8 border border-indigo-200 dark:border-gray-700">
-          <ContactCard
-            contact={{
-              emails: editableResume?.emails || [""],
-              phones: editableResume?.phones || [""],
-            }}
-            onChange={(newContact) =>
-              setEditableResume((prev) => ({
-                ...prev,
-                emails: newContact.emails,
-                phones: newContact.phones,
-              }))
-            }
-          />
-          <div className="bg-gray-800 text-white p-6 rounded-lg shadow-md w-full mb-6">
-            <h3 className="text-xl font-semibold mb-2">Career Objective</h3>
-            <textarea
-              className="w-full bg-gray-700 text-white rounded p-2 border border-gray-600 focus:outline-none focus:bg-gray-600 resize-y"
-              style={{ minHeight: '100px', height: 'auto', overflow: 'hidden' }}
-              value={editableResume?.objective || ""}
-              onChange={e => setEditableResume(prev => ({ ...prev, objective: e.target.value }))}
-              placeholder="Enter your career objective (optional)"
-              rows={1}
-              onInput={e => {
-                const target = e.target as HTMLTextAreaElement;
-                target.style.height = 'auto';
-                target.style.height = target.scrollHeight + 'px';
-              }}
-            />
-          </div>
-          <div className="bg-gray-800 text-white p-6 rounded-lg shadow-md w-full mb-6 max-w-5xl mx-auto">
-            <h3 className="text-xl font-semibold mb-2">Biography</h3>
-            <textarea
-              className="w-full bg-gray-700 text-white rounded p-2 border border-gray-600 focus:outline-none focus:bg-gray-600 resize-y"
-              style={{ minHeight: '100px', height: 'auto', overflow: 'hidden' }}
-              value={bio}
-              onChange={e => setBio(e.target.value)}
-              placeholder="Enter your biography (optional)"
-              rows={1}
-              onInput={e => {
-                const target = e.target as HTMLTextAreaElement;
-                target.style.height = 'auto';
-                target.style.height = target.scrollHeight + 'px';
-              }}
-            />
-          </div>
-
-          <SkillsList
-            skills={editableResume?.skills || []}
-            onChange={(newSkills) =>
-              setEditableResume((prev) => ({ ...prev, skills: newSkills }))
-            }
-          />
-          <EducationList
-            education={editableResume?.education || []}
-            onChange={(newEdu) =>
-              setEditableResume((prev) => ({ ...prev, education: newEdu }))
-            }
-          />
-          <JobHistory
-            jobs={editableResume?.jobHistory || []}
-            onChange={(newJobs) =>
-              setEditableResume((prev) => ({ ...prev, jobHistory: newJobs }))
-            }
-          />
-          <RawToggle label="Raw Resume Data" data={editableResume} />
-
-          <div className="flex gap-4 mt-6 max-w-3xl mx-auto">
-            <button
-              onClick={handleReset}
-              className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded"
-            >
-              Upload Different Resume
-            </button>
-
-            <button
-              onClick={() => setShowNameModal(true)}
-              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded"
-            >
-              Save Resume
-            </button>
-          </div>
-          {/* Modal for custom resume name */}
-          {showNameModal && (
-            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
-              <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-sm flex flex-col items-center">
-                <h3 className="text-2xl font-bold mb-2 text-indigo-700 dark:text-indigo-200">Save Resume As</h3>
-                <p className="text-gray-600 dark:text-gray-300 mb-4 text-center text-sm">Give your resume a custom name for easy management and retrieval.</p>
-                <input
-                  type="text"
-                  className="w-full p-2 border border-indigo-300 dark:border-gray-600 rounded mb-4 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-400"
-                  placeholder="Enter a name for your resume"
-                  value={customResumeName}
-                  onChange={e => setCustomResumeName(e.target.value)}
-                  autoFocus
-                  disabled={saveStatus === 'saving' || saveStatus === 'success'}
-                />
-                <div className="flex justify-end gap-2 w-full mt-2">
-                  <button
-                    onClick={() => { setShowNameModal(false); setSaveStatus('idle'); }}
-                    className="px-4 py-2 bg-gray-400 hover:bg-gray-500 text-white rounded"
-                    disabled={saveStatus === 'saving'}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleConfirmSave}
-                    className={`px-4 py-2 rounded text-white font-semibold transition-colors duration-150 ${saveStatus === 'success' ? 'bg-green-600' : 'bg-indigo-600 hover:bg-indigo-700'} ${saveStatus === 'saving' ? 'opacity-60 cursor-not-allowed' : ''}`}
-                    disabled={!customResumeName.trim() || saveStatus === 'saving' || saveStatus === 'success'}
-                  >
-                    {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'success' ? 'Saved!' : 'Save'}
-                  </button>
-                </div>
-                {saveStatus === 'success' && (
-                  <div className="mt-4 text-green-700 dark:text-green-400 font-medium text-center">Resume saved successfully!</div>
-                )}
-                {saveStatus === 'error' && (
-                  <div className="mt-4 text-red-600 dark:text-red-400 font-medium text-center">Error saving resume. Please try again.</div>
-                )}
-              </div>
+          <div className="bg-white/98 dark:bg-gray-900/98 rounded-3xl shadow-2xl p-6 md:p-10 space-y-8 border-2 border-indigo-200 dark:border-indigo-700 transition-all relative overflow-hidden">
+            <div className="absolute -top-8 -left-8 opacity-20 pointer-events-none">
+              <svg width="120" height="120" viewBox="0 0 120 120"><circle cx="60" cy="60" r="56" fill="url(#edit-grad)" /><defs><linearGradient id="edit-grad" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#38bdf8"/><stop offset="1" stopColor="#a78bfa"/></linearGradient></defs></svg>
             </div>
+        <ContactCard
+          contact={{
+            emails: editableResume?.emails || [""],
+            phones: editableResume?.phones || [""]
+          }}
+          onChange={(newContact) =>
+            setEditableResume((prev) => ({
+          ...prev,
+          emails: newContact.emails,
+          phones: newContact.phones,
+            }))
+          }
+        />
+        <div className="bg-gray-800 text-white p-6 rounded-lg shadow-md w-full mb-6">
+          <h3 className="text-xl font-semibold mb-2 tracking-tight flex items-center gap-2">
+            <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" stroke="#38bdf8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            Career Objective
+          </h3>
+          <textarea
+            className="w-full bg-gray-700 text-white rounded p-2 border border-gray-600 focus:outline-none focus:bg-gray-600 resize-y transition-all"
+            style={{ minHeight: '100px', height: 'auto', overflow: 'hidden' }}
+            value={editableResume?.objective || ""}
+            onChange={e => setEditableResume(prev => ({ ...prev, objective: e.target.value }))
+            }
+            placeholder="Enter your career objective (optional)"
+            rows={1}
+            onInput={e => {
+          const target = e.target as HTMLTextAreaElement;
+          target.style.height = 'auto';
+          target.style.height = target.scrollHeight + 'px';
+            }}
+          />
+        </div>
+        <div className="bg-gray-800 text-white p-6 rounded-lg shadow-md w-full mb-6 max-w-5xl mx-auto">
+          <h3 className="text-xl font-semibold mb-2 tracking-tight flex items-center gap-2">
+            <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path d="M12 4a8 8 0 100 16 8 8 0 000-16zm0 0v8l4 2" stroke="#f472b6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            Biography
+          </h3>
+          <textarea
+            className="w-full bg-gray-700 text-white rounded p-2 border border-gray-600 focus:outline-none focus:bg-gray-600 resize-y transition-all"
+            style={{ minHeight: '100px', height: 'auto', overflow: 'hidden' }}
+            value={bio}
+            onChange={e => setBio(e.target.value)}
+            placeholder="Enter your biography (optional)"
+            rows={1}
+            onInput={e => {
+          const target = e.target as HTMLTextAreaElement;
+          target.style.height = 'auto';
+          target.style.height = target.scrollHeight + 'px';
+            }}
+          />
+        </div>
+        <SkillsList
+          skills={editableResume?.skills || []}
+          onChange={(newSkills) =>
+            setEditableResume((prev) => ({ ...prev, skills: newSkills }))
+          }
+        />
+        <EducationList
+          education={editableResume?.education || []}
+          onChange={(newEdu) =>
+            setEditableResume((prev) => ({ ...prev, education: newEdu }))
+          }
+        />
+        <JobHistory
+          jobs={editableResume?.jobHistory || []}
+          onChange={(newJobs) =>
+            setEditableResume((prev) => ({ ...prev, jobHistory: newJobs }))
+          }
+        />
+        <RawToggle label="Raw Resume Data" data={editableResume} />
+        <div className="flex flex-col md:flex-row gap-4 mt-6 max-w-3xl mx-auto">
+          <button
+            onClick={handleReset}
+            className="px-4 py-2 bg-gradient-to-r from-gray-500 via-gray-600 to-gray-700 hover:from-gray-600 hover:to-gray-800 text-white rounded font-semibold shadow-md transition-all"
+          >
+            Upload Different Resume
+          </button>
+          <button
+            onClick={() => setShowNameModal(true)}
+            className="px-4 py-2 bg-gradient-to-r from-green-500 via-teal-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white rounded font-semibold shadow-md transition-all"
+          >
+            Save Resume
+          </button>
+        </div>
+        {/* Modal for custom resume name */}
+        {showNameModal && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50 backdrop-blur-sm transition-all">
+            <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-sm flex flex-col items-center animate-fade-in">
+          <h3 className="text-2xl font-bold mb-2 text-indigo-700 dark:text-indigo-200">Save Resume As</h3>
+          <p className="text-gray-600 dark:text-gray-300 mb-4 text-center text-sm">Give your resume a custom name for easy management and retrieval.</p>
+          <input
+            type="text"
+            className="w-full p-2 border border-indigo-300 dark:border-gray-600 rounded mb-4 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-400 transition"
+            placeholder="Enter a name for your resume"
+            value={customResumeName}
+            onChange={e => setCustomResumeName(e.target.value)}
+            autoFocus
+            disabled={saveStatus === 'saving' || saveStatus === 'success'}
+          />
+          <div className="flex justify-end gap-2 w-full mt-2">
+            <button
+              onClick={() => { setShowNameModal(false); setSaveStatus('idle'); }}
+              className="px-4 py-2 bg-gray-400 hover:bg-gray-500 text-white rounded font-semibold transition-all"
+              disabled={saveStatus === 'saving'}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleConfirmSave}
+              className={`px-4 py-2 rounded text-white font-semibold transition-colors duration-150 ${saveStatus === 'success' ? 'bg-green-600' : 'bg-indigo-600 hover:bg-indigo-700'} ${saveStatus === 'saving' ? 'opacity-60 cursor-not-allowed' : ''}`}
+              disabled={!customResumeName.trim() || saveStatus === 'saving' || saveStatus === 'success'}
+            >
+              {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'success' ? 'Saved!' : 'Save'}
+            </button>
+          </div>
+          {saveStatus === 'success' && (
+            <div className="mt-4 text-green-700 dark:text-green-400 font-medium text-center">Resume saved successfully!</div>
           )}
+          {saveStatus === 'error' && (
+            <div className="mt-4 text-red-600 dark:text-red-400 font-medium text-center">Error saving resume. Please try again.</div>
+          )}
+            </div>
           </div>
         )}
+          </div>
+        )}
+        {/* Resume selector and file name chip */}
         {!uploaded && resumeList.length > 0 && (
           <div className="mb-4">
-            <label className="block mb-2 font-semibold text-indigo-700 dark:text-indigo-300">Load a Saved Resume:</label>
-            <select
-              className="w-full p-2 rounded border border-indigo-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-white"
-              value={selectedResumeId || ""}
-              onChange={e => handleLoadResume(e.target.value)}
-            >
-              <option value="">Select a resume...</option>
-              {resumeList.map((resume) => (
-                <option key={resume.resumeId} value={resume.resumeId}>
-                  {resume.customName || resume.objective?.slice(0, 30) || resume.resumeId}
-                </option>
-              ))}
-            </select>
+        <label className="block mb-2 font-semibold text-indigo-700 dark:text-indigo-300">Load a Saved Resume:</label>
+        <select
+          className="w-full p-2 rounded border border-indigo-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-white transition"
+          value={selectedResumeId || ""}
+          onChange={e => handleLoadResume(e.target.value)}
+        >
+          <option value="">Select a resume...</option>
+          {resumeList.map((resume) => (
+            <option key={resume.resumeId} value={resume.resumeId}>
+          {resume.customName || resume.objective?.slice(0, 30) || resume.resumeId}
+            </option>
+          ))}
+        </select>
           </div>
         )}
-            {parsedResume && parsedResume.fileName && (
-              <div className="text-center bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-medium mt-2 px-3 py-1 rounded shadow inline-block">
-                Uploaded File: <span className="font-semibold">{parsedResume.fileName}</span>
-              </div>
-            )}
-      </div>
+        {parsedResume && parsedResume.fileName && (
+          <div className="text-center bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-medium mt-2 px-3 py-1 rounded shadow inline-block">
+        Uploaded File: <span className="font-semibold">{parsedResume.fileName}</span>
+          </div>
+        )}
       </div>
     </main>
   );

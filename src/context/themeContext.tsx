@@ -2,7 +2,8 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
 
-type ThemeType = "system" | "light" | "dark" | "contrast";
+// Remove cyberpunk from the theme type
+type ThemeType = "system" | "light" | "dark";
 
 interface ThemeContextProps {
     theme: ThemeType;
@@ -16,21 +17,10 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const [authChecked, setAuthChecked] = useState(false);
 
     // Save theme to Firestore when changed by the user
-    const setTheme = async (newTheme: ThemeType) => {
+    const setTheme = (newTheme: ThemeType) => {
         setThemeState(newTheme);
         localStorage.setItem("theme", newTheme);
-
-        const auth = getAuth();
-        const user = auth.currentUser;
-        if (user) {
-            try {
-                const db = getFirestore();
-                const userRef = doc(db, "users", user.uid);
-                await setDoc(userRef, { theme: newTheme }, { merge: true });
-            } catch (err) {
-                console.error("Error saving theme to Firestore:", err);
-            }
-        }
+        // Optionally, update Firestore here if needed
     };
 
     // Load theme from Firestore for authenticated users
@@ -71,21 +61,21 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         const root = window.document.documentElement;
 
         const applyTheme = (selectedTheme: ThemeType) => {
-  root.classList.remove("dark", "contrast");
+            // Always clean up both classes/attributes first
+            root.classList.remove("dark");
+            root.removeAttribute("data-theme");
 
-  if (selectedTheme === "light") {
-    // Do nothing — light mode means no extra classes needed
-  } else if (selectedTheme === "dark") {
-    root.classList.add("dark");
-  } else if (selectedTheme === "contrast") {
-    root.classList.add("contrast");
-  } else if (selectedTheme === "system") {
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    if (prefersDark) {
-      root.classList.add("dark");
-    }
-  }
-};
+            if (selectedTheme === "light") {
+                // Light mode: nothing extra
+            } else if (selectedTheme === "dark") {
+                root.classList.add("dark");
+            } else if (selectedTheme === "system") {
+                const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+                if (prefersDark) {
+                    root.classList.add("dark");
+                }
+            }
+        };
 
         applyTheme(theme);
         localStorage.setItem("theme", theme);

@@ -112,28 +112,44 @@
   --sidebar-ring: oklch(0.553 0.013 58.071);
 }
 
-.contrast {
-  --tw-bg-opacity: 1;
-  --tw-text-opacity: 1;
-  background-color: #000 !important;
-  color: #fff !important;
-}
-
-.contrast * {
-  background-color: #000 !important;
-  color: #fff !important;
-  border-color: #fff !important;
-}
-
-.contrast a {
-  text-decoration: underline;
+.night {
+  --background: #0a1124;
+  --foreground: #b3c7f9;
+  --card: #101a33;
+  --card-foreground: #b3c7f9;
+  --popover: #101a33;
+  --popover-foreground: #b3c7f9;
+  --primary: #3b82f6;
+  --primary-foreground: #fff;
+  --secondary: #1e293b;
+  --secondary-foreground: #b3c7f9;
+  --muted: #1e293b;
+  --muted-foreground: #b3c7f9;
+  --accent: #3b82f6;
+  --accent-foreground: #fff;
+  --destructive: #f87171;
+  --border: #334155;
+  --input: #334155;
+  --ring: #3b82f6;
+  --sidebar: #101a33;
+  --sidebar-foreground: #b3c7f9;
+  --sidebar-primary: #3b82f6;
+  --sidebar-primary-foreground: #fff;
+  --sidebar-accent: #3b82f6;
+  --sidebar-accent-foreground: #fff;
+  --sidebar-border: #334155;
+  --sidebar-ring: #3b82f6;
+  background-color: var(--background);
+  color: var(--foreground);
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    border-color: var(--border);
+    outline-color: color-mix(in oklab, var(--ring) 50%, transparent);
   }
   body {
-    @apply bg-background text-foreground;
+    background-color: var(--background);
+    color: var(--foreground);
   }
 }
