@@ -108,9 +108,30 @@ export default function ViewJobAdsPage() {
         const resumeInfo = JSON.stringify(userSnap.data().resumeFields);
         const jobAdText = jobAds[idx].jobDescription;
         // const result = await getResumeAIResponseText(generateResumeAIPromptJSON, resumeInfo, jobAdText);
-        const JSONResume = await getResumeAIResponseJSON(generateResumeAIPromptJSON, resumeInfo, jobAdText);
-        const result = await getResumeAIResponseText(generateResumeAIPromptText, JSONResume);
-        setNewResume(result);
+        // const JSONResume = await getResumeAIResponseJSON(generateResumeAIPromptJSON, resumeInfo, jobAdText);
+        const result = await generateAIResumeJSON(generateAIResumeJSONPrompt, resumeInfo, jobAdText);
+        if (!result) {
+          throw new Error("AI returned empty response while generating JSON resume");
+        }
+        console.log(result);
+        // Generate a unique ID for the new resume and 
+        // append it to the array of generated resumes on Cloud Firestore
+        const {fullName, contact, summary, workExperience, education, skills: desc} = JSON.parse(result);
+        const JSONResume = {
+          jobID: jobAds[idx].jobID, // So the resume can be associated with the job ad
+          resumeID: uuidv4(),
+          fullName,
+          contact,
+          summary,
+          workExperience,
+          education,
+          skills: desc
+        };
+        console.log(JSONResume);
+        await updateDoc(userRef, {generatedResumes: arrayUnion(JSONResume)});
+        // The AI doesn't need to know about the jobID or resumeID when generating an unstructured text resume
+        const finalResult = await getResumeAIResponseText(generateResumeAIPromptText, result);
+        setNewResume(finalResult);
         setStatus("Resume generated!");
         setTimeout(() => setStatus(null), 3000);
       }
