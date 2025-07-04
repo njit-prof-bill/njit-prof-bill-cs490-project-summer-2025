@@ -51,6 +51,9 @@ export default function HomePage() {
 
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
 
+  // New state for formatting button loading
+  const [formatting, setFormatting] = useState(false);
+
   const breakdownRef = useRef<HTMLButtonElement | null>(null);
 
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -74,31 +77,31 @@ export default function HomePage() {
         });
     }
   }, [user, loading]);
-useEffect(() => {
-  const storedJobText = localStorage.getItem("jobText");
-  const storedResumeId = localStorage.getItem("resumeId");
-  const aiResume = localStorage.getItem("aiResume");
 
-  if (storedJobText) {
-    setJobText(storedJobText);
-  }
+  useEffect(() => {
+    const storedJobText = localStorage.getItem("jobText");
+    const storedResumeId = localStorage.getItem("resumeId");
+    const aiResume = localStorage.getItem("aiResume");
 
-  if (storedResumeId && !aiResume) {
-    handleLoadResume(storedResumeId);
-  }
-}, []);
+    if (storedJobText) {
+      setJobText(storedJobText);
+    }
 
+    if (storedResumeId && !aiResume) {
+      handleLoadResume(storedResumeId);
+    }
+  }, []);
 
-useEffect(() => {
-  const storedAI = localStorage.getItem("aiResume");
-  if (storedAI) {
-    const parsed = JSON.parse(storedAI);
-    setParsedResume(parsed);
-    setEditableResume(parsed);
-    setBio(parsed.bio || "");
-    setUploaded(true);
-  }
-}, []);
+  useEffect(() => {
+    const storedAI = localStorage.getItem("aiResume");
+    if (storedAI) {
+      const parsed = JSON.parse(storedAI);
+      setParsedResume(parsed);
+      setEditableResume(parsed);
+      setBio(parsed.bio || "");
+      setUploaded(true);
+    }
+  }, []);
 
   const handleLoadResume = async (resumeId: string) => {
     const res = await fetch(`/api/saveResume?userId=${user?.uid}&resumeId=${resumeId}`);
@@ -112,16 +115,16 @@ useEffect(() => {
     }
   };
 
-const handleViewBreakdown = () => {
-  if (!parsedResume) {
-    alert("No resume loaded.");
-    return;
-  }
+  const handleViewBreakdown = () => {
+    if (!parsedResume) {
+      alert("No resume loaded.");
+      return;
+    }
 
-  setEditableResume(parsedResume);
-  setUploaded(true);
-  setBio(parsedResume.bio || "");
-};
+    setEditableResume(parsedResume);
+    setUploaded(true);
+    setBio(parsedResume.bio || "");
+  };
 
   const handleReset = () => {
     setUploaded(false);
@@ -207,15 +210,15 @@ const handleViewBreakdown = () => {
   }, []);
   
   useEffect(() => {
-  const handler = (e: Event) => {
-    const customEvent = e as CustomEvent;
-    if (customEvent.detail) {
-      setJobText(customEvent.detail);
-    }
-  };
-  window.addEventListener("set-job-text", handler);
-  return () => window.removeEventListener("set-job-text", handler);
-}, []);
+    const handler = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail) {
+        setJobText(customEvent.detail);
+      }
+    };
+    window.addEventListener("set-job-text", handler);
+    return () => window.removeEventListener("set-job-text", handler);
+  }, []);
 
 
   if (loading) return <p>Loading... This may take awhile!</p>;
@@ -483,6 +486,53 @@ const handleViewBreakdown = () => {
           >
             Upload Different Resume
           </button>
+
+         <button
+  onClick={async () => {
+    const storedResumeId = localStorage.getItem("resumeId");
+    if (!storedResumeId) {
+      alert("No resume selected to format.");
+      return;
+    }
+    setFormatting(true);
+    try {
+      const res = await fetch("/api/resumes/format", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user?.uid,
+          resumeId: storedResumeId,
+          format: "pdf" // or "html", "md", etc., adjust as needed
+        }),
+      });
+      if (!res.ok) throw new Error("Formatting failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      // trigger download
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${customResumeName || "resume"}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      console.error("Format/download error:", err);
+      alert("Failed to format resume. Please try again.");
+    } finally {
+      setFormatting(false);
+    }
+  }}
+  disabled={formatting}
+  className={`px-4 py-2 ${
+    formatting
+      ? "bg-yellow-500 cursor-wait"
+      : "bg-blue-500 hover:bg-blue-600"
+  } text-white rounded font-semibold shadow-md transition-all`}
+>
+  {formatting ? "Formatting…" : "Format & Download"}
+</button>
+
           <button
             onClick={handleConfirmSave}
             className="px-4 py-2 bg-gradient-to-r from-green-500 via-teal-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white rounded font-semibold shadow-md transition-all"
