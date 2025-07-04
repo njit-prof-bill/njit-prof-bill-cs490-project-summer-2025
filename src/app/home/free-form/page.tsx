@@ -15,6 +15,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { Trash2, FileText, Clock, ChevronDown, ChevronUp, Save, Edit3, Sparkles } from "lucide-react";
 
 type freeFormEntry = {
     text: string;
@@ -58,36 +59,40 @@ function DeleteButton({index, freeFormList, setFreeFormList, user}: DeleteButton
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <button
-                    type="button"
+                <Button
+                    variant="outline"
+                    size="sm"
                     disabled={deleting}
-                    className="bg-red-500 px-2 py-1 rounded mt-3" 
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 hover:border-red-300"
                 >
+                    <Trash2 className="h-4 w-4 mr-1" />
                     {deleting ? "Deleting..." : "Delete"}
-                </button>
+                </Button>
             </DialogTrigger>
             <DialogPortal>
-                <DialogOverlay className="fixed inset-0 backdrop-blur-md bg-opacity-50"></DialogOverlay>
-                <DialogContent className="fixed top-1/2 left-1/2 bg-background p-4 rounded shadow transform -translate-x-1/2 -translate-y-1/2 border border-foreground">
-                    <DialogTitle className="text-foreground"><strong><u>Confirm Delete</u></strong></DialogTitle>
-                    <DialogDescription className="text-foreground">
-                        Are you sure you want to delete <strong>{freeFormList[index].label}</strong>?
+                <DialogOverlay className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"></DialogOverlay>
+                <DialogContent className="fixed top-1/2 left-1/2 bg-white dark:bg-gray-900 p-6 rounded-lg shadow-xl transform -translate-x-1/2 -translate-y-1/2 border max-w-md w-full mx-4 z-50">
+                    <DialogTitle className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                        Confirm Delete
+                    </DialogTitle>
+                    <DialogDescription className="text-gray-600 dark:text-gray-300 mb-4">
+                        Are you sure you want to delete <strong className="text-gray-900 dark:text-white">"{freeFormList[index].label}"</strong>? This action cannot be undone.
                     </DialogDescription>
-                    <div className="mt-4 flex gap-2">
-                        <button
+                    <div className="flex justify-end gap-3">
+                        <DialogClose asChild>
+                            <Button variant="outline" disabled={deleting}>
+                                Cancel
+                            </Button>
+                        </DialogClose>
+                        <Button
                             onClick={confirmDelete}
                             disabled={deleting}
-                            className="bg-red-500 text-white px-2 py-1 rounded"
+                            className="bg-red-600 hover:bg-red-700 text-white"
                         >
-                            {deleting ? "Deleting..." : "Yes, Delete"}
-                        </button>
-                        <DialogClose asChild>
-                            <button className="bg-gray-600 px-2 py-1 rounded text-white" disabled={deleting}>
-                                Cancel
-                            </button>
-                        </DialogClose>
+                            {deleting ? "Deleting..." : "Delete"}
+                        </Button>
                     </div>
-                    {error && <div className="mt-2 text-red-500">{error}</div>}
+                    {error && <div className="mt-3 text-red-600 text-sm">{error}</div>}
                 </DialogContent>
             </DialogPortal>
         </Dialog>
@@ -117,36 +122,75 @@ function LabelMenu({freeFormList, setFreeFormList, text, setText, label, setLabe
         setLabel(freeFormList[index].label);
     }
     return (
-        <Collapsible
-            open={isOpen}
-            onOpenChange={setIsOpen}
-            className="flex max-w-lg flex-col gap-2 mx-12"
-        >
-            <div className="items-center justify-between gap-4 px-4 mt-4">
-                <h1 className="text-3xl m-auto font-bold mb-2 max-w-lg"><u>Load Past Submissions</u></h1>
-                <div>
-                    <CollapsibleTrigger asChild>
-                        {/*Click to Expand Button*/}
-                        <Button variant="ghost" className="bg-background text-foreground text-lg px-3 py-1 rounded hover:bg-chart-2 cursor-pointer">
-                            <span> {isOpen ? "Click to Close" : "Click to Expand"} </span>
-                        </Button>
-                    </CollapsibleTrigger>
+        <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+            <Collapsible
+                open={isOpen}
+                onOpenChange={setIsOpen}
+                className="w-full"
+            >
+                <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <FileText className="h-5 w-5 text-blue-600" />
+                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                Past Submissions
+                            </h2>
+                        </div>
+                        <CollapsibleTrigger asChild>
+                            <Button variant="outline" size="sm" className="gap-2">
+                                {isOpen ? (
+                                    <>
+                                        <ChevronUp className="h-4 w-4" />
+                                        Hide
+                                    </>
+                                ) : (
+                                    <>
+                                        <ChevronDown className="h-4 w-4" />
+                                        Show ({freeFormList.length})
+                                    </>
+                                )}
+                            </Button>
+                        </CollapsibleTrigger>
+                    </div>
                 </div>
-            </div>
-            <CollapsibleContent className="flex flex-col gap-2">    
-                {freeFormList.map((submission, index) => (
-                    <div key={index} className="rounded-md border px-4 py-2 font-mono text-sm">
-                        <button className="cursor-pointer text-base transition-duration-400 hover:bg-muted-foreground hover:text-white"
-                            onClick={(event) => handleClick(event, index)}
-                        >
-                            <strong><u>{submission.label}</u></strong>
-                        </button>
-                        <SubmissionDate dateSubmitted={submission.dateSubmitted} />
-                        <DeleteButton index={index} freeFormList={freeFormList} setFreeFormList={setFreeFormList} user={user} />
-                    </div>                    
-                ))}
-            </CollapsibleContent>
-        </Collapsible>
+                <CollapsibleContent>
+                    <div className="p-4 space-y-3 max-h-96 overflow-y-auto">
+                        {freeFormList.length === 0 ? (
+                            <p className="text-gray-500 dark:text-gray-400 text-center py-8">
+                                No past submissions yet. Create your first one below!
+                            </p>
+                        ) : (
+                            freeFormList.map((submission, index) => (
+                                <div key={index} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                                    <div className="flex items-start justify-between">
+                                        <div className="flex-1">
+                                            <button 
+                                                className="text-left w-full group"
+                                                onClick={(event) => handleClick(event, index)}
+                                            >
+                                                <h3 className="font-medium text-gray-900 dark:text-white group-hover:text-blue-600 transition-colors">
+                                                    {submission.label}
+                                                </h3>
+                                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
+                                                    {submission.text.substring(0, 100)}...
+                                                </p>
+                                            </button>
+                                            <div className="flex items-center gap-2 mt-2">
+                                                <Clock className="h-4 w-4 text-gray-400" />
+                                                <SubmissionDate dateSubmitted={submission.dateSubmitted} />
+                                            </div>
+                                        </div>
+                                        <div className="ml-4 flex-shrink-0">
+                                            <DeleteButton index={index} freeFormList={freeFormList} setFreeFormList={setFreeFormList} user={user} />
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </CollapsibleContent>
+            </Collapsible>
+        </div>
     );
 }
 
@@ -172,9 +216,9 @@ function SubmissionDate({dateSubmitted}: SubmissionDateProps) {
     const date = formatDateTime(dateSubmitted.toDate().toISOString());
 
     return (
-        <div>
-            <p>Modified: {date}</p>
-        </div>
+        <span className="text-xs text-gray-500 dark:text-gray-400">
+            {date}
+        </span>
     );
 }
 
@@ -300,51 +344,114 @@ export default function FreeFormPage() {
     }
 
     return (
-        <div className="flex items-center justify-center min-h-screen text-gray-900 dark:text-gray-100">
-            <div className="flex flex-row items-stretch justify-center w-full text-center text-lg">
-                <div>
-                    <LabelMenu freeFormList={freeFormList} setFreeFormList={setFreeFormList} text={text} setText={setText} label={label} setLabel={setLabel} user={user}/>
+        <div className="max-w-6xl mx-auto p-6 space-y-6">
+            {/* Header */}
+            <div className="text-center space-y-2">
+                <div className="flex items-center justify-center gap-3">
+                    <Edit3 className="h-8 w-8 text-blue-600" />
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                        Free-Form Resume
+                    </h1>
                 </div>
-                <br />
-                <div>
-                    <h1 className="text-3xl font-bold mb-3"><u>Free-Form Text</u></h1>
-                    <form method="post" onSubmit={handleSubmit}>
-                        <p >Enter some text in the box below. When you are done, hit "Submit"</p>
-                        <br />
-                        <textarea
-                            name="text"
-                            // Using defaultValue since I just want to pre-fill the text field once
-                            // with whatever the user entered there in a past session,
-                            // instead of updating the field while the user is typing in it.
-                            value={text}
-                            onChange={(event) => setText(event.target.value)}
-                            placeholder="Start typing here"
-                            rows={15}
-                            className="w-full p-3 border border-gray-300 rounded-md mb-4"
-                        ></textarea>
-                        <input
-                            name="label"
-                            value={label}
-                            onChange={(event) => setLabel(event.target.value)}
-                            placeholder="Enter a label for this submission"
-                            className="w-full p-3 border border-gray-300 rounded-md mb-4"
-                            required
-                        ></input>
-                        <button
-                            type="submit"
-                            disabled={submitting}
-                            className={`px-4 py-2 rounded text-white font-semibold transition duration-300 ${submitted
-                                    ? "bg-blue-600 cursor-not-allowed"
-                                    : submitting
-                                        ? "bg-gray-500 cursor-wait"
-                                        : "bg-blue-600 hover:bg-blue-700 cursor-pointer"
-                                }`}
-                        >
-                            {submitting ? "Submitting..." : submitted ? "Submitted!" : "Submit"}
-                        </button>
-                    </form>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Past Submissions Panel */}
+                <div className="lg:col-span-1">
+                    <LabelMenu 
+                        freeFormList={freeFormList} 
+                        setFreeFormList={setFreeFormList} 
+                        text={text} 
+                        setText={setText} 
+                        label={label} 
+                        setLabel={setLabel} 
+                        user={user}
+                    />
                 </div>
-                
+
+                {/* Main Writing Area */}
+                <div className="lg:col-span-2">
+                    <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+                        <div className="p-6">
+                            <div className="flex items-center gap-3 mb-6">
+                                <Sparkles className="h-5 w-5 text-blue-600" />
+                                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                                    Create New Content
+                                </h2>
+                            </div>
+                            
+                            <form onSubmit={handleSubmit} className="space-y-6">
+                                {/* Label Input */}
+                                <div className="space-y-2">
+                                    <label htmlFor="label" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        Title/Label
+                                    </label>
+                                    <input
+                                        id="label"
+                                        name="label"
+                                        value={label}
+                                        onChange={(event) => setLabel(event.target.value)}
+                                        placeholder="Give your writing a descriptive title..."
+                                        className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                                        required
+                                    />
+                                </div>
+
+                                {/* Text Area */}
+                                <div className="space-y-2">
+                                    <label htmlFor="text" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        Your Content
+                                    </label>
+                                    <textarea
+                                        id="text"
+                                        name="text"
+                                        value={text}
+                                        onChange={(event) => setText(event.target.value)}
+                                        placeholder="Start writing your thoughts, experiences, or ideas here..."
+                                        rows={15}
+                                        className="w-full p-4 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 resize-none"
+                                    />
+                                    <div className="flex justify-between items-center text-sm text-gray-500 dark:text-gray-400">
+                                        <span>{text.length} characters</span>
+                                        <span>AI will process and enhance your content</span>
+                                    </div>
+                                </div>
+
+                                {/* Submit Button */}
+                                <div className="flex justify-end">
+                                    <Button
+                                        type="submit"
+                                        disabled={submitting || !text.trim() || !label.trim()}
+                                        className={`px-6 py-3 rounded-lg font-semibold transition-all duration-300 flex items-center gap-2 ${
+                                            submitted
+                                                ? "bg-green-600 hover:bg-green-700 text-white"
+                                                : submitting
+                                                    ? "bg-gray-500 cursor-wait text-white"
+                                                    : "bg-blue-600 hover:bg-blue-700 text-white hover:shadow-lg"
+                                        }`}
+                                    >
+                                        {submitting ? (
+                                            <>
+                                                <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                                                Processing...
+                                            </>
+                                        ) : submitted ? (
+                                            <>
+                                                <Save className="h-4 w-4" />
+                                                Saved!
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Sparkles className="h-4 w-4" />
+                                                Submit & Enhance
+                                            </>
+                                        )}
+                                    </Button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     );

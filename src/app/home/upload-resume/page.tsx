@@ -13,10 +13,23 @@ import { getAuth } from "firebase/auth";
 // For DOCX previews
 import { renderAsync } from "docx-preview";
 import html2canvas from "html2canvas";
-
 // For PDF previews
 import * as pdfjsLib from 'pdfjs-dist/build/pdf.mjs';
 pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.mjs';
+
+// Lucide icons
+import { 
+  Upload as UploadIcon, 
+  FileText, 
+  CheckCircle, 
+  AlertCircle, 
+  Eye,
+  Trash2,
+  File,
+  Wand2,
+  Brain,
+  Zap
+} from "lucide-react";
 
 export default function UploadResumePage() {
   // For checking whether the user is logged in and redirecting them accordingly
