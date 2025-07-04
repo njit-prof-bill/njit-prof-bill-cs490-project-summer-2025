@@ -5,6 +5,20 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { Button } from "@/components/ui/button";
+import { 
+    User, 
+    Mail, 
+    Phone, 
+    MapPin, 
+    Plus, 
+    Trash2, 
+    Save, 
+    CheckCircle, 
+    AlertCircle,
+    Edit3,
+    Contact
+} from "lucide-react";
 
 type EmailFormProps = {
   emailList: string[];
@@ -18,33 +32,29 @@ type EmailFormProps = {
 function EmailForm({emailList, setEmailList, submitted, setSubmitted, error, setError}: EmailFormProps) {
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formChanged, setFormChanged] = useState(false); //for unsaved changes check
+  const [formChanged, setFormChanged] = useState(false);
 
   function handleChange(index: number, value: string) {
-    if (submitted) setSubmitted(false); // Hide success message if editing again
-    if (error) setError(null);          // Clear error message on user change
+    if (submitted) setSubmitted(false);
+    if (error) setError(null);
     setEmailList((oldEmails) => oldEmails.map((email, i) => (i === index ? value : email)));
   }
 
   function addEmail(event: React.MouseEvent<HTMLButtonElement>) {
-    if (submitted) setSubmitted(false); // Hide success message if editing again
-    if (error) setError(null);          // Clear error message on user change
-    // Prevent browser from reloading page
+    if (submitted) setSubmitted(false);
+    if (error) setError(null);
     event.preventDefault();
-    // Add a new, empty string to the array
     setEmailList((oldEmails) => [...oldEmails, ""]);
   }
 
   function removeEmail(event: React.MouseEvent<HTMLButtonElement>, index: number) {
-    if (submitted) setSubmitted(false); // Hide success message if editing again
-    if (error) setError(null);          // Clear error message on user change
-    // Prevent browser from reloading page
+    if (submitted) setSubmitted(false);
+    if (error) setError(null);
     event.preventDefault();
-    // Remove the email from the array
     setEmailList((oldEmails) => oldEmails.filter((currEmail, i) => i !== index));
   }
 
-  function placeboSubmit() { //all this does is reset formChanged and statusMessage so unchanged edits can be set & reset
+  function placeboSubmit() {
     try {
         setIsSubmitting(true);
         setStatusMessage("Saved!");
@@ -104,52 +114,91 @@ function EmailForm({emailList, setEmailList, submitted, setSubmitted, error, set
 
 
   return (
-    <>
-      <h2 className="text-l font-bold">Email Address:</h2>
-      {emailList.map((email, emailIdx) => (
-        <div key={emailIdx}>
-          <input
-            type="text"
-            name="email"
-            value={email}
-            pattern="^[a-zA-Z0-9.!#$%&'*\+\/=?^_`\{\|\}~\-]+@[a-zA-Z0-9\-]+(\.[a-zA-Z0-9\-]+)+$"
-            onChange={(event) => {
-              handleChange(emailIdx, event.target.value);
-              setFormChanged(true);
-              setStatusMessage("There has been a change. Don't forget to click \"Save Email Address\" and then the \"Save\" button at the bottom!");
-            }}
-            placeholder="Enter your email address here"
-            className="border p-2 rounded w-full"
-          />
-          <button
-            className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 cursor-pointer"
-            onClick={(event) => {
-              removeEmail(event, emailIdx);
-              setFormChanged(true);
-              setStatusMessage("There has been a change. Don't forget to click \"Save Email Address\" and then the \"Save\" button at the bottom!");
-            }}>
-              Remove
-              </button><br />
+    <div className="space-y-4">
+      <div className="space-y-3">
+        {emailList.map((email, emailIdx) => (
+          <div key={emailIdx} className="flex gap-2 items-center">
+            <div className="flex-1">
+              <input
+                type="email"
+                name="email"
+                value={email}
+                pattern="^[a-zA-Z0-9.!#$%&'*\+\/=?^_`\{\|\}~\-]+@[a-zA-Z0-9\-]+(\.[a-zA-Z0-9\-]+)+$"
+                onChange={(event) => {
+                  handleChange(emailIdx, event.target.value);
+                  setFormChanged(true);
+                  setStatusMessage("There has been a change. Don't forget to click \"Save Email Address\" and then the \"Save\" button at the bottom!");
+                }}
+                placeholder="Enter your email address"
+                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+              />
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={(event) => {
+                removeEmail(event, emailIdx);
+                setFormChanged(true);
+                setStatusMessage("There has been a change. Don't forget to click \"Save Email Address\" and then the \"Save\" button at the bottom!");
+              }}
+              className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 dark:text-red-400 dark:hover:text-red-300"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        ))}
+      </div>
+
+      {statusMessage === "There has been a change. Don't forget to click \"Save Email Address\" and then the \"Save\" button at the bottom!" && (
+        <div className="flex items-center gap-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg">
+          <AlertCircle className="h-4 w-4 text-yellow-600" />
+          <p className="text-sm text-yellow-800 dark:text-yellow-200">{statusMessage}</p>
         </div>
-      ))}
-      {statusMessage == "There has been a change. Don't forget to click \"Save Email Address\" and then the \"Save\" button at the bottom!" && <p className="mt-2 text-sm text-yellow-400">{statusMessage}</p>} 
-      <button
-        className="bg-blue-500 text-white px-3 py-2 mt-2 rounded hover:bg-blue-600 cursor-pointer" 
-        onClick={addEmail}
-      >
-        Add New Email Address
-      </button>
-      {/*PLACEBO BUTTON USED TO RESET FORMEDCHANGES, DOESN'T ACTUALLY SAVE ANYTHING IN THE BACKEND*/}
-      <button
+      )}
+
+      <div className="flex gap-2">
+        <Button
           type="button"
-          className="submit-button bg-green-500 text-white px-3 py-2 mt-4 rounded hover:bg-green-600 cursor-pointer disabled:opacity-50"
+          variant="outline"
+          onClick={addEmail}
+          className="flex items-center gap-2"
+        >
+          <Plus className="h-4 w-4" />
+          Add Email
+        </Button>
+        
+        <Button
+          type="button"
           disabled={isSubmitting}
           onClick={placeboSubmit}
-      > 
-      {isSubmitting ? "Saving..." : "Save Email Address"}
-      </button>
-      {statusMessage == "Saved!" && <p className="mt-2 text-sm text-green-700">{statusMessage}</p>}
-    </>
+          className={`flex items-center gap-2 ${
+            isSubmitting 
+              ? "bg-gray-500 cursor-wait text-white" 
+              : "bg-green-600 hover:bg-green-700 text-white"
+          }`}
+        >
+          {isSubmitting ? (
+            <>
+              <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+              Saving...
+            </>
+          ) : (
+            <>
+              <Save className="h-4 w-4" />
+              Save Emails
+            </>
+          )}
+        </Button>
+      </div>
+
+      {statusMessage === "Saved!" && (
+        <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg">
+          <CheckCircle className="h-4 w-4 text-green-600" />
+          <p className="text-sm text-green-800 dark:text-green-200">{statusMessage}</p>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -165,33 +214,29 @@ type PhoneNumFormProps = {
 function PhoneNumForm({phoneList, setPhoneList, submitted, setSubmitted, error, setError}: PhoneNumFormProps) {
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formChanged, setFormChanged] = useState(false); //for unsaved changes check
+  const [formChanged, setFormChanged] = useState(false);
 
   function handleChange(index: number, value: string) {
-    if (submitted) setSubmitted(false); // Hide success message if editing again
-    if (error) setError(null);          // Clear error message on user change
+    if (submitted) setSubmitted(false);
+    if (error) setError(null);
     setPhoneList((oldNums) => oldNums.map((num, i) => (i === index ? value : num)));
   }
 
   function addPhoneNum(event: React.MouseEvent<HTMLButtonElement>) {
-    if (submitted) setSubmitted(false); // Hide success message if editing again
-    if (error) setError(null);          // Clear error message on user change
-    // Prevent browser from reloading page
+    if (submitted) setSubmitted(false);
+    if (error) setError(null);
     event.preventDefault();
-    // Add a new, empty string to the array
     setPhoneList((oldNums) => [...oldNums, ""]);
   }
 
   function removePhoneNum(event: React.MouseEvent<HTMLButtonElement>, index: number) {
-    if (submitted) setSubmitted(false); // Hide success message if editing again
-    if (error) setError(null);          // Clear error message on user change
-    // Prevent browser from reloading page
+    if (submitted) setSubmitted(false);
+    if (error) setError(null);
     event.preventDefault();
-    // Remove the phone number from the array
     setPhoneList((oldNums) => oldNums.filter((currNum, i) => i !== index));
   }
 
-  function placeboSubmit() { //all this does is reset formChanged and statusMessage so unchanged edits can be set & reset
+  function placeboSubmit() {
         try {
             setIsSubmitting(true);
             setStatusMessage("Saved!");
@@ -250,53 +295,91 @@ function PhoneNumForm({phoneList, setPhoneList, submitted, setSubmitted, error, 
     }, [formChanged]);
 
   return (
-    <>
-      <h2 className="text-l font-bold">Phone Number (Format: 123-456-7890):</h2>
-      {phoneList.map((phoneNum, phoneIdx) => (
-        <div key={phoneIdx}>
-          <input
-            type="tel"
-            name="phone"
-            pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}"
-            value={phoneNum}
-            onChange={(event) => {
-              handleChange(phoneIdx, event.target.value);
+    <div className="space-y-4">
+      <div className="space-y-3">
+        {phoneList.map((phoneNum, phoneIdx) => (
+          <div key={phoneIdx} className="flex gap-2 items-center">
+            <div className="flex-1">
+              <input
+                type="tel"
+                name="phone"
+                pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}"
+                value={phoneNum}
+                onChange={(event) => {
+                  handleChange(phoneIdx, event.target.value);
+                  setFormChanged(true);
+                  setStatusMessage("There has been a change. Don't forget to click \"Save Phone Number\" and then the \"Save\" button at the bottom!");
+                }}
+                placeholder="123-456-7890"
+                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+              />
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={(event) => {
+                removePhoneNum(event, phoneIdx);
                 setFormChanged(true);
                 setStatusMessage("There has been a change. Don't forget to click \"Save Phone Number\" and then the \"Save\" button at the bottom!");
-            }}
-            placeholder="Enter your phone number here"
-            className="border p-2 rounded w-full"
-          />
-          <button
-            className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 cursor-pointer"
-            onClick={(event) => {
-              removePhoneNum(event, phoneIdx);
-              setFormChanged(true);
-              setStatusMessage("There has been a change. Don't forget to click \"Save Phone Number\" and then the \"Save\" button at the bottom!");
-            }}
-          >
-            Remove
-          </button><br />
+              }}
+              className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 dark:text-red-400 dark:hover:text-red-300"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        ))}
+      </div>
+
+      {statusMessage === "There has been a change. Don't forget to click \"Save Phone Number\" and then the \"Save\" button at the bottom!" && (
+        <div className="flex items-center gap-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg">
+          <AlertCircle className="h-4 w-4 text-yellow-600" />
+          <p className="text-sm text-yellow-800 dark:text-yellow-200">{statusMessage}</p>
         </div>
-      ))}
-      {statusMessage == "There has been a change. Don't forget to click \"Save Phone Number\" and then the \"Save\" button at the bottom!" && <p className="mt-2 text-sm text-yellow-400">{statusMessage}</p>}
-      <button
-        className="bg-blue-500 text-white px-3 py-2 mt-2 rounded hover:bg-blue-600 cursor-pointer"
-        onClick={addPhoneNum}
-      >
-        Add New Phone Number
-      </button>
-      {/*PLACEBO BUTTON USED TO RESET FORMEDCHANGES, DOESN'T ACTUALLY SAVE ANYTHING IN THE BACKEND*/}
-      <button
+      )}
+
+      <div className="flex gap-2">
+        <Button
           type="button"
-          className="submit-button bg-green-500 text-white px-3 py-2 mt-4 rounded hover:bg-green-600 cursor-pointer disabled:opacity-50"
+          variant="outline"
+          onClick={addPhoneNum}
+          className="flex items-center gap-2"
+        >
+          <Plus className="h-4 w-4" />
+          Add Phone
+        </Button>
+        
+        <Button
+          type="button"
           disabled={isSubmitting}
           onClick={placeboSubmit}
-      > 
-          {isSubmitting ? "Saving..." : "Save Phone Number"}
-      </button>
-      {statusMessage == "Saved!" && <p className="mt-2 text-sm text-green-700">{statusMessage}</p>}
-    </>
+          className={`flex items-center gap-2 ${
+            isSubmitting 
+              ? "bg-gray-500 cursor-wait text-white" 
+              : "bg-green-600 hover:bg-green-700 text-white"
+          }`}
+        >
+          {isSubmitting ? (
+            <>
+              <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+              Saving...
+            </>
+          ) : (
+            <>
+              <Save className="h-4 w-4" />
+              Save Phones
+            </>
+          )}
+        </Button>
+      </div>
+
+      {statusMessage === "Saved!" && (
+        <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg">
+          <CheckCircle className="h-4 w-4 text-green-600" />
+          <p className="text-sm text-green-800 dark:text-green-200">{statusMessage}</p>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -443,107 +526,176 @@ export default function EditContactInfoPage() {
     };
   }
 
-  if (loading) return <p>Loading...</p>;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full"></div>
+      </div>
+    );
+  }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 max-w-xl mx-auto p-6">
-      <h2 className="text-l font-bold">Full Name:</h2>
-      <input
-        type="text"
-        name="fullName"
-        value={fullName}
-        onChange={handleInputChange(setFullName)}
-        placeholder="Enter your full name here"
-        className="border p-2 rounded w-full"
-      />
+    <div className="max-w-4xl mx-auto p-6 space-y-6">
+      {/* Header */}
+      <div className="text-center space-y-2">
+        <div className="flex items-center justify-center gap-3">
+          <Contact className="h-8 w-8 text-blue-600" />
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            Contact Information
+          </h1>
+        </div>
+      </div>
 
-      <EmailForm emailList={email} setEmailList={setEmail} submitted={submitted} setSubmitted={setSubmitted} error={error} setError={setError} />
-      {/* <h2 className="text-l font-bold">Email Address:</h2>
-      <input
-        type="email"
-        name="email"
-        value={email}
-        onChange={handleInputChange(setEmail)}
-        placeholder="Enter your email address here"
-        className="border p-2 rounded w-full"
-      /> */}
+      {/* Main Form */}
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Full Name Card */}
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden">
+          <div className="bg-gray-50 dark:bg-gray-800 px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center gap-3">
+              <User className="h-5 w-5 text-blue-600" />
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Full Name
+              </h2>
+            </div>
+          </div>
+          <div className="p-6">
+            <input
+              type="text"
+              name="fullName"
+              value={fullName}
+              onChange={handleInputChange(setFullName)}
+              placeholder="Enter your full name"
+              className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+            />
+          </div>
+        </div>
 
-      <PhoneNumForm phoneList={phone} setPhoneList={setPhone} submitted={submitted} setSubmitted={setSubmitted} error={error} setError={setError} />
-      {/* <h2 className="text-l font-bold">Phone Number (Format: 123-456-7890):</h2>
-      <input
-        type="tel"
-        name="phone"
-        pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}"
-        value={phone}
-        onChange={handleInputChange(setPhone)}
-        placeholder="Enter your number here"
-        className="border p-2 rounded w-full"
-      /> */}
+        {/* Email Addresses Card */}
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden">
+          <div className="bg-gray-50 dark:bg-gray-800 px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center gap-3">
+              <Mail className="h-5 w-5 text-blue-600" />
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Email Addresses
+              </h2>
+            </div>
+          </div>
+          <div className="p-6">
+            <EmailForm 
+              emailList={email} 
+              setEmailList={setEmail} 
+              submitted={submitted} 
+              setSubmitted={setSubmitted} 
+              error={error} 
+              setError={setError} 
+            />
+          </div>
+        </div>
 
-      <h2 className="text-l font-bold">Location:</h2>
-      <input
-        type="text"
-        name="location"
-        value={location}
-        onChange={handleInputChange(setLocation)}
-        placeholder="Enter your location here"
-        className="border p-2 rounded w-full"
-      />
-      {statusMessage == "There has been a change. Don't forget to save!" && <p className="mt-2 text-sm text-yellow-400">{statusMessage}</p>}
-      {/* SUBMIT BUTTON with dynamic styles for submitting and submitted states */}
-      <button
-        type="submit"
-        disabled={submitting}
-        className={`px-4 py-2 rounded text-white font-semibold transition duration-300 flex items-center justify-center space-x-2 ${
-          submitted
-            ? "bg-green-600 cursor-not-allowed" // Success styling
-            : submitting
-            ? "bg-gray-500 cursor-wait"         // Disabled + spinner styling
-            : "bg-blue-600 hover:bg-blue-700 cursor-pointer" // Normal
-        }`}
-      >
-        {/* Spinner icon while submitting */}
-        {submitting && (
-          <svg
-            className="animate-spin h-5 w-5 text-white"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            ></circle>
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-            ></path>
-          </svg>
+        {/* Phone Numbers Card */}
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden">
+          <div className="bg-gray-50 dark:bg-gray-800 px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center gap-3">
+              <Phone className="h-5 w-5 text-blue-600" />
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Phone Numbers
+              </h2>
+            </div>
+          </div>
+          <div className="p-6">
+            <PhoneNumForm 
+              phoneList={phone} 
+              setPhoneList={setPhone} 
+              submitted={submitted} 
+              setSubmitted={setSubmitted} 
+              error={error} 
+              setError={setError} 
+            />
+          </div>
+        </div>
+
+        {/* Location Card */}
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden">
+          <div className="bg-gray-50 dark:bg-gray-800 px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center gap-3">
+              <MapPin className="h-5 w-5 text-blue-600" />
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Location
+              </h2>
+            </div>
+          </div>
+          <div className="p-6">
+            <input
+              type="text"
+              name="location"
+              value={location}
+              onChange={handleInputChange(setLocation)}
+              placeholder="Enter your location (e.g., City, State)"
+              className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+            />
+          </div>
+        </div>
+
+        {/* Status Messages */}
+        {statusMessage === "There has been a change. Don't forget to save!" && (
+          <div className="flex items-center gap-2 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg">
+            <AlertCircle className="h-5 w-5 text-yellow-600" />
+            <p className="text-sm text-yellow-800 dark:text-yellow-200">{statusMessage}</p>
+          </div>
         )}
-        {/* Dynamic button label */}
-        <span>
-          {submitting ? "Submitting..." : submitted ? "Submitted!" : "Submit"}
-        </span>
-      </button>
 
-      {/* SUCCESS MESSAGE */}
-      {submitted && (
-        <p className="text-green-700 font-semibold mt-4 text-center">
-          Contact info updated successfully!
-        </p>
-      )}
+        {/* Submit Button */}
+        <div className="flex justify-center pt-6">
+          <Button
+            type="submit"
+            disabled={submitting}
+            className={`px-8 py-3 font-medium flex items-center gap-2 ${
+              submitted
+                ? "bg-green-600 hover:bg-green-700 text-white"
+                : submitting
+                  ? "bg-gray-500 cursor-wait text-white"
+                  : "bg-blue-600 hover:bg-blue-700 text-white"
+            }`}
+          >
+            {submitting ? (
+              <>
+                <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                Submitting...
+              </>
+            ) : submitted ? (
+              <>
+                <CheckCircle className="h-4 w-4" />
+                Submitted!
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4" />
+                Save All Changes
+              </>
+            )}
+          </Button>
+        </div>
 
-      {/* ERROR MESSAGE */}
-      {error && (
-        <p className="text-red-600 font-semibold mt-4 text-center">
-          {error}
-        </p>
-      )}
-    </form>
+        {/* SUCCESS MESSAGE */}
+        {submitted && (
+          <div className="flex items-center gap-2 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg">
+            <CheckCircle className="h-5 w-5 text-green-600" />
+            <p className="text-sm text-green-800 dark:text-green-200 font-semibold">
+              Contact info updated successfully!
+            </p>
+          </div>
+        )}
+
+        {/* ERROR MESSAGE */}
+        {error && (
+          <div className="flex items-center gap-2 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg">
+            <AlertCircle className="h-5 w-5 text-red-600" />
+            <p className="text-sm text-red-800 dark:text-red-200 font-semibold">
+              {error}
+            </p>
+          </div>
+        )}
+      </form>
+    </div>
   );
 }
