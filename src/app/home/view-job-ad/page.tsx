@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/context/authContext";
 import { db } from "@/lib/firebase";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc, arrayUnion } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { Timestamp } from "firebase/firestore";
 import { 
@@ -147,7 +147,7 @@ export default function ViewJobAdsPage() {
         // append it to the array of generated resumes on Cloud Firestore
         const {fullName, contact, summary, workExperience, education, skills: desc} = JSON.parse(result);
         const newJSONResume = {
-          jobID: jobAds[idx].jobID,
+          jobID: jobAds[idx].jobID, // So the resume can be associated with the job ad
           resumeID: uuidv4(),
           fullName,
           contact,
@@ -157,6 +157,7 @@ export default function ViewJobAdsPage() {
           skills: desc
         };
         console.log(newJSONResume);
+        await updateDoc(userRef, {generatedResumes: arrayUnion(newJSONResume)});
 
         setNewResume(result);
         setStatus("Resume generated!");
