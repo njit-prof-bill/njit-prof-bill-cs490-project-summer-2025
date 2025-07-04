@@ -11,6 +11,24 @@ import {
   getResumeAIResponseText, 
   generateResumeAIPromptText 
 } from "@/components/ai/aiPrompt";
+import { Button } from "@/components/ui/button";
+import { 
+  Briefcase, 
+  Building, 
+  Calendar, 
+  Download, 
+  Edit, 
+  Trash2, 
+  Eye, 
+  FileText,
+  Code,
+  Save,
+  X,
+  AlertCircle,
+  CheckCircle,
+  Clock,
+  Wand2
+} from "lucide-react";
 
 type JobAd = {
   companyName: string;
@@ -25,39 +43,26 @@ type DownloadResumeButtonProps = {
 };
 
 function DownloadResumeButton({text, fileName}: DownloadResumeButtonProps) {
-  // text: the text of the resume file
-  // fileName: self-explalnatory
   function handleDownload() {
     const blob = new Blob([text], { type: "text/plain" });
-    // The URL is temporary because it is only used to 
-    // download the generated resume (which can vary if 
-    // the user clicks "Generate Resume" multiple times 
-    // for the same job ad).
     const url = URL.createObjectURL(blob);
-    const downloadLink = document.createElement("a"); // Anchor element
+    const downloadLink = document.createElement("a");
     downloadLink.href = url;
-
-    // The filename can be optional for now, but I think it would be 
-    // a good idea to set this to a value related to the job ad 
-    // when calling this function (i.e. the job title)
-    // so the user doesn't have to manually rename 
-    // different generated resumes for different job ads.
     downloadLink.download = fileName || "resume.txt";
-
     document.body.appendChild(downloadLink);
-    // Simulating the click triggers the download programmatically
     downloadLink.click();
     document.body.removeChild(downloadLink);
-
-    // Free up memory
     URL.revokeObjectURL(url);
   }
   
   return (
-    <button
-      className="bg-blue-500 text-white px-4 py-2 rounded mr-2"
+    <Button
       onClick={handleDownload}
-    >Download</button>
+      className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
+    >
+      <Download className="h-4 w-4" />
+      Download Resume
+    </Button>
   );
 }
 
@@ -179,136 +184,321 @@ export default function ViewJobAdsPage() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto mt-8 p-6 bg-white dark:bg-stone-900 rounded shadow">
-      <h1 className="text-2xl font-bold mb-4">Your Job Ads</h1>
-      <div className="flex">
-        {/* Drawer */}
-        <div className="w-1/3 border-r pr-4">
-          {jobAds.length === 0 && <div>No job ads found.</div>}
-          {jobAds.map((ad, idx) => (
-            <div
-              key={idx}
-              className={`p-2 mb-2 rounded cursor-pointer ${selectedIndex === idx ? "bg-blue-100 dark:bg-stone-800" : "hover:bg-gray-100 dark:hover:bg-stone-800"}`}
-              onClick={() => {
-                // Don't remove the generated resume unless the user clicks on a different job ad
-                if (selectedIndex !== idx) {
-                  setNewResume(null);
-                  setResumeFormat(null);
-                };
-                setSelectedIndex(idx);
-              }}
-            >
-              <div className="font-semibold">{ad.jobTitle}</div>
-              <div className="text-xs text-gray-500">
-                {ad.companyName}
-              </div>
-              <div className="text-xs text-gray-400">
-                {ad.dateSubmitted?.toDate?.().toLocaleString?.() || ""}
+    <div className="max-w-7xl mx-auto p-6 space-y-6">
+      {/* Header */}
+      <div className="text-center space-y-2">
+        <div className="flex items-center justify-center gap-3">
+          <Briefcase className="h-8 w-8 text-blue-600" />
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            Job Advertisements
+          </h1>
+        </div>
+        <p className="text-gray-600 dark:text-gray-400">
+          View and manage your saved job ads, generate tailored resumes
+        </p>
+      </div>
+
+      {/* Content */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Job List Sidebar */}
+        <div className="lg:col-span-1">
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden">
+            <div className="bg-gray-50 dark:bg-gray-800 px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center gap-3">
+                <Eye className="h-5 w-5 text-blue-600" />
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Saved Job Ads ({jobAds.length})
+                </h2>
               </div>
             </div>
-          ))}
+            
+            <div className="p-4 space-y-2 max-h-96 overflow-y-auto">
+              {jobAds.length === 0 ? (
+                <div className="text-center py-8">
+                  <Briefcase className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                  <p className="text-gray-500 dark:text-gray-400">No job ads found</p>
+                  <p className="text-sm text-gray-400 dark:text-gray-500">Upload a job ad to get started</p>
+                </div>
+              ) : (
+                jobAds.map((ad, idx) => (
+                  <div
+                    key={idx}
+                    className={`p-3 rounded-lg cursor-pointer transition-all duration-200 border ${
+                      selectedIndex === idx 
+                        ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700" 
+                        : "hover:bg-gray-50 dark:hover:bg-gray-800 border-transparent"
+                    }`}
+                    onClick={() => {
+                      if (selectedIndex !== idx) {
+                        setNewResume(null);
+                        setResumeFormat(null);
+                      }
+                      setSelectedIndex(idx);
+                    }}
+                  >
+                    <div className="font-semibold text-gray-900 dark:text-white truncate">
+                      {ad.jobTitle}
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mt-1">
+                      <Building className="h-3 w-3" />
+                      <span className="truncate">{ad.companyName}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-500 mt-1">
+                      <Calendar className="h-3 w-3" />
+                      <span>{ad.dateSubmitted?.toDate?.().toLocaleDateString?.() || ""}</span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         </div>
-        {/* Content */}
-        <div className="flex-1 pl-6">
+
+        {/* Main Content Area */}
+        <div className="lg:col-span-2">
           {selectedIndex === null ? (
-            <div className="text-gray-500">Select a job ad to view details.</div>
+            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-12 text-center">
+              <Eye className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                Select a Job Ad
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400">
+                Choose a job advertisement from the list to view details and generate resumes
+              </p>
+            </div>
           ) : editIndex === selectedIndex ? (
-            <div>
-              <div className="mb-2">
-                <label className="block font-medium">Job Title</label>
-                <input
-                  className="w-full border rounded p-2 text-black"
-                  value={editData.jobTitle || ""}
-                  onChange={(e) => handleEditChange("jobTitle", e.target.value)}
-                />
+            /* Edit Mode */
+            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden">
+              <div className="bg-gray-50 dark:bg-gray-800 px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <div className="flex items-center gap-3">
+                  <Edit className="h-5 w-5 text-blue-600" />
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    Edit Job Advertisement
+                  </h2>
+                </div>
               </div>
-              <div className="mb-2">
-                <label className="block font-medium">Company Name</label>
-                <input
-                  className="w-full border rounded p-2 text-black"
-                  value={editData.companyName || ""}
-                  onChange={(e) => handleEditChange("companyName", e.target.value)}
-                />
+              
+              <div className="p-6 space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Job Title
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    value={editData.jobTitle || ""}
+                    onChange={(e) => handleEditChange("jobTitle", e.target.value)}
+                    placeholder="Enter job title"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Company Name
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    value={editData.companyName || ""}
+                    onChange={(e) => handleEditChange("companyName", e.target.value)}
+                    placeholder="Enter company name"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Job Description
+                  </label>
+                  <textarea
+                    rows={8}
+                    className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white resize-none"
+                    value={editData.jobDescription || ""}
+                    onChange={(e) => handleEditChange("jobDescription", e.target.value)}
+                    placeholder="Enter job description"
+                  />
+                </div>
+                
+                <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <Button
+                    onClick={handleSave}
+                    className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
+                  >
+                    <Save className="h-4 w-4" />
+                    Save Changes
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setEditIndex(null)}
+                    className="flex items-center gap-2"
+                  >
+                    <X className="h-4 w-4" />
+                    Cancel
+                  </Button>
+                </div>
               </div>
-              <div className="mb-2">
-                <label className="block font-medium">Job Description</label>
-                <textarea
-                  className="w-full border rounded p-2 text-black"
-                  rows={8}
-                  value={editData.jobDescription || ""}
-                  onChange={(e) => handleEditChange("jobDescription", e.target.value)}
-                />
-              </div>
-              <button
-                className="bg-blue-600 text-white px-4 py-2 rounded mr-2"
-                onClick={handleSave}
-              >
-                Save
-              </button>
-              <button
-                className="bg-gray-300 text-black px-4 py-2 rounded"
-                onClick={() => setEditIndex(null)}
-              >
-                Cancel
-              </button>
             </div>
           ) : (
-            <div>
-              <div className="mb-2">
-                <span className="font-bold">Job Title:</span> {jobAds[selectedIndex].jobTitle}
-              </div>
-              <div className="mb-2">
-                <span className="font-bold">Company Name:</span> {jobAds[selectedIndex].companyName}
-              </div>
-              <div className="mb-2">
-                <span className="font-bold">Date Uploaded:</span>{" "}
-                {jobAds[selectedIndex].dateSubmitted?.toDate?.().toLocaleString?.() || ""}
-              </div>
-              <div className="mb-4 whitespace-pre-line">
-                <span className="font-bold">Description:</span>
-                <div className="mt-1">{jobAds[selectedIndex].jobDescription}</div>
-              </div>
-              <button
-                className="bg-blue-500 text-white px-4 py-2 rounded mr-2"
-                disabled={generatingText || generatingJSON}
-                onClick={() => handleGenerateText(selectedIndex)}
-              >
-                {generatingText ? "Generating..." : "Generate Text Resume"}
-              </button>
-              <button
-                className="bg-blue-500 text-white px-4 py-2 rounded mr-2"
-                disabled={generatingJSON || generatingText}
-                onClick={() => handleGenerateJSON(selectedIndex)}
-              >
-                {generatingJSON ? "Generating..." : "Generate JSON Resume"}
-              </button>
-              <button
-                className="bg-yellow-500 text-white px-4 py-2 rounded mr-2"
-                onClick={() => handleEdit(selectedIndex)}
-              >
-                Edit
-              </button>
-              <button
-                className="bg-red-600 text-white px-4 py-2 rounded mr-2"
-                onClick={() => handleDelete(selectedIndex)}
-              >
-                Delete
-              </button>
-              <div>
-                {status && <p className="mt-2 text-sm text-green-700">{status}</p>}
-              </div>
-              <div>
-                {newResume && (
-                  <div>
-                    <div>
-                      <p>Your new generated resume:</p>
-                      <p className="font-mono">{newResume}</p>
+            /* View Mode */
+            <div className="space-y-6">
+              {/* Job Details Card */}
+              <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden">
+                <div className="bg-gray-50 dark:bg-gray-800 px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Briefcase className="h-5 w-5 text-blue-600" />
+                      <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        Job Details
+                      </h2>
                     </div>
-                    <DownloadResumeButton 
-                      text={newResume} 
-                      fileName={`${jobAds[selectedIndex].jobTitle}.${resumeFormat === "json" ? "json" : "txt"}`} />
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEdit(selectedIndex)}
+                        className="flex items-center gap-2"
+                      >
+                        <Edit className="h-4 w-4" />
+                        Edit
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDelete(selectedIndex)}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 dark:text-red-400 flex items-center gap-2"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Delete
+                      </Button>
+                    </div>
                   </div>
-                )}
+                </div>
+                
+                <div className="p-6 space-y-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Job Title</label>
+                    <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                      {jobAds[selectedIndex].jobTitle}
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Company</label>
+                    <p className="text-lg text-gray-900 dark:text-white">
+                      {jobAds[selectedIndex].companyName}
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Date Uploaded</label>
+                    <p className="text-gray-900 dark:text-white">
+                      {jobAds[selectedIndex].dateSubmitted?.toDate?.().toLocaleString?.() || ""}
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2 block">Description</label>
+                    <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                      <p className="whitespace-pre-line text-gray-900 dark:text-white leading-relaxed">
+                        {jobAds[selectedIndex].jobDescription}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* AI Resume Generation Card */}
+              <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden">
+                <div className="bg-gray-50 dark:bg-gray-800 px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center gap-3">
+                    <Wand2 className="h-5 w-5 text-blue-600" />
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      AI Resume Generation
+                    </h2>
+                  </div>
+                </div>
+                
+                <div className="p-6 space-y-4">
+                  <p className="text-gray-600 dark:text-gray-400">
+                    Generate a tailored resume for this job advertisement using AI
+                  </p>
+                  
+                  <div className="flex gap-3">
+                    <Button
+                      disabled={generatingText || generatingJSON}
+                      onClick={() => handleGenerateText(selectedIndex)}
+                      className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
+                    >
+                      {generatingText ? (
+                        <>
+                          <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <FileText className="h-4 w-4" />
+                          Generate Text Resume
+                        </>
+                      )}
+                    </Button>
+                    
+                    <Button
+                      disabled={generatingJSON || generatingText}
+                      onClick={() => handleGenerateJSON(selectedIndex)}
+                      className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2"
+                    >
+                      {generatingJSON ? (
+                        <>
+                          <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <Code className="h-4 w-4" />
+                          Generate JSON Resume
+                        </>
+                      )}
+                    </Button>
+                  </div>
+
+                  {/* Status Messages */}
+                  {status && (
+                    <div className={`flex items-center gap-2 p-3 rounded-lg ${
+                      status.includes("Error") 
+                        ? "bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700"
+                        : "bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700"
+                    }`}>
+                      {status.includes("Error") ? (
+                        <AlertCircle className="h-4 w-4 text-red-600" />
+                      ) : (
+                        <CheckCircle className="h-4 w-4 text-green-600" />
+                      )}
+                      <span className={status.includes("Error") 
+                        ? "text-red-800 dark:text-red-200" 
+                        : "text-green-800 dark:text-green-200"
+                      }>
+                        {status}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Generated Resume Display */}
+                  {newResume && (
+                    <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-semibold text-gray-900 dark:text-white">Generated Resume</h3>
+                        <DownloadResumeButton 
+                          text={newResume} 
+                          fileName={`${jobAds[selectedIndex].jobTitle}.${resumeFormat === "json" ? "json" : "txt"}`} 
+                        />
+                      </div>
+                      <div className="bg-white dark:bg-gray-900 p-4 rounded border border-gray-200 dark:border-gray-700 max-h-64 overflow-auto">
+                        <pre className="text-sm text-gray-900 dark:text-white whitespace-pre-wrap font-mono">
+                          {newResume}
+                        </pre>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}

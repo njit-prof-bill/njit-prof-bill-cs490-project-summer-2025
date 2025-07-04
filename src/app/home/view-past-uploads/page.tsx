@@ -11,6 +11,22 @@ import JSZip from "jszip";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogOverlay, DialogPortal, DialogTitle, DialogTrigger } from "@radix-ui/react-dialog";
 import { metadata } from "@/app/server-layout";
 import { Button } from "@/components/ui/button";
+import { 
+  Clock, 
+  FileText, 
+  Download, 
+  Trash2, 
+  Eye, 
+  EyeOff,
+  Calendar, 
+  AlertCircle,
+  CheckCircle,
+  Archive,
+  ChevronDown,
+  File,
+  Image,
+  FileImage
+} from "lucide-react";
 
 // Types
 
@@ -146,9 +162,25 @@ function PreviewOdtFile({ fileData }: { fileData: ProxyFileResult }) {
     })();
   }, [fileData]);
 
-  if (error) return <div>Error: {error}</div>;
-  if (!elements) return <div>Loading ODT preview...</div>;
-  return <div>{elements}</div>;
+  if (error) return (
+    <div className="flex items-center gap-2 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg">
+      <AlertCircle className="h-5 w-5 text-red-600" />
+      <span className="text-red-800 dark:text-red-200">Error: {error}</span>
+    </div>
+  );
+  
+  if (!elements) return (
+    <div className="flex items-center gap-2 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
+      <div className="animate-spin h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+      <span className="text-blue-800 dark:text-blue-200">Loading ODT preview...</span>
+    </div>
+  );
+  
+  return (
+    <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+      <div className="prose dark:prose-invert max-w-none">{elements}</div>
+    </div>
+  );
 }
 
 function PreviewDocxFile({ fileData }: { fileData: ProxyFileResult }) {
@@ -174,24 +206,47 @@ function PreviewDocxFile({ fileData }: { fileData: ProxyFileResult }) {
     })();
   }, [fileData]);
 
-  if (error) return <div>Error: {error}</div>;
-  return <div ref={refDiv}></div>;
+  if (error) return (
+    <div className="flex items-center gap-2 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg">
+      <AlertCircle className="h-5 w-5 text-red-600" />
+      <span className="text-red-800 dark:text-red-200">Error: {error}</span>
+    </div>
+  );
+  
+  return (
+    <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+      <div ref={refDiv} className="prose dark:prose-invert max-w-none"></div>
+    </div>
+  );
 }
 
 function PreviewPDFFile({ fileData }: { fileData: ProxyFileResult }) {
   if (fileData.type === "blob" && fileData.contentType === "application/pdf") {
-    return <iframe src={fileData.blobUrl} width="100%" height="600px"></iframe>;
+    return (
+      <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+        <iframe 
+          src={fileData.blobUrl} 
+          width="100%" 
+          height="600px" 
+          className="rounded-lg"
+          title="PDF Preview"
+        />
+      </div>
+    );
   }
-  return <div>Not a PDF file.</div>;
+  return <div className="text-red-600">Not a PDF file.</div>;
 }
 
-function PreviewTxtFile({ fileData, charLimit }: { fileData: ProxyFileResult; charLimit: number }) {
+function PreviewTxtFile({ fileData }: { fileData: ProxyFileResult }) {
   if (fileData.type === "text") {
     const text = fileData.content;
-    const displayed = text.length > charLimit ? `${text.substring(0, charLimit)}...\n...(truncated)` : text;
-    return <pre>{displayed}</pre>;
+    return (
+      <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+        <pre className="text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap overflow-auto max-h-96">{text}</pre>
+      </div>
+    );
   }
-  return <div>Not a text file.</div>;
+  return <div className="text-red-600">Not a text file.</div>;
 }
 
 function PreviewFile({ fileRef }: { fileRef: StorageReference }) {
@@ -219,17 +274,44 @@ function PreviewFile({ fileRef }: { fileRef: StorageReference }) {
     };
   }, [user, fileRef]);
 
-  if (error) return <div>Error: {error}</div>;
-  if (!fileData) return <div>Loading...</div>;
+  if (error) return (
+    <div className="flex items-center gap-2 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg">
+      <AlertCircle className="h-5 w-5 text-red-600" />
+      <span className="text-red-800 dark:text-red-200">Error: {error}</span>
+    </div>
+  );
+  
+  if (!fileData) return (
+    <div className="flex items-center gap-2 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
+      <div className="animate-spin h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+      <span className="text-blue-800 dark:text-blue-200">Loading file preview...</span>
+    </div>
+  );
 
-  if (fileData.type === "text") return <PreviewTxtFile fileData={fileData} charLimit={300} />;
+  if (fileData.type === "text") return <PreviewTxtFile fileData={fileData} />;
   if (fileData.type === "blob") {
     if (fileData.contentType === "application/pdf") return <PreviewPDFFile fileData={fileData} />;
     if (fileData.contentType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") return <PreviewDocxFile fileData={fileData} />;
     if (fileData.contentType === "application/vnd.oasis.opendocument.text") return <PreviewOdtFile fileData={fileData} />;
-    return <a href={fileData.blobUrl} download={fileData.fileName}>Download {fileData.fileName}</a>;
+    return (
+      <div className="flex items-center gap-2 p-4 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+        <Download className="h-5 w-5 text-blue-600" />
+        <a 
+          href={fileData.blobUrl} 
+          download={fileData.fileName}
+          className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
+        >
+          Download {fileData.fileName}
+        </a>
+      </div>
+    );
   }
-  return <div>Unknown file type</div>;
+  return (
+    <div className="flex items-center gap-2 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg">
+      <AlertCircle className="h-5 w-5 text-yellow-600" />
+      <span className="text-yellow-800 dark:text-yellow-200">Unknown file type</span>
+    </div>
+  );
 }
 
 type DeleteFileButtonProps = {
@@ -241,7 +323,6 @@ type DeleteFileButtonProps = {
 function DeleteFileButton({fileRef, fileRefs, setFileRefs}: DeleteFileButtonProps) {
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // Controls whether the confirmation dialog is open
   const [open, setOpen] = useState(false);
 
   async function confirmDelete() {
@@ -263,37 +344,56 @@ function DeleteFileButton({fileRef, fileRefs, setFileRefs}: DeleteFileButtonProp
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button
-          type="button"
+        <Button
+          variant="outline"
+          size="sm"
           disabled={deleting}
-          className="bg-red-500 px-2 py-1 rounded mt-3"
+          className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 dark:text-red-400 dark:hover:text-red-300 flex items-center gap-2"
         >
+          <Trash2 className="h-4 w-4" />
           {deleting ? "Deleting..." : "Delete"}
-        </button>
+        </Button>
       </DialogTrigger>
       <DialogPortal>
-          <DialogOverlay className="fixed inset-0 backdrop-blur-md bg-opacity-50"></DialogOverlay>
-            <DialogContent className="fixed top-1/2 left-1/2 bg-background p-4 rounded shadow transform -translate-x-1/2 -translate-y-1/2 border border-foreground">
-              <DialogTitle className="text-foreground"><strong><u>Confirm Delete</u></strong></DialogTitle>
-              <DialogDescription className="text-foreground">
-                Are you sure you want to delete <strong>{fileRef.name}</strong>?
-              </DialogDescription>
-              <div className="mt-4 flex gap-2">
-                <button
-                  onClick={confirmDelete}
-                  disabled={deleting}
-                  className="bg-red-500 text-white px-2 py-1 rounded"
-                >
-                  {deleting ? "Deleting..." : "Yes, Delete"}
-                </button>
-                <DialogClose asChild>
-                  <button className="bg-gray-600 px-2 py-1 rounded text-white" disabled={deleting}>
-                    Cancel
-                  </button>
-                </DialogClose>
-              </div>
-              {error && <div className="mt-2 text-red-500">{error}</div>}
-            </DialogContent>
+        <DialogOverlay className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm"></DialogOverlay>
+        <DialogContent className="fixed top-1/2 left-1/2 bg-white dark:bg-gray-900 p-6 rounded-lg shadow-xl transform -translate-x-1/2 -translate-y-1/2 border border-gray-200 dark:border-gray-700 max-w-md w-full mx-4">
+          <DialogTitle className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+            Confirm Delete
+          </DialogTitle>
+          <DialogDescription className="text-gray-600 dark:text-gray-300 mb-4">
+            Are you sure you want to delete <strong className="text-gray-900 dark:text-white">{fileRef.name}</strong>? This action cannot be undone.
+          </DialogDescription>
+          <div className="flex gap-3 justify-end">
+            <DialogClose asChild>
+              <Button variant="outline" disabled={deleting}>
+                Cancel
+              </Button>
+            </DialogClose>
+            <Button
+              onClick={confirmDelete}
+              disabled={deleting}
+              className="bg-red-600 hover:bg-red-700 text-white flex items-center gap-2"
+            >
+              {deleting ? (
+                <>
+                  <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4" />
+                  Delete
+                </>
+              )}
+            </Button>
+          </div>
+          {error && (
+            <div className="mt-4 flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg">
+              <AlertCircle className="h-4 w-4 text-red-600" />
+              <span className="text-red-800 dark:text-red-200 text-sm">{error}</span>
+            </div>
+          )}
+        </DialogContent>
       </DialogPortal>
     </Dialog>
   );
@@ -323,55 +423,175 @@ function GetFileDate({fileRef}: {fileRef: StorageReference}) {
       }
     }).catch((error) => {
       console.error("Could not retrieve upload date: ", error);
-      setDate("");
+      setDate("Date unavailable");
     });
   }, [fileRef]);
 
   return (
-    <div>
-      {date ? `Uploaded on: ${date}` : "Date unavailable"}
+    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+      <Calendar className="h-4 w-4" />
+      <span>{date || "Loading date..."}</span>
     </div>
   );
+}
+
+function getFileIcon(fileName: string) {
+  const extension = fileName.split('.').pop()?.toLowerCase();
+  
+  switch (extension) {
+    case 'pdf':
+      return <FileText className="h-6 w-6 text-red-600" />;
+    case 'docx':
+    case 'doc':
+      return <FileText className="h-6 w-6 text-blue-600" />;
+    case 'odt':
+      return <FileText className="h-6 w-6 text-green-600" />;
+    case 'txt':
+    case 'md':
+      return <FileText className="h-6 w-6 text-gray-600" />;
+    case 'jpg':
+    case 'jpeg':
+    case 'png':
+    case 'gif':
+    case 'bmp':
+      return <FileImage className="h-6 w-6 text-purple-600" />;
+    default:
+      return <File className="h-6 w-6 text-gray-500" />;
+  }
 }
 
 export default function ViewPastUploadsPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [fileRefs, setFileRefs] = useState<StorageReference[]>([]);
+  const [loadingFiles, setLoadingFiles] = useState(true);
+  const [previewStates, setPreviewStates] = useState<Record<string, boolean>>({});
+
+  const togglePreview = (fileName: string) => {
+    setPreviewStates(prev => ({
+      ...prev,
+      [fileName]: !prev[fileName]
+    }));
+  };
 
   useEffect(() => {
     if (!loading && user) {
       (async () => {
-        const listRef = ref(storage, `users/${user.uid}`);
-        const result = await list(listRef, { maxResults: 10 });
-        setFileRefs(result.items);
+        try {
+          const listRef = ref(storage, `users/${user.uid}`);
+          const result = await list(listRef, { maxResults: 10 });
+          setFileRefs(result.items);
+        } catch (error) {
+          console.error("Error loading files:", error);
+        } finally {
+          setLoadingFiles(false);
+        }
       })();
     } else if (!loading && !user) {
       router.push("/");
     }
   }, [user, loading, router]);
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full"></div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col items-center">
-      <h1 className="text-3xl m-auto font-bold mb-5"><u>View Past Uploads</u></h1>
-      <Accordion type="single" collapsible className="w-full">
-        {fileRefs.map((f, i) => (
-          <AccordionItem key={i} value={`item-${i}`} className="flex flex-col justify-between mb-8">
-            {/* <AccordionTrigger>{f.name} <GetFileDate fileRef={f}></GetFileDate></AccordionTrigger> */}
-            <AccordionTrigger>
-              <div className="cursor-pointer text-lg transition-duration-400 hover:bg-chart-2">
-                {f.name}
-                <GetFileDate fileRef={f}></GetFileDate>
+    <div className="max-w-4xl mx-auto p-6 space-y-6">
+      {/* Header */}
+      <div className="text-center space-y-2">
+        <div className="flex items-center justify-center gap-3">
+          <Archive className="h-8 w-8 text-blue-600" />
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            Past Uploads
+          </h1>
+        </div>
+        <p className="text-gray-600 dark:text-gray-400">
+          View and manage your uploaded files
+        </p>
+      </div>
+
+      {/* Content */}
+      {loadingFiles ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full"></div>
+        </div>
+      ) : fileRefs.length === 0 ? (
+        <div className="text-center py-12">
+          <Archive className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+            No files uploaded yet
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400">
+            Upload your first file to get started
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {fileRefs.map((fileRef, index) => {
+            const isPreviewOpen = previewStates[fileRef.name] || false;
+            
+            return (
+              <div key={index} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden">
+                <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      {getFileIcon(fileRef.name)}
+                      <div>
+                        <h3 className="font-semibold text-gray-900 dark:text-white truncate">
+                          {fileRef.name}
+                        </h3>
+                        <GetFileDate fileRef={fileRef} />
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => togglePreview(fileRef.name)}
+                        className="flex items-center gap-2"
+                      >
+                        {isPreviewOpen ? (
+                          <>
+                            <EyeOff className="h-4 w-4" />
+                            Hide Preview
+                          </>
+                        ) : (
+                          <>
+                            <Eye className="h-4 w-4" />
+                            Show Preview
+                          </>
+                        )}
+                      </Button>
+                      <DeleteFileButton 
+                        fileRef={fileRef} 
+                        fileRefs={fileRefs} 
+                        setFileRefs={setFileRefs} 
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                {isPreviewOpen && (
+                  <div className="p-6">
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                        <Eye className="h-4 w-4" />
+                        <span>File Preview</span>
+                      </div>
+                      <PreviewFile fileRef={fileRef} />
+                    </div>
+                  </div>
+                )}
               </div>
-            </AccordionTrigger>
-            <AccordionContent className="flex flex-col gap-4 text-balance">
-              <PreviewFile fileRef={f} />
-              <DeleteFileButton fileRef={f} fileRefs={fileRefs} setFileRefs={setFileRefs} />
-            </AccordionContent>
-            <hr className="mt-2 bg-foreground"/>
-          </AccordionItem>
-        ))}
-      </Accordion>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

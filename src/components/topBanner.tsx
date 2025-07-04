@@ -1,6 +1,6 @@
 "use client";
 
-import { Bars3Icon } from "@heroicons/react/24/outline";
+import { Menu, Settings, LogOut, Home, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -9,8 +9,9 @@ import {
     DropdownMenuTrigger,
     DropdownMenuContent,
     DropdownMenuItem,
-} from "@/components/ui/dropdown-menu"; // Import Shadcn dropdown components
-import { useRouter, usePathname } from "next/navigation"; // Import usePathname
+    DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { useRouter, usePathname } from "next/navigation";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 
@@ -20,7 +21,7 @@ interface TopBannerProps {
 
 export default function TopBanner({ toggleSidePanel }: TopBannerProps) {
     const router = useRouter();
-    const pathname = usePathname(); // Get the current path
+    const pathname = usePathname();
 
     // Get current user
     const user = auth.currentUser;
@@ -33,97 +34,123 @@ export default function TopBanner({ toggleSidePanel }: TopBannerProps) {
         return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
     };
 
-    const initials = getInitials(user?.displayName).toLowerCase();
-
+    const initials = getInitials(user?.displayName);
 
     // Map paths to page titles
     const pageTitles: { [key: string]: string } = {
-        "/home": "Home",
+        "/home": "Dashboard",
         "/home/settings": "Settings",
         "/home/upload-resume": "Upload Resume",
         "/home/upload-job-ad": "Upload Job Ad",
         "/home/view-job-ad": "View Job Ads",
-        "/home/free-form": "Submit Freeform Text",
-        "/home/edit-contact-info": "Edit Contact Info",
-        "/home/edit-summary": "Edit Professional Summary",
-        "/home/edit-skills": "Edit Skills",
-        "/home/edit-education": "Edit Education",
-        "/home/edit-work-experience": "Edit Work Experience",
+        "/home/free-form": "Free-form Resume",
+        "/home/edit-contact-info": "Contact Information",
+        "/home/edit-summary": "Professional Summary",
+        "/home/edit-skills": "Skills",
+        "/home/edit-education": "Education",
+        "/home/edit-work-experience": "Work Experience",
         "/home/view-past-uploads": "Past Uploads",
     };
 
-    const pageTitle = pageTitles[pathname] || "Page"; // Default to "Page" if no match
+    const pageTitle = pageTitles[pathname] || "Dashboard";
 
     const handleLogout = async () => {
         try {
             await signOut(auth);
-            router.push("/"); // Redirect to landing page
+            router.push("/");
         } catch (error) {
             console.error("Failed to log out:", error);
         }
     };
 
     return (
-        <header className="bg-stone-200 dark:bg-stone-800 p-4 shadow border-b border-stone-600 flex items-center justify-between">
-            {/* Left Section: Hamburger Menu, Logo, and Breadcrumb */}
-            <div className="flex items-center space-x-4">
-                <button
-                    onClick={toggleSidePanel}
-                    className="p-2 rounded-md border-none hover:bg-stone-300 dark:hover:bg-stone-700"
-                >
-                    <Bars3Icon className="h-9 w-9 text-gray-800 dark:text-gray-200" />
-                </button>
-                <Link href="/" className="flex items-center">
-                    <Image
-                        src="/new-logo.png"
-                        alt="Pisces Home"
-                        width={48}
-                        height={48}
-                        className="mr-2"
-                    />
-                </Link>
-                <div className="flex space-x-2 text-md">
-                    <p>{pageTitle}</p> {/* Dynamically display the page title */}
-                </div>
-            </div>
-
-            {/* Center Section: Title */}
-            <div className="flex-grow flex justify-center">
-                <h1 className="text-xl font-semibold">Pisces</h1>
-            </div>
-
-            {/* Right Section: Avatar with Dropdown */}
-            <div className="flex items-center relative">
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <div className="relative cursor-pointer">
-                            <Avatar className="w-10 h-10">
-                                <AvatarImage src="/path-to-avatar-image.jpg" alt="User Avatar" />
-                                <AvatarFallback className="bg-blue-500 w-full h-full flex items-center justify-center rounded-full">
-                                    {initials || "?"}
-                                </AvatarFallback>
-                            </Avatar>
-                            {/* Down Arrow Indicator */}
-                            <span
-                                className="absolute text-gray-800 dark:text-gray-200 text-xs"
-                                style={{
-                                    bottom: "-4px", // Move the arrow slightly lower
-                                    right: "-4px",  // Move the arrow slightly to the right
-                                }}
-                            >
-                                ▼
+        <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-3 shadow-sm">
+            <div className="flex items-center justify-between">
+                {/* Left Section: Menu, Logo, and Page Title */}
+                <div className="flex items-center space-x-4">
+                    <button
+                        onClick={toggleSidePanel}
+                        className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                        aria-label="Toggle sidebar"
+                    >
+                        <Menu className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                    </button>
+                    
+                    <Link href="/home" className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
+                        <Image
+                            src="/new-logo.png"
+                            alt="Pisces Logo"
+                            width={32}
+                            height={32}
+                            className="rounded-full"
+                        />
+                        <div className="hidden sm:block">
+                            <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                Pisces
+                            </h1>
+                        </div>
+                    </Link>
+                    
+                    <div className="hidden md:block">
+                        <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
+                            <Home className="h-4 w-4" />
+                            <span>/</span>
+                            <span className="text-gray-900 dark:text-white font-medium">
+                                {pageTitle}
                             </span>
                         </div>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48">
-                        <DropdownMenuItem onClick={() => router.push("/home/settings")}>
-                            Settings
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={handleLogout}>
-                            Logout
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                    </div>
+                </div>
+
+                {/* Center Section: Page Title for mobile */}
+                <div className="md:hidden">
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        {pageTitle}
+                    </h2>
+                </div>
+
+                {/* Right Section: User Menu */}
+                <div className="flex items-center space-x-3">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <button className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                                <Avatar className="w-8 h-8">
+                                    <AvatarImage src={user?.photoURL || ""} alt="User Avatar" />
+                                    <AvatarFallback className="bg-blue-500 text-white text-sm font-medium">
+                                        {initials || "?"}
+                                    </AvatarFallback>
+                                </Avatar>
+                                <div className="hidden sm:block text-left">
+                                    <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                        {user?.displayName || "User"}
+                                    </div>
+                                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                                        {user?.email}
+                                    </div>
+                                </div>
+                                <ChevronDown className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                            </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-56">
+                            <div className="px-2 py-1.5 text-sm text-gray-500 dark:text-gray-400">
+                                Signed in as
+                            </div>
+                            <div className="px-2 py-1.5 text-sm font-medium text-gray-900 dark:text-white truncate">
+                                {user?.email}
+                            </div>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => router.push("/home/settings")}>
+                                <Settings className="h-4 w-4 mr-2" />
+                                Settings
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={handleLogout} className="text-red-600 dark:text-red-400">
+                                <LogOut className="h-4 w-4 mr-2" />
+                                Sign out
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
             </div>
         </header>
     );
