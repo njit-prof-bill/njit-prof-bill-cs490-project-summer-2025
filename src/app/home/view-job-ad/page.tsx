@@ -9,7 +9,9 @@ import {
   getResumeAIResponseJSON, 
   generateResumeAIPromptJSON, 
   getResumeAIResponseText, 
-  generateResumeAIPromptText 
+  generateResumeAIPromptText,
+  generateAIResumeJSONPrompt,
+  generateAIResumeJSON
 } from "@/components/ai/aiPrompt";
 
 type JobAd = {
@@ -133,7 +135,9 @@ export default function ViewJobAdsPage() {
       if (userSnap.exists() && userSnap.data().resumeFields) {
         const resumeInfo = JSON.stringify(userSnap.data().resumeFields);
         const jobAdText = jobAds[idx].jobDescription;
-        const result = await getResumeAIResponseJSON(generateResumeAIPromptJSON, resumeInfo, jobAdText);
+        // const result = await getResumeAIResponseJSON(generateResumeAIPromptJSON, resumeInfo, jobAdText);
+        const result = await generateAIResumeJSON(generateAIResumeJSONPrompt, resumeInfo, jobAdText);
+        console.log(result);
         setNewResume(result);
         setStatus("Resume generated!");
         setTimeout(() => setStatus(null), 3000);
