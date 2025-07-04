@@ -35,6 +35,35 @@ import {
 } from "lucide-react";
 import { User } from "firebase/auth";
 
+type generatedResume = {
+  jobID: string;
+  resumeID: string;
+  fullName: string;
+  contact: {
+    phone: string[];
+    email: string[];
+    location: string;
+  }
+  summary: string;
+  workExperience: {
+    jobTitle: string;
+    company: string;
+    startDate: string;
+    endDate: string;
+    jobSummary: string;
+    responsibilities: string[];
+  }[];
+  education: {
+    degree: string;
+    institution: string;
+    startDate: string;
+    endDate: string;
+    gpa: string;
+  }[];
+  skills: string[];
+  applied: boolean;
+};
+
 type JobAd = {
   companyName: string;
   jobTitle: string;
@@ -46,19 +75,23 @@ type JobAd = {
 
 type ApplyButtonProps = {
   user: User | null;
-  resumeText: string;
+  resumeRecord: generatedResume | null;
+  jobAd: JobAd;
+  jobID: string;
 };
 
-function ApplyButton({user, resumeText}: ApplyButtonProps) {
+function ApplyButton({user, resumeRecord, jobAd, jobID}: ApplyButtonProps) {
   // If the user clicks it, mark the corresponding job ad as "applied",
   // and then upload the resume to the user's database record.
   const [uploading, setUploading] = useState(false);
   async function handleClick(event: React.MouseEvent<HTMLButtonElement>) {
-    if (!user) return;
+    if (!user || !resumeRecord) return;
     try {
-      ;
+      setUploading(true);
     } catch (error) {
-      ;
+      console.error("Error saving resume: ", error);
+    } finally {
+      setUploading(false);
     }
   }
   return (
@@ -114,7 +147,8 @@ export default function ViewJobAdsPage() {
   const [generated, setGenerated] = useState(false); // Track whether resume was successfully generated
   // const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null); // Track status message related to resume generation
-  const [newResume, setNewResume] = useState<string | null>(null);
+  const [newResume, setNewResume] = useState<string | null>(null); // Track what is displayed to the user
+  const [newResumeRecord, setNewResumeRecord] = useState<generatedResume | null>(null); // Track what will be stored to the database if the user indicates they applied to a job ad with it
   const [resumeFormat, setResumeFormat] = useState<"text" | "json" | null>(null);
 
   useEffect(() => {
@@ -137,6 +171,7 @@ export default function ViewJobAdsPage() {
       setGeneratingJSON(false);
       setGeneratingText(true);
       setNewResume(null); // Clear any previous result
+      setNewResumeRecord(null); // Clear any previous result
       setStatus(null); // Clear any previous status message
       const userRef = doc(db, "users", user.uid);
       const userSnap = await getDoc(userRef);
@@ -150,23 +185,41 @@ export default function ViewJobAdsPage() {
           throw new Error("AI returned empty response while generating JSON resume");
         }
         console.log(result);
-        // Generate a unique ID for the new resume and 
-        // append it to the array of generated resumes on Cloud Firestore
-        const {fullName, contact, summary, workExperience, education, skills: desc} = JSON.parse(result);
-        const JSONResume = {
+        const {fullName, contact, summary, workExperience, education, skills} = JSON.parse(result);
+        const JSONResume: generatedResume = {
           jobID: jobAds[idx].jobID, // So the resume can be associated with the job ad
           resumeID: uuidv4(),
-          fullName,
-          contact,
-          summary,
-          workExperience,
-          education,
-          skills: desc,
+          fullName: fullName,
+          contact: contact,
+          summary: summary,
+          workExperience: workExperience,
+          education: education,
+          skills: skills,
           applied: false,
         };
         console.log(JSONResume);
-        await updateDoc(userRef, {generatedResumes: arrayUnion(JSONResume)});
-        // The AI doesn't need to know about the jobID or resumeID when generating an unstructured text resume
+        setNewResumeRecord(JSONResume);
+
+        // Generate a unique ID for the new resume and 
+        // append it to the array of generated resumes on Cloud Firestore
+        // const {fullName, contact, summary, workExperience, education, skills: desc} = JSON.parse(result);
+        // const JSONResume = {
+        //   jobID: jobAds[idx].jobID, // So the resume can be associated with the job ad
+        //   resumeID: uuidv4(),
+        //   fullName,
+        //   contact,
+        //   summary,
+        //   workExperience,
+        //   education,
+        //   skills: desc,
+        //   applied: false,
+        // };
+        // console.log(JSONResume);
+        // setNewResumeRecord(JSONResume);
+        // await updateDoc(userRef, {generatedResumes: arrayUnion(JSONResume)});
+
+        // The AI doesn't need to know about the jobID or resumeID when generating an unstructured text resume.
+        // The AI also doesn't need to know whether or not the user applied with this resume.
         const finalResult = await getResumeAIResponseText(generateResumeAIPromptText, result);
         setNewResume(finalResult);
         setStatus("Resume generated!");
@@ -189,6 +242,7 @@ export default function ViewJobAdsPage() {
       setGeneratingJSON(true);
       // setError(null); // Clear any previous error message
       setNewResume(null); // Clear any previous result
+      setNewResumeRecord(null); // Clear any previous result
       setStatus(null); // Clear any previous status message
       const userRef = doc(db, "users", user.uid);
       const userSnap = await getDoc(userRef);
@@ -201,22 +255,38 @@ export default function ViewJobAdsPage() {
         if (!result) {
           throw new Error("AI returned empty response while generating resume");
         }
-        // Generate a unique ID for the new resume and 
-        // append it to the array of generated resumes on Cloud Firestore
-        const {fullName, contact, summary, workExperience, education, skills: desc} = JSON.parse(result);
-        const newJSONResume = {
+        const {fullName, contact, summary, workExperience, education, skills} = JSON.parse(result);
+        const newJSONResume: generatedResume = {
           jobID: jobAds[idx].jobID, // So the resume can be associated with the job ad
           resumeID: uuidv4(),
-          fullName,
-          contact,
-          summary,
-          workExperience,
-          education,
-          skills: desc,
+          fullName: fullName,
+          contact: contact,
+          summary: summary,
+          workExperience: workExperience,
+          education: education,
+          skills: skills,
           applied: false,
         };
         console.log(newJSONResume);
-        await updateDoc(userRef, {generatedResumes: arrayUnion(newJSONResume)});
+        setNewResumeRecord(newJSONResume);
+
+        // Generate a unique ID for the new resume and 
+        // append it to the array of generated resumes on Cloud Firestore
+        // const {fullName, contact, summary, workExperience, education, skills: desc} = JSON.parse(result);
+        // const newJSONResume = {
+        //   jobID: jobAds[idx].jobID, // So the resume can be associated with the job ad
+        //   resumeID: uuidv4(),
+        //   fullName,
+        //   contact,
+        //   summary,
+        //   workExperience,
+        //   education,
+        //   skills: desc,
+        //   applied: false,
+        // };
+        // console.log(newJSONResume);
+        // setNewResumeRecord(newJSONResume);
+        // await updateDoc(userRef, {generatedResumes: arrayUnion(newJSONResume)});
 
         // setNewResume(result);
         setNewResume(JSON.stringify(newJSONResume, null, 2));
@@ -570,7 +640,6 @@ export default function ViewJobAdsPage() {
                           text={newResume} 
                           fileName={`${jobAds[selectedIndex].jobTitle}.${resumeFormat === "json" ? "json" : "txt"}`} 
                         />
-                        <ApplyButton user={user} resumeText={newResume} />
                       </div>
                       <div className="bg-white dark:bg-gray-900 p-4 rounded border border-gray-200 dark:border-gray-700 max-h-64 overflow-auto">
                         <pre className="text-sm text-gray-900 dark:text-white whitespace-pre-wrap font-mono">
