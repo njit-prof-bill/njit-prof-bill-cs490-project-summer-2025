@@ -30,8 +30,10 @@ import {
   AlertCircle,
   CheckCircle,
   Clock,
-  Wand2
+  Wand2,
+  Check
 } from "lucide-react";
+import { User } from "firebase/auth";
 
 type JobAd = {
   companyName: string;
@@ -39,7 +41,36 @@ type JobAd = {
   jobDescription: string;
   dateSubmitted: Timestamp;
   jobID: string;
+  applied: boolean;
 };
+
+type ApplyButtonProps = {
+  user: User | null;
+  resumeText: string;
+};
+
+function ApplyButton({user, resumeText}: ApplyButtonProps) {
+  // If the user clicks it, mark the corresponding job ad as "applied",
+  // and then upload the resume to the user's database record.
+  const [uploading, setUploading] = useState(false);
+  async function handleClick(event: React.MouseEvent<HTMLButtonElement>) {
+    if (!user) return;
+    try {
+      ;
+    } catch (error) {
+      ;
+    }
+  }
+  return (
+    <Button
+      onClick={handleClick}
+      className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
+    >
+      <Check />
+      I applied with this resume
+    </Button>
+  );
+}
 
 type DownloadResumeButtonProps = {
   text: string;
@@ -130,7 +161,8 @@ export default function ViewJobAdsPage() {
           summary,
           workExperience,
           education,
-          skills: desc
+          skills: desc,
+          applied: false,
         };
         console.log(JSONResume);
         await updateDoc(userRef, {generatedResumes: arrayUnion(JSONResume)});
@@ -180,7 +212,8 @@ export default function ViewJobAdsPage() {
           summary,
           workExperience,
           education,
-          skills: desc
+          skills: desc,
+          applied: false,
         };
         console.log(newJSONResume);
         await updateDoc(userRef, {generatedResumes: arrayUnion(newJSONResume)});
@@ -537,6 +570,7 @@ export default function ViewJobAdsPage() {
                           text={newResume} 
                           fileName={`${jobAds[selectedIndex].jobTitle}.${resumeFormat === "json" ? "json" : "txt"}`} 
                         />
+                        <ApplyButton user={user} resumeText={newResume} />
                       </div>
                       <div className="bg-white dark:bg-gray-900 p-4 rounded border border-gray-200 dark:border-gray-700 max-h-64 overflow-auto">
                         <pre className="text-sm text-gray-900 dark:text-white whitespace-pre-wrap font-mono">
