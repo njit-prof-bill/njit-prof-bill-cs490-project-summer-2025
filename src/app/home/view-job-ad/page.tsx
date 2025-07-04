@@ -2,15 +2,18 @@
 
 import { useAuth } from "@/context/authContext";
 import { db } from "@/lib/firebase";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc, arrayUnion } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { Timestamp } from "firebase/firestore";
 import { 
   getResumeAIResponseJSON, 
   generateResumeAIPromptJSON, 
   getResumeAIResponseText, 
-  generateResumeAIPromptText 
+  generateResumeAIPromptText,
+  generateAIResumeJSONPrompt,
+  generateAIResumeJSON
 } from "@/components/ai/aiPrompt";
+import { v4 as uuidv4 } from "uuid";
 import { Button } from "@/components/ui/button";
 import { 
   Briefcase, 
@@ -35,6 +38,7 @@ type JobAd = {
   jobTitle: string;
   jobDescription: string;
   dateSubmitted: Timestamp;
+  jobID: string;
 };
 
 type DownloadResumeButtonProps = {
@@ -109,9 +113,30 @@ export default function ViewJobAdsPage() {
         const resumeInfo = JSON.stringify(userSnap.data().resumeFields);
         const jobAdText = jobAds[idx].jobDescription;
         // const result = await getResumeAIResponseText(generateResumeAIPromptJSON, resumeInfo, jobAdText);
-        const JSONResume = await getResumeAIResponseJSON(generateResumeAIPromptJSON, resumeInfo, jobAdText);
-        const result = await getResumeAIResponseText(generateResumeAIPromptText, JSONResume);
-        setNewResume(result);
+        // const JSONResume = await getResumeAIResponseJSON(generateResumeAIPromptJSON, resumeInfo, jobAdText);
+        const result = await generateAIResumeJSON(generateAIResumeJSONPrompt, resumeInfo, jobAdText);
+        if (!result) {
+          throw new Error("AI returned empty response while generating JSON resume");
+        }
+        console.log(result);
+        // Generate a unique ID for the new resume and 
+        // append it to the array of generated resumes on Cloud Firestore
+        const {fullName, contact, summary, workExperience, education, skills: desc} = JSON.parse(result);
+        const JSONResume = {
+          jobID: jobAds[idx].jobID, // So the resume can be associated with the job ad
+          resumeID: uuidv4(),
+          fullName,
+          contact,
+          summary,
+          workExperience,
+          education,
+          skills: desc
+        };
+        console.log(JSONResume);
+        await updateDoc(userRef, {generatedResumes: arrayUnion(JSONResume)});
+        // The AI doesn't need to know about the jobID or resumeID when generating an unstructured text resume
+        const finalResult = await getResumeAIResponseText(generateResumeAIPromptText, result);
+        setNewResume(finalResult);
         setStatus("Resume generated!");
         setTimeout(() => setStatus(null), 3000);
       }
@@ -138,8 +163,30 @@ export default function ViewJobAdsPage() {
       if (userSnap.exists() && userSnap.data().resumeFields) {
         const resumeInfo = JSON.stringify(userSnap.data().resumeFields);
         const jobAdText = jobAds[idx].jobDescription;
-        const result = await getResumeAIResponseJSON(generateResumeAIPromptJSON, resumeInfo, jobAdText);
-        setNewResume(result);
+        // const result = await getResumeAIResponseJSON(generateResumeAIPromptJSON, resumeInfo, jobAdText);
+        const result = await generateAIResumeJSON(generateAIResumeJSONPrompt, resumeInfo, jobAdText);
+        // console.log(result);
+        if (!result) {
+          throw new Error("AI returned empty response while generating resume");
+        }
+        // Generate a unique ID for the new resume and 
+        // append it to the array of generated resumes on Cloud Firestore
+        const {fullName, contact, summary, workExperience, education, skills: desc} = JSON.parse(result);
+        const newJSONResume = {
+          jobID: jobAds[idx].jobID, // So the resume can be associated with the job ad
+          resumeID: uuidv4(),
+          fullName,
+          contact,
+          summary,
+          workExperience,
+          education,
+          skills: desc
+        };
+        console.log(newJSONResume);
+        await updateDoc(userRef, {generatedResumes: arrayUnion(newJSONResume)});
+
+        // setNewResume(result);
+        setNewResume(JSON.stringify(newJSONResume, null, 2));
         setStatus("Resume generated!");
         setTimeout(() => setStatus(null), 3000);
       }

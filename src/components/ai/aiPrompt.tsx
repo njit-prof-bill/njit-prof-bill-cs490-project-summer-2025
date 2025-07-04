@@ -1,6 +1,6 @@
 "use client";
 
-import { model } from "@/lib/firebase";
+import { model, jobAdParseModel, resumeModel } from "@/lib/firebase";
 import { doc, getDoc, updateDoc, writeBatch, arrayUnion } from "firebase/firestore";
 
 export const AIPrompt = `Please take this text corpus submitted by a user and parse the following information from it:
@@ -278,6 +278,93 @@ export async function getResumeAIResponseText(prompt: string, JSONText: string) 
 
     console.log(finalResult);
     return finalResult;
+  } catch (error) {
+    console.error("Error generating resume: ", error);
+    return "";
+  }
+}
+
+// Used with jobAdParseModel (which is designed to return responses strictly in JSON format)
+export const parseJobAdJSONPrompt = `
+Parse the following information from the text of a job ad:
+- The name of the company in the job ad.
+- The job title of the job ad.
+- The full job description of the job ad.
+
+Return the result as a strict JSON object with the following structure:
+
+*** Start of Job Ad JSON Structure ***
+| Field | Type | Description |
+|-------|------|-------------|
+| companyName | String | The name of the company in the job ad. |
+| jobTitle | String | The job title of the job ad. |
+| jobDescription | String | The full job description of the job ad. |
+*** End of Job Ad JSON Structure ***
+`
+
+// Used with jobAdParseModel (which is designed to return responses strictly in JSON format)
+export async function AIParseJobAdJSON(prompt: string, jobAdText: string) {
+  try {
+    const fullPrompt = prompt + `\nText of the job ad:\n` + `\n${jobAdText}\n`;
+    const result = await jobAdParseModel.generateContent(fullPrompt);
+    const response = result.response.text();
+    return response;
+  } catch (error) {
+    console.error("Error parsing job ad: ", error);
+    return "";
+  }
+}
+
+// Used with resumeModel (which is designed to return responses strictly in JSON format)
+export const generateAIResumeJSONPrompt = `
+Use the following information submitted by a user to generate a tailored resume:
+
+1. A JSON object representing the user's information
+2. Text from a job ad
+
+Please return your response as a strict JSON object in the following format:
+
+*** Start of Resume JSON Structure ***
+| Field | Type | Description |
+|-------|------|-------------|
+| fullName | String | Full name of the user. |
+| contact | Object | User's contact details. |
+| contact.email | Array of Strings | Email addresses. |
+| contact.phone | Array of Strings | Phone numbers (optional; also should have the format: XXX-XXX-XXXX with X being a number from 0 to 9). |
+| contact.location | String | City and state or country (optional). |
+| summary | String | Professional summary (1-2 paragraphs). |
+| workExperience | Array of Objects | List of work experiences, ordered most recent first. |
+| workExperience[].jobTitle | String | Job title. |
+| workExperience[].company | String | Company name. |
+| workExperience[].startDate | String | Start date (format: YYYY-MM). |
+| workExperience[].endDate | String | End date (or \"Present\"). |
+| workExperience[].jobSummary | String | Summary of the job role. |
+| workExperience[].responsibilities | Array of Strings | Bullet points of responsibilities/accomplishments. |
+| education | Array of Objects | Educational qualifications, ordered by most recent first. |
+| education[].degree | String | Degree title (e.g., \"Bachelor of Science in Computer Science\"). |
+| education[].institution | String | Name of the school or university. |
+| education[].startDate | String | Start date (format: YYYY-MM). |
+| education[].endDate | String | End date (or \"Present\"). |
+| education[].gpa | String | GPA if available (optional). |
+| skills | Array of Strings | List of skills. |
+*** End of Resume JSON Structure ***
+
+Do not include any explanation, markdown, rich text, or commentary in your response.
+`;
+
+// Used with resumeModel (which is designed to return responses strictly in JSON format)
+export async function generateAIResumeJSON(prompt: string, JSONText: string, jobAdText: string) {
+  // prompt: AI prompt
+  // JSONText: text of JSON generated resume
+  try {
+    const fullPrompt = prompt 
+                       + `\nText of the JSON object:\n` 
+                       + `\n${JSONText}\n`
+                       + `\nText of the job ad:\n`
+                       + `\n${jobAdText}\n`;
+    const result = await resumeModel.generateContent(fullPrompt);
+    const response = result.response.text();
+    return response;
   } catch (error) {
     console.error("Error generating resume: ", error);
     return "";
