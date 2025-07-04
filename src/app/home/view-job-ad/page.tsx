@@ -13,12 +13,14 @@ import {
   generateAIResumeJSONPrompt,
   generateAIResumeJSON
 } from "@/components/ai/aiPrompt";
+import { v4 as uuidv4 } from "uuid";
 
 type JobAd = {
   companyName: string;
   jobTitle: string;
   jobDescription: string;
   dateSubmitted: Timestamp;
+  jobID: string;
 };
 
 type DownloadResumeButtonProps = {
@@ -137,7 +139,25 @@ export default function ViewJobAdsPage() {
         const jobAdText = jobAds[idx].jobDescription;
         // const result = await getResumeAIResponseJSON(generateResumeAIPromptJSON, resumeInfo, jobAdText);
         const result = await generateAIResumeJSON(generateAIResumeJSONPrompt, resumeInfo, jobAdText);
-        console.log(result);
+        // console.log(result);
+        if (!result) {
+          throw new Error("AI returned empty response while generating resume");
+        }
+        // Generate a unique ID for the new resume and 
+        // append it to the array of generated resumes on Cloud Firestore
+        const {fullName, contact, summary, workExperience, education, skills: desc} = JSON.parse(result);
+        const newJSONResume = {
+          jobID: jobAds[idx].jobID,
+          resumeID: uuidv4(),
+          fullName,
+          contact,
+          summary,
+          workExperience,
+          education,
+          skills: desc
+        };
+        console.log(newJSONResume);
+
         setNewResume(result);
         setStatus("Resume generated!");
         setTimeout(() => setStatus(null), 3000);
