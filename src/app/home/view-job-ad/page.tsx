@@ -159,7 +159,8 @@ export default function ViewJobAdsPage() {
         console.log(newJSONResume);
         await updateDoc(userRef, {generatedResumes: arrayUnion(newJSONResume)});
 
-        setNewResume(result);
+        // setNewResume(result);
+        setNewResume(JSON.stringify(newJSONResume, null, 2));
         setStatus("Resume generated!");
         setTimeout(() => setStatus(null), 3000);
       }
