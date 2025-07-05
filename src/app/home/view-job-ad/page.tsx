@@ -61,7 +61,6 @@ type generatedResume = {
     gpa: string;
   }[];
   skills: string[];
-  applied: boolean;
 };
 
 type JobAd = {
@@ -77,10 +76,9 @@ type ApplyButtonProps = {
   user: User | null;
   resumeRecord: generatedResume | null;
   jobAd: JobAd;
-  jobID: string;
 };
 
-function ApplyButton({user, resumeRecord, jobAd, jobID}: ApplyButtonProps) {
+function ApplyButton({user, resumeRecord, jobAd}: ApplyButtonProps) {
   // If the user clicks it, mark the corresponding job ad as "applied",
   // and then upload the resume to the user's database record.
   const [uploading, setUploading] = useState(false);
@@ -88,6 +86,7 @@ function ApplyButton({user, resumeRecord, jobAd, jobID}: ApplyButtonProps) {
     if (!user || !resumeRecord) return;
     try {
       setUploading(true);
+      const userRef = doc(db, "users", user.uid);
     } catch (error) {
       console.error("Error saving resume: ", error);
     } finally {
@@ -195,7 +194,6 @@ export default function ViewJobAdsPage() {
           workExperience: workExperience,
           education: education,
           skills: skills,
-          applied: false,
         };
         console.log(JSONResume);
         setNewResumeRecord(JSONResume);
@@ -265,7 +263,6 @@ export default function ViewJobAdsPage() {
           workExperience: workExperience,
           education: education,
           skills: skills,
-          applied: false,
         };
         console.log(newJSONResume);
         setNewResumeRecord(newJSONResume);

@@ -24,6 +24,7 @@ type JobAdEntry = {
   jobTitle: string;
   jobDescription: string;
   dateSubmitted: Timestamp;
+  applied: boolean;
 };
 
 export default function UploadJobAdPage() {
@@ -61,12 +62,13 @@ export default function UploadJobAdPage() {
       if (userSnap.exists() && Array.isArray(userSnap.data().jobAds)) {
         jobAds = userSnap.data().jobAds;
       }
-      const newJobAd = {
+      const newJobAd: JobAdEntry = {
         jobID: uuidv4(), // Generate a unique ID
         companyName,
         jobTitle,
         jobDescription: desc,
         dateSubmitted: Timestamp.now(),
+        applied: false,
       };
       const newList = [...jobAds, newJobAd];
       await updateDoc(userRef, { jobAds: newList });
