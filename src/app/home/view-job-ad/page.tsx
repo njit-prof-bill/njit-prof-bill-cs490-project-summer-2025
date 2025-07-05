@@ -355,6 +355,7 @@ export default function ViewJobAdsPage() {
       setRefresh((r) => !r);
     } catch (error) {
       console.error("Error marking job as applied: ", error);
+      setStatus(`Error occurred while recording job application: ${(error as Error).message || String(error)}`);
     } finally {
       setApplying(false);
     }
