@@ -145,6 +145,7 @@ export default function ViewJobAdsPage() {
 
   const [generatingText, setGeneratingText] = useState(false); // Track whether plain text resume is being generated
   const [generatingJSON, setGeneratingJSON] = useState(false); // Track whether JSON resume is being generated
+  const [applying, setApplying] = useState(false); // Track whether job application is being recorded
   const [generated, setGenerated] = useState(false); // Track whether resume was successfully generated
   // const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null); // Track status message related to resume generation
@@ -335,6 +336,7 @@ export default function ViewJobAdsPage() {
   const handleApply = async () => {
     if (selectedIndex === null || !user) return;
     try {
+      setApplying(true);
       // Mark the job ad as applied
       const updatedAds = [...jobAds];
       updatedAds[selectedIndex].applied = true;
@@ -347,10 +349,14 @@ export default function ViewJobAdsPage() {
       // Save the generated resume to the database
       await updateDoc(doc(db, "users", user.uid), { generatedResumes: arrayUnion(newResumeRecord) });
       console.log("Resume saved to database.");
+
+      setStatus("Job marked as \"applied\"!");
+      setTimeout(() => setStatus(null), 3000);
       setRefresh((r) => !r);
     } catch (error) {
       console.error("Error marking job as applied: ", error);
-      return;
+    } finally {
+      setApplying(false);
     }
   };
 
@@ -662,11 +668,21 @@ export default function ViewJobAdsPage() {
                           fileName={`${jobAds[selectedIndex].jobTitle}.${resumeFormat === "json" ? "json" : "txt"}`} 
                         />
                         <Button
+                          disabled={applying}
                           onClick={handleApply}
                           className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
                         >
-                          <Check />
-                          I applied with this resume
+                          {applying ? (
+                            <>
+                              <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                              Saving...
+                            </>
+                          ) : (
+                            <>
+                              <Check />
+                              I applied with this resume
+                            </>
+                          )}
                         </Button>
                       </div>
                       <div className="bg-white dark:bg-gray-900 p-4 rounded border border-gray-200 dark:border-gray-700 max-h-64 overflow-auto">
