@@ -72,37 +72,39 @@ type JobAd = {
   applied: boolean;
 };
 
-type ApplyButtonProps = {
-  user: User | null;
-  resumeRecord: generatedResume | null;
-  jobAd: JobAd;
-};
+// type ApplyButtonProps = {
+//   user: User | null;
+//   resumeRecord: generatedResume | null;
+//   jobAd: JobAd;
+// };
 
-function ApplyButton({user, resumeRecord, jobAd}: ApplyButtonProps) {
-  // If the user clicks it, mark the corresponding job ad as "applied",
-  // and then upload the resume to the user's database record.
-  const [uploading, setUploading] = useState(false);
-  async function handleClick(event: React.MouseEvent<HTMLButtonElement>) {
-    if (!user || !resumeRecord) return;
-    try {
-      setUploading(true);
-      const userRef = doc(db, "users", user.uid);
-    } catch (error) {
-      console.error("Error saving resume: ", error);
-    } finally {
-      setUploading(false);
-    }
-  }
-  return (
-    <Button
-      onClick={handleClick}
-      className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
-    >
-      <Check />
-      I applied with this resume
-    </Button>
-  );
-}
+// function ApplyButton({user, resumeRecord, jobAd}: ApplyButtonProps) {
+//   // If the user clicks it, mark the corresponding job ad as "applied",
+//   // and then upload the resume to the user's database record.
+//   const [uploading, setUploading] = useState(false);
+//   async function handleClick(event: React.MouseEvent<HTMLButtonElement>) {
+//     if (!user || !resumeRecord) return;
+//     try {
+//       setUploading(true);
+//       const userRef = doc(db, "users", user.uid);
+//       // Update the job ad to indicate the user applied to it with the generated resume.
+//       // Save that update to the database.
+//     } catch (error) {
+//       console.error("Error saving resume: ", error);
+//     } finally {
+//       setUploading(false);
+//     }
+//   }
+//   return (
+//     <Button
+//       onClick={handleClick}
+//       className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
+//     >
+//       <Check />
+//       I applied with this resume
+//     </Button>
+//   );
+// }
 
 type DownloadResumeButtonProps = {
   text: string;
@@ -328,6 +330,28 @@ export default function ViewJobAdsPage() {
     await updateDoc(doc(db, "users", user.uid), { jobAds: updatedAds });
     setEditIndex(null);
     setRefresh((r) => !r);
+  };
+
+  const handleApply = async () => {
+    if (selectedIndex === null || !user) return;
+    try {
+      // Mark the job ad as applied
+      const updatedAds = [...jobAds];
+      updatedAds[selectedIndex].applied = true;
+      updatedAds[selectedIndex].dateSubmitted = Timestamp.now();
+
+      // Record the job ad as applied in the database
+      await updateDoc(doc(db, "users", user.uid), { jobAds: updatedAds });
+      console.log("Job ad marked as 'applied'.");
+
+      // Save the generated resume to the database
+      await updateDoc(doc(db, "users", user.uid), { generatedResumes: arrayUnion(newResumeRecord) });
+      console.log("Resume saved to database.");
+      setRefresh((r) => !r);
+    } catch (error) {
+      console.error("Error marking job as applied: ", error);
+      return;
+    }
   };
 
   return (
@@ -637,6 +661,13 @@ export default function ViewJobAdsPage() {
                           text={newResume} 
                           fileName={`${jobAds[selectedIndex].jobTitle}.${resumeFormat === "json" ? "json" : "txt"}`} 
                         />
+                        <Button
+                          onClick={handleApply}
+                          className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
+                        >
+                          <Check />
+                          I applied with this resume
+                        </Button>
                       </div>
                       <div className="bg-white dark:bg-gray-900 p-4 rounded border border-gray-200 dark:border-gray-700 max-h-64 overflow-auto">
                         <pre className="text-sm text-gray-900 dark:text-white whitespace-pre-wrap font-mono">
