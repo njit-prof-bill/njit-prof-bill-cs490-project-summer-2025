@@ -29,7 +29,21 @@ interface EducationFormProps {
   onCancel: () => void;
   title: string;
   saveText: string;
+  disabled?: boolean;
 }
+
+const isDateRangeValid = (startDate: string, endDate: string): boolean => {
+  if (!startDate || !endDate || endDate.toLowerCase() === 'present') {
+    return true;
+  }
+
+  const parsedStart = Date.parse(startDate);
+  const parsedEnd = Date.parse(endDate);
+
+  if (isNaN(parsedStart) || isNaN(parsedEnd)) return true;
+
+  return parsedStart <= parsedEnd;
+};
 
 // Move EducationForm outside the main component to prevent re-creation
 const EducationForm: React.FC<EducationFormProps> = React.memo(({ 
@@ -46,6 +60,8 @@ const EducationForm: React.FC<EducationFormProps> = React.memo(({
       e.preventDefault();
     }
   };
+
+  const isValidDateRange = isDateRangeValid(educationData.startDate, educationData.endDate);
 
   return (
     <div className="p-4 bg-gray-700 rounded-md space-y-3">
@@ -99,6 +115,14 @@ const EducationForm: React.FC<EducationFormProps> = React.memo(({
             className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
+
+        {!isValidDateRange && (
+            <div className="md:col-span-2">
+              <p className="text-red-400 text-sm mt-1">
+                Start date must be before or equal to end date.
+              </p>
+            </div>
+          )}
         
         <div className="md:col-span-2">
           <label className="block text-sm font-medium mb-1 text-gray-200">GPA</label>
@@ -117,7 +141,7 @@ const EducationForm: React.FC<EducationFormProps> = React.memo(({
         <button
           type="button"
           onClick={onSave}
-          disabled={!educationData.degree.trim() || !educationData.institution.trim()}
+          disabled={!educationData.degree.trim() || !educationData.institution.trim() || !isValidDateRange}
           className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors"
         >
           {saveText}
@@ -460,6 +484,7 @@ const EducationEditor: React.FC<EducationEditorProps> = ({ onSuccess, onError })
                             onChange={handleEditingEducationChange}
                             onSave={saveEdit}
                             onCancel={cancelEdit}
+                            disabled={(!isDateRangeValid(editingEducation.startDate, editingEducation.endDate))}
                             title="Edit Education"
                             saveText="Save Changes"
                           />
@@ -518,7 +543,11 @@ const EducationEditor: React.FC<EducationEditorProps> = ({ onSuccess, onError })
           <button
             type="button"
             onClick={saveEducation}
-            disabled={saving || loading}
+            disabled={
+              saving ||
+              loading ||
+              (editingIndex !== null && !isDateRangeValid(editingEducation.startDate, editingEducation.endDate))
+            }
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2 transition-colors"
           >
             {saving ? (
