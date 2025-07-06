@@ -150,7 +150,16 @@ The JSON MUST follow this exact structure:
   "skills": ["", "", "", "", "", ""]
 }
 
-RETURN ONLY THE VALID JSON OBJECT - NOTHING ELSE.`;
+RETURN ONLY THE VALID JSON OBJECT - NOTHING ELSE.
+
+If you find multiple emails you can structure the email and phone number sections as such:
+{"email":
+  {"primary":"",
+  "other":""},
+"phone":
+  {"primary":"",
+  "other":""},
+`;
 
   const combinePrompt = `You are a data consolidation assistant. Your task is to combine multiple JSON objects containing resume data into a single, comprehensive JSON object.
 
@@ -202,6 +211,14 @@ Expected output structure (return only this JSON format):
 }
 
 RETURN ONLY THE COMBINED JSON OBJECT - NO OTHER TEXT WHATSOEVER.
+
+If you find multiple emails you can structure the email and phone number sections as such:
+{"email":
+  {"primary":"",
+  "other":""},
+"phone":
+  {"primary":"",
+  "other":""},
 
 Combine the following JSON objects:`;
 
