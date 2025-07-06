@@ -152,7 +152,7 @@ The JSON MUST follow this exact structure:
 
 RETURN ONLY THE VALID JSON OBJECT - NOTHING ELSE.
 
-If you find multiple email addresses or phone numbers in the document, use the following JSON structure to store them:
+When extracting emails and phone numbers, use the following JSON structure:
 
 {
   "email": {
@@ -165,13 +165,29 @@ If you find multiple email addresses or phone numbers in the document, use the f
   }
 }
 
-- Use "primary" for the first instance found.
-- Use "other" for a second instance, if present.
+Rules:
+1. Place the first detected email/phone number in the "primary" field.
+2. Place the second detected email/phone number in the "other" field.
+3. If more than two email or phone numbers are detected, DO NOT nest additional data inside "other".
+4. Instead, add new keys directly at the same level using unique labels such as:
+   - "Email 1", "Email 2", "Phone Number 1", "Phone Number 2", etc.
+5. The email and phone sections must remain **flat objects** (no nested objects inside "other" or any other key).
 
-If more than two email addresses or phone numbers are detected, continue using uniquely numbered keys such as:
-"Email 1", "Email 2", "Phone Number 1", "Phone Number 2", and so on.
+Example of correct structure with multiple entries:
 
-Ensure that each additional value beyond the original structure is given a clearly incremented and unique label.
+{
+  "email": {
+    "primary": "",
+    "other": "",
+    "Email 1": "",
+    "Email 2": ""
+  },
+  "phone": {
+    "primary": "",
+    "other": "",
+    "Phone Number 1": ""
+  }
+}
 
 `;
 
@@ -226,7 +242,7 @@ Expected output structure (return only this JSON format):
 
 RETURN ONLY THE COMBINED JSON OBJECT - NO OTHER TEXT WHATSOEVER.
 
-If you find multiple email addresses or phone numbers in the document, use the following JSON structure to store them:
+When extracting emails and phone numbers, use the following JSON structure:
 
 {
   "email": {
@@ -239,14 +255,29 @@ If you find multiple email addresses or phone numbers in the document, use the f
   }
 }
 
-- Use "primary" for the first instance found.
-- Use "other" for a second instance, if present.
+Rules:
+1. Place the first detected email/phone number in the "primary" field.
+2. Place the second detected email/phone number in the "other" field.
+3. If more than two email or phone numbers are detected, DO NOT nest additional data inside "other".
+4. Instead, add new keys directly at the same level using unique labels such as:
+   - "Email 1", "Email 2", "Phone Number 1", "Phone Number 2", etc.
+5. The email and phone sections must remain **flat objects** (no nested objects inside "other" or any other key).
 
-If more than two email addresses or phone numbers are detected, continue using uniquely numbered keys such as:
-"Email 1", "Email 2", "Phone Number 1", "Phone Number 2", and so on.
+Example of correct structure with multiple entries:
 
-Ensure that each additional value beyond the original structure is given a clearly incremented and unique label.
-
+{
+  "email": {
+    "primary": "",
+    "other": "",
+    "Email 1": "",
+    "Email 2": ""
+  },
+  "phone": {
+    "primary": "",
+    "other": "",
+    "Phone Number 1": ""
+  }
+}
 
 Combine the following JSON objects:`;
 
