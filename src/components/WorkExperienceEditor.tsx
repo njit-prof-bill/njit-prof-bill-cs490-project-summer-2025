@@ -383,6 +383,8 @@ const WorkExperienceEditor: React.FC<WorkExperienceEditorProps> = ({ onSuccess, 
         endDate: '',
         responsibilities: []
       });
+    } else {
+      saveWorkExperience();
     }
   }, [editingIndex, editingWorkExperience]);
 
@@ -577,7 +579,7 @@ const WorkExperienceEditor: React.FC<WorkExperienceEditorProps> = ({ onSuccess, 
           </button>
           <button
             type="button"
-            onClick={saveWorkExperience}
+            onClick={saveEdit}                     
             disabled={saving || loading}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2 transition-colors"
           >
