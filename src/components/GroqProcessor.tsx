@@ -152,13 +152,27 @@ The JSON MUST follow this exact structure:
 
 RETURN ONLY THE VALID JSON OBJECT - NOTHING ELSE.
 
-If you find multiple emails you can structure the email and phone number sections as such:
-{"email":
-  {"primary":"",
-  "other":""},
-"phone":
-  {"primary":"",
-  "other":""},
+If you find multiple email addresses or phone numbers in the document, use the following JSON structure to store them:
+
+{
+  "email": {
+    "primary": "",
+    "other": ""
+  },
+  "phone": {
+    "primary": "",
+    "other": ""
+  }
+}
+
+- Use "primary" for the first instance found.
+- Use "other" for a second instance, if present.
+
+If more than two email addresses or phone numbers are detected, continue using uniquely numbered keys such as:
+"Email 1", "Email 2", "Phone Number 1", "Phone Number 2", and so on.
+
+Ensure that each additional value beyond the original structure is given a clearly incremented and unique label.
+
 `;
 
   const combinePrompt = `You are a data consolidation assistant. Your task is to combine multiple JSON objects containing resume data into a single, comprehensive JSON object.
@@ -212,13 +226,27 @@ Expected output structure (return only this JSON format):
 
 RETURN ONLY THE COMBINED JSON OBJECT - NO OTHER TEXT WHATSOEVER.
 
-If you find multiple emails you can structure the email and phone number sections as such:
-{"email":
-  {"primary":"",
-  "other":""},
-"phone":
-  {"primary":"",
-  "other":""},
+If you find multiple email addresses or phone numbers in the document, use the following JSON structure to store them:
+
+{
+  "email": {
+    "primary": "",
+    "other": ""
+  },
+  "phone": {
+    "primary": "",
+    "other": ""
+  }
+}
+
+- Use "primary" for the first instance found.
+- Use "other" for a second instance, if present.
+
+If more than two email addresses or phone numbers are detected, continue using uniquely numbered keys such as:
+"Email 1", "Email 2", "Phone Number 1", "Phone Number 2", and so on.
+
+Ensure that each additional value beyond the original structure is given a clearly incremented and unique label.
+
 
 Combine the following JSON objects:`;
 
