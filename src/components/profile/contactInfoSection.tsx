@@ -1,7 +1,6 @@
-// src/components/profile/ContactInfoSection.tsx
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { Mail, Phone, Plus, X } from "lucide-react";
@@ -9,12 +8,18 @@ import { useProfile, ContactInfo } from "@/context/profileContext";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
+import { countries } from "@/lib/countries";
+
 
 const ContactInfoSection: React.FC = () => {
-  // pull out your actual context API
   const { activeProfile: profile, updateContactInfo } = useProfile();
   const [showAdditionalEmails, setShowAdditionalEmails] = useState(false);
   const [showAdditionalPhones, setShowAdditionalPhones] = useState(false);
+
+  const [primaryCountryCode, setPrimaryCountryCode] = useState("+1"); // Default US
+  const [additionalCountryCodes, setAdditionalCountryCodes] = useState<string[]>(
+    (profile.contactInfo.additionalPhones || []).map(() => "+1")
+  );
 
   const {
     register,
@@ -22,6 +27,7 @@ const ContactInfoSection: React.FC = () => {
     formState: { errors },
     setValue,
     watch,
+    clearErrors,
   } = useForm<ContactInfo>({
     defaultValues: profile.contactInfo,
   });
@@ -29,13 +35,46 @@ const ContactInfoSection: React.FC = () => {
   const additionalEmails = watch("additionalEmails") || [];
   const additionalPhones = watch("additionalPhones") || [];
 
+  // Auto-detect country code from loaded phone
+  useEffect(() => {
+    const phone = profile.contactInfo?.phone || "";
+    if (!phone) return;
+
+    let normalized = phone.replace(/\s+/g, "").replace(/[^0-9+]/g, "");
+    let found = false;
+
+    if (normalized.startsWith("+")) {
+      for (const country of countries) {
+        if (normalized.startsWith(country.code)) {
+          setPrimaryCountryCode(country.code);
+          const local = normalized.slice(country.code.length).replace(/^0+/, "");
+          setValue("phone", local);
+          found = true;
+          break;
+        }
+      }
+    }
+
+    if (!found) {
+      setPrimaryCountryCode("+1");
+      setValue("phone", normalized);
+    }
+  }, [profile.contactInfo?.phone, setValue]);
+
   const onSubmit = (data: ContactInfo) => {
-    // this will merge into profile.contactInfo
-    updateContactInfo(data);
+    const fullPhone = `${primaryCountryCode}${data.phone}`;
+    const fullAdditionalPhones = additionalPhones.map((p, i) => {
+      return `${additionalCountryCodes[i]}${p}`;
+    });
+    updateContactInfo({
+      ...data,
+      phone: fullPhone,
+      additionalPhones: fullAdditionalPhones,
+    });
   };
 
   const addAdditionalEmail = () => {
-    const newEmails = [...(profile.contactInfo.additionalEmails || []), ""];
+    const newEmails = [...additionalEmails, ""];
     updateContactInfo({ additionalEmails: newEmails });
     setValue("additionalEmails", newEmails);
   };
@@ -54,31 +93,45 @@ const ContactInfoSection: React.FC = () => {
   };
 
   const addAdditionalPhone = () => {
-    const newPhones = [...(profile.contactInfo.additionalPhones || []), ""];
+    const newPhones = [...additionalPhones, ""];
+    const newCodes = [...additionalCountryCodes, "+1"];
     updateContactInfo({ additionalPhones: newPhones });
     setValue("additionalPhones", newPhones);
+    setAdditionalCountryCodes(newCodes);
   };
 
   const removeAdditionalPhone = (index: number) => {
     const newPhones = additionalPhones.filter((_, i) => i !== index);
+    const newCodes = additionalCountryCodes.filter((_, i) => i !== index);
     updateContactInfo({ additionalPhones: newPhones });
     setValue("additionalPhones", newPhones);
+    setAdditionalCountryCodes(newCodes);
   };
 
   const updateAdditionalPhone = (index: number, value: string) => {
+    let cleaned = value.trim();
+
+    if (cleaned.startsWith("+")) {
+      const found = countries.find((c) => cleaned.startsWith(c.code));
+      if (found) {
+        const newCodes = [...additionalCountryCodes];
+        newCodes[index] = found.code;
+        setAdditionalCountryCodes(newCodes);
+
+        cleaned = cleaned.slice(found.code.length).replace(/^0+/, "");
+      }
+    }
+
     const newPhones = [...additionalPhones];
-    newPhones[index] = value;
+    newPhones[index] = cleaned;
     updateContactInfo({ additionalPhones: newPhones });
     setValue("additionalPhones", newPhones);
   };
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-      {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold text-foreground mb-2">
-          Contact Information
-        </h2>
+        <h2 className="text-2xl font-bold text-foreground mb-2">Contact Information</h2>
         <p className="text-muted-foreground">
           Manage your contact details and communication preferences
         </p>
@@ -91,6 +144,9 @@ const ContactInfoSection: React.FC = () => {
           <div className="relative">
             <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
             <Input
+              type="email"
+              className="pl-10"
+              placeholder="your.email@example.com"
               {...register("email", {
                 required: "Email is required",
                 pattern: {
@@ -98,9 +154,10 @@ const ContactInfoSection: React.FC = () => {
                   message: "Invalid email address",
                 },
               })}
-              type="email"
-              className="pl-10"
-              placeholder="your.email@example.com"
+              onChange={(e) => {
+                setValue("email", e.target.value);
+                if (errors.email) clearErrors("email");
+              }}
             />
           </div>
           {errors.email && (
@@ -162,13 +219,58 @@ const ContactInfoSection: React.FC = () => {
         {/* Primary Phone */}
         <div className="space-y-2">
           <Label htmlFor="phone">Primary Phone Number *</Label>
-          <div className="relative">
-            <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          <div className="relative flex">
+            <select
+              value={primaryCountryCode}
+              onChange={(e) => setPrimaryCountryCode(e.target.value)}
+              className="
+                rounded-l
+                border
+                border-gray-300
+                bg-gray-50
+                text-gray-700
+                dark:bg-zinc-800
+                dark:text-white
+                dark:border-zinc-700
+                px-2
+                focus:outline-none
+              "
+            >
+              {countries.map((country) => (
+                <option key={country.code} value={country.code}>
+                  {country.emoji} {country.label} ({country.code})
+                </option>
+              ))}
+            </select>
             <Input
-              {...register("phone", { required: "Phone number is required" })}
               type="tel"
-              className="pl-10"
-              placeholder="(555) 123-4567"
+              className="rounded-l-none"
+              placeholder={
+                primaryCountryCode === "+1" ? "(555) 123-4567" : "Enter phone number"
+              }
+              {...register("phone", {
+                required: "Phone number is required",
+                validate: (value) => {
+                  const digits = value.replace(/\D/g, "");
+                  if (digits.length < 7) return "Phone number must have at least 7 digits";
+                  if (digits.length > 15) return "Phone number must have at most 15 digits";
+                  return true;
+                },
+              })}
+              onChange={(e) => {
+                let value = e.target.value.trim();
+
+                if (value.startsWith("+")) {
+                  const found = countries.find((c) => value.startsWith(c.code));
+                  if (found) {
+                    setPrimaryCountryCode(found.code);
+                    value = value.slice(found.code.length).replace(/^0+/, "");
+                  }
+                }
+
+                setValue("phone", value);
+                if (errors.phone) clearErrors("phone");
+              }}
             />
           </div>
           {errors.phone && (
@@ -193,14 +295,39 @@ const ContactInfoSection: React.FC = () => {
             <div className="space-y-2">
               {additionalPhones.map((phone, i) => (
                 <div key={i} className="flex items-center space-x-2">
-                  <div className="flex-1 relative">
-                    <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <div className="flex relative w-full">
+                    <select
+                      value={additionalCountryCodes[i]}
+                      onChange={(e) => {
+                        const newCodes = [...additionalCountryCodes];
+                        newCodes[i] = e.target.value;
+                        setAdditionalCountryCodes(newCodes);
+                      }}
+                      className="
+                        rounded-l
+                        border
+                        border-gray-300
+                        bg-gray-50
+                        text-gray-700
+                        dark:bg-zinc-800
+                        dark:text-white
+                        dark:border-zinc-700
+                        px-2
+                        focus:outline-none
+                      "
+                    >
+                      {countries.map((country) => (
+                        <option key={country.code} value={country.code}>
+                          {country.emoji} {country.label} ({country.code})
+                        </option>
+                      ))}
+                    </select>
                     <Input
                       type="tel"
                       value={phone}
                       onChange={(e) => updateAdditionalPhone(i, e.target.value)}
-                      className="pl-10"
-                      placeholder="(555) 987-6543"
+                      className="rounded-l-none"
+                      placeholder="Enter phone number"
                     />
                   </div>
                   <Button

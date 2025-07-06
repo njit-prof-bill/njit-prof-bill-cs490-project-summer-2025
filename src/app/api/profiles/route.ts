@@ -6,9 +6,11 @@ import { db } from "@/lib/mongodb";
 
 if (!admin.apps.length) {
   admin.initializeApp({
-    credential: admin.credential.cert(
-      JSON.parse(process.env.FIREBASE_ADMIN_KEY!)
-    ),
+    credential: admin.credential.cert({
+      projectId: process.env.FIREBASE_PROJECT_ID,
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+    }),
   });
 }
 
@@ -48,7 +50,7 @@ export async function GET(request: Request) {
     .sort({ createdAt: 1 })
     .toArray();
 
-  // lazy‐create a first profile if none
+  // lazy-create a first profile if none
   if (docs.length === 0) {
     const name = "Profile 1";
     const res = await db.collection("profiles").insertOne({

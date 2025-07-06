@@ -1,7 +1,7 @@
 // src/components/profile/CareerObjectiveSection.tsx
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { Target } from "lucide-react";
@@ -22,17 +22,41 @@ interface ObjectiveForm {
 
 const CareerObjectiveSection: React.FC = () => {
   const { activeProfile, updateCareerObjective } = useProfile();
+  const [text, setText] = useState(activeProfile.careerObjective || "");
+  const [submittedOnce, setSubmittedOnce] = useState(false);
+
   const {
     register,
     handleSubmit,
     formState: { errors },
+    setError,
+    clearErrors,
+    setValue,
   } = useForm<ObjectiveForm>({
     defaultValues: {
       careerObjective: activeProfile.careerObjective,
     },
   });
 
+  useEffect(() => {
+    setValue("careerObjective", text, { shouldValidate: true });
+    if (text.length >= 50) {
+      clearErrors("careerObjective");
+    }
+  }, [text, setValue, clearErrors]);
+
   const onSubmit = (data: ObjectiveForm) => {
+    setSubmittedOnce(true);
+
+    if (text.length < 50) {
+      setError("careerObjective", {
+        type: "manual",
+        message: "Career objective should be at least 50 characters",
+      });
+      return;
+    }
+
+    clearErrors("careerObjective");
     updateCareerObjective(data.careerObjective);
   };
 
@@ -54,30 +78,33 @@ const CareerObjectiveSection: React.FC = () => {
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="space-y-2">
-          <Label htmlFor="careerObjective">
-            Career Objective Statement
-          </Label>
+          <Label htmlFor="careerObjective">Career Objective Statement</Label>
           <div className="relative">
             <Target className="absolute top-3 left-3 h-4 w-4 text-muted-foreground" />
             <Textarea
-              {...register("careerObjective", {
-                required: "Career objective is required",
-                minLength: {
-                  value: 50,
-                  message:
-                    "Career objective should be at least 50 characters",
-                },
-              })}
+              {...register("careerObjective")}
               rows={6}
               className="pl-10 resize-none"
               placeholder="Describe your career goals, what you're looking for in your next role, and how you want to contribute to an organization..."
+              value={text}
+              onChange={(e) => setText(e.target.value)}
             />
           </div>
-          {errors.careerObjective && (
-            <p className="text-sm text-destructive">
-              {errors.careerObjective.message}
+
+          {/* Error + Character Counter */}
+          <div className="flex justify-between text-sm mt-1">
+            {errors.careerObjective && (
+              <p className="text-destructive">{errors.careerObjective.message}</p>
+            )}
+            <p
+              className={`ml-auto ${submittedOnce && text.length < 50
+                ? "text-red-500"
+                : "text-muted-foreground"
+                }`}
+            >
+              {text.length}/50
             </p>
-          )}
+          </div>
         </div>
 
         <Button type="submit" className="w-full">

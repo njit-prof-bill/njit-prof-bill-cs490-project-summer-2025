@@ -20,16 +20,17 @@ function stubbedReadFileSync(
   }
   return originalReadFileSync(path, options as fs.ObjectEncodingOptions);
 }
-// Cast to satisfy all overloads of fs.readFileSync
 fs.readFileSync = stubbedReadFileSync as unknown as typeof fs.readFileSync;
 
 export const config = { api: { bodyParser: false } };
 
 if (!admin.apps.length) {
   admin.initializeApp({
-    credential: admin.credential.cert(
-      JSON.parse(process.env.FIREBASE_ADMIN_KEY!)
-    ),
+    credential: admin.credential.cert({
+      projectId: process.env.FIREBASE_PROJECT_ID,
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+    }),
   });
 }
 
@@ -49,7 +50,6 @@ async function extractText(buffer: Buffer, filename: string): Promise<string> {
       const { text } = await pdfParse(buffer);
       return text;
     } catch {
-      // fallback: raw UTF-8
       return buffer.toString("utf-8");
     }
   } else if (ext === "docx") {
@@ -66,15 +66,34 @@ You are an expert resume parser.
 Respond with NOTHING but a single, valid JSON object matching this interface exactly:
 
 interface ProfileData {
-  contactInfo: { email: string; phone: string; additionalEmails?: string[]; additionalPhones?: string[] };
+  contactInfo: {
+    email: string;
+    phone: string; // MUST include the full international format with "+" prefix (e.g., "+56XXXXXXXXX")
+    additionalEmails?: string[];
+    additionalPhones?: string[];
+  };
   careerObjective: string;
   skills: string[];
-  jobHistory: { company: string; title: string; description: string; startDate: string; endDate: string; accomplishments: string[] }[];
-  education: { school: string; degree: string; dates: string; gpa?: string }[];
+  jobHistory: {
+    company: string;
+    title: string;
+    description: string;
+    startDate: string;
+    endDate: string;
+    accomplishments: string[];
+  }[];
+  education: {
+    school: string;
+    degree: string;
+    dates: string;
+    gpa?: string;
+  }[];
 }
 
-Output only the JSON, no explanation.
-  `.trim();
+VERY IMPORTANT:
+- Format contactInfo.phone as "+[countrycode][restofnumber]" with NO spaces after the "+" (e.g., "+56123456789").
+- Do not include any explanations or formatting outside of the JSON.
+`.trim();
 
   const completion = await aiClient.chat.completions.create({
     model: MODEL,
@@ -95,11 +114,11 @@ Output only the JSON, no explanation.
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
-  const { id: profileId } = await params;
+  // IMPORTANT: Await params to avoid Next.js error
+  const { id: profileId } = await context.params;
 
-  // 1) Auth
   const bearer = request.headers.get("Authorization")?.replace(/^Bearer\s+/, "");
   if (!bearer) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -109,12 +128,10 @@ export async function POST(
     return NextResponse.json({ error: "Invalid token" }, { status: 401 });
   }
 
-  // 2) Validate profileId
   if (!ObjectId.isValid(profileId)) {
     return NextResponse.json({ error: "Bad profile ID" }, { status: 400 });
   }
 
-  // 3) Parse JSON body
   let body: unknown;
   try {
     body = await request.json();
@@ -133,7 +150,6 @@ export async function POST(
     return NextResponse.json({ error: "Bad fileId" }, { status: 400 });
   }
 
-  // 4) Lookup filename
   const fileMeta = await db
     .collection("uploads.files")
     .findOne<{ filename: string }>({ _id: new ObjectId(fileId) });
@@ -141,7 +157,6 @@ export async function POST(
     return NextResponse.json({ error: "File not found" }, { status: 404 });
   }
 
-  // 5) Stream file
   const downloadStream = bucket.openDownloadStream(new ObjectId(fileId));
   const chunks: Buffer[] = [];
   await new Promise<void>((resolve, reject) => {
@@ -151,10 +166,8 @@ export async function POST(
   });
   const buffer = Buffer.concat(chunks);
 
-  // 6) Extract text
   const text = await extractText(buffer, fileMeta.filename);
 
-  // 7) Call AI parser
   let parsed: Partial<ProfileData>;
   try {
     parsed = await parseWithAI(text);
@@ -165,12 +178,10 @@ export async function POST(
     );
   }
 
-  // 8) Save to Mongo
   await db.collection("profiles").updateOne(
     { _id: new ObjectId(profileId), userId: decoded.uid },
     { $set: { data: parsed, updatedAt: new Date() } }
   );
 
-  // 9) Return parsed JSON
   return NextResponse.json(parsed);
 }

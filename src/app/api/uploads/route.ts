@@ -10,9 +10,11 @@ export const config = { api: { bodyParser: false } };
 // init Firebase Admin once
 if (!admin.apps.length) {
   admin.initializeApp({
-    credential: admin.credential.cert(
-      JSON.parse(process.env.FIREBASE_ADMIN_KEY!)
-    ),
+    credential: admin.credential.cert({
+      projectId: process.env.FIREBASE_PROJECT_ID,
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+    }),
   });
 }
 
@@ -96,9 +98,9 @@ export async function POST(request: Request) {
   });
 
   return NextResponse.json({
-    fileId:   uploadStream.id.toString(),
+    fileId: uploadStream.id.toString(),
     filename,
-    type:     typeField,
+    type: typeField,
   });
 }
 
@@ -131,11 +133,11 @@ export async function GET(request: Request) {
 
   // 3) Map to lightweight shape
   const items = docs.map((f) => ({
-    id:        f._id.toString(),
-    filename:  f.filename,
+    id: f._id.toString(),
+    filename: f.filename,
     createdAt: f.uploadDate,
-    type:      f.contentType,
-    order:     f.metadata?.order ?? 0,
+    type: f.contentType,
+    order: f.metadata?.order ?? 0,
   }));
 
   return NextResponse.json(items);
@@ -165,7 +167,10 @@ export async function DELETE(request: Request) {
 
   // 3) Ensure user owns it
   const filesColl = db.collection("uploads.files");
-  const doc = await filesColl.findOne({ _id: new ObjectId(id), "metadata.userId": decoded.uid });
+  const doc = await filesColl.findOne({
+    _id: new ObjectId(id),
+    "metadata.userId": decoded.uid,
+  });
   if (!doc) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
