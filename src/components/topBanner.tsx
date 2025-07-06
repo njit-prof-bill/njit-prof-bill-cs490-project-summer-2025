@@ -54,7 +54,7 @@ export default function TopBanner({ toggleSidePanel }: TopBannerProps) {
     };
 
     return (
-        <header className="bg-stone-200 dark:bg-stone-800 p-4 shadow border-b border-stone-600 flex items-center justify-between">
+        <header className="bg-stone-200 dark:bg-stone-800 p-2 shadow border-b border-stone-600 flex items-center justify-between">
             {/* Left Section: Hamburger Menu, Logo, and Breadcrumb */}
             <div className="flex items-center space-x-4">
                 <button
