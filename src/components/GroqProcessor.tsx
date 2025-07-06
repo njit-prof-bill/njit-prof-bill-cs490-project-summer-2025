@@ -166,12 +166,14 @@ When extracting emails and phone numbers, use the following JSON structure:
 }
 
 Rules:
-1. Place the first detected email/phone number in the "primary" field.
-2. Place the second detected email/phone number in the "other" field.
-3. If more than two email or phone numbers are detected, DO NOT nest additional data inside "other".
-4. Instead, add new keys directly at the same level using unique labels such as:
-   - "Email 1", "Email 2", "Phone Number 1", "Phone Number 2", etc.
-5. The email and phone sections must remain **flat objects** (no nested objects inside "other" or any other key).
+1. Only extract unique emails and phone numbers. Remove any duplicates **before assigning labels**.
+2. After removing duplicates:
+   - Place the first unique value in the "primary" field.
+   - Place the second unique value in the "other" field.
+3. If more than two unique values are found, add new fields at the same level:
+   - "Email 1", "Email 2", "Phone Number 1", etc.
+4. Do NOT nest any values inside the "other" field.
+5. The email and phone sections must be flat key-value objects.
 
 Example of correct structure with multiple entries:
 
@@ -256,12 +258,14 @@ When extracting emails and phone numbers, use the following JSON structure:
 }
 
 Rules:
-1. Place the first detected email/phone number in the "primary" field.
-2. Place the second detected email/phone number in the "other" field.
-3. If more than two email or phone numbers are detected, DO NOT nest additional data inside "other".
-4. Instead, add new keys directly at the same level using unique labels such as:
-   - "Email 1", "Email 2", "Phone Number 1", "Phone Number 2", etc.
-5. The email and phone sections must remain **flat objects** (no nested objects inside "other" or any other key).
+1. Only extract unique emails and phone numbers. Remove any duplicates **before assigning labels**.
+2. After removing duplicates:
+   - Place the first unique value in the "primary" field.
+   - Place the second unique value in the "other" field.
+3. If more than two unique values are found, add new fields at the same level:
+   - "Email 1", "Email 2", "Phone Number 1", etc.
+4. Do NOT nest any values inside the "other" field.
+5. The email and phone sections must be flat key-value objects.
 
 Example of correct structure with multiple entries:
 
