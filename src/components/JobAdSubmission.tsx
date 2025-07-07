@@ -45,6 +45,8 @@ const JobAdSubmission: React.FC = () => {
   const [deleteAd, setDeleteAd] = useState<JobAd | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
+  const [jobUrl, setJobUrl] = useState("");
+  const [isFetchingUrl, setIsFetchingUrl] = useState(false);
 
   // Get Firebase user
   useEffect(() => {
@@ -160,17 +162,43 @@ const JobAdSubmission: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!adText.trim()) {
+    let text = adText.trim();
+    if (!text) {
       setMessage("Please paste or type a job ad.");
       return;
     }
-    setIsAdding(true);
-    // Call backend to parse all fields
+    // Simple URL detection
+    const urlPattern = /^https?:\/\//i;
+    if (urlPattern.test(text)) {
+      setIsAdding(true);
+      setMessage("Fetching job ad from URL...");
+      try {
+        const res = await fetch("/api/fetchJobAdFromUrl", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: text }),
+        });
+        const data = await res.json();
+        if (data?.jobText) {
+          text = data.jobText;
+          // Do NOT setAdText(text); // Do not populate the textarea with the extracted job ad
+        } else {
+          setMessage("Failed to fetch job ad from URL.");
+          setIsAdding(false);
+          return;
+        }
+      } catch (err) {
+        setMessage("Error fetching job ad from URL.");
+        setIsAdding(false);
+        return;
+      }
+    }
+    // Now submit the job ad (whether pasted or fetched)
     try {
       const res = await fetch("/api/jobAd", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user?.uid, jobText: adText })
+        body: JSON.stringify({ userId: user?.uid, jobText: text })
       });
       const data = await res.json();
       if (data && data.id) {
