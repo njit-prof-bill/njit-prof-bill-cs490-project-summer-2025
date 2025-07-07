@@ -61,7 +61,7 @@ export default function TopBanner({ toggleSidePanel, onForceHome }: TopBannerPro
     };
 
     return (
-        <header className="sticky top-0 z-30 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-md rounded-b-2xl mb-4 flex items-center justify-between px-4 md:px-8 py-3 md:py-5 border-b border-indigo-200 dark:border-gray-800">
+        <header className="z-30 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-md rounded-b-2xl mb-4 flex items-center justify-between px-4 md:px-8 py-3 md:py-5 border-b border-indigo-200 dark:border-gray-800">
             {/* Left Section: Hamburger Menu, Logo, and Breadcrumb */}
             <div className="flex items-center space-x-4">
                 <button
