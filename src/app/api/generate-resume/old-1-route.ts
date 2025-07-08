@@ -33,6 +33,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+
+// Additional prompts if they come out too rigid.
+// These give goofy but interesting results:
+
+// - Tailor the resume to fit the JOB REQUIREMENTS as best as possible
+// - Make up qualifications that fit the requirements if you have to
+
+
+
+
+
+
     // Prepare the resume generation prompt for Groq
     const prompt = `Generate a professional resume tailored to the job requirements. Output ONLY the resume content without any introductory text, explanations, or comments.
 
@@ -40,6 +52,7 @@ JOB REQUIREMENTS:
 Title: ${jobData.jobTitle}
 Company: ${jobData.companyName}
 Description: ${jobData.jobDescription}
+
 
 USER DATA:
 ${JSON.stringify(userData, null, 2)}
@@ -70,8 +83,8 @@ OUTPUT ONLY THE RESUME CONTENT - NO ADDITIONAL TEXT OR COMMENTS.`;
         },
       ],
       model: 'llama3-70b-8192',
-      temperature: 0.3,
-      max_tokens: 1500,
+      temperature: 0.3, // Lower temperature for more consistent formatting
+      max_tokens: 1500, // Increased for full resume content
     });
 
     let generatedResume = completion.choices[0]?.message?.content;
@@ -92,7 +105,6 @@ OUTPUT ONLY THE RESUME CONTENT - NO ADDITIONAL TEXT OR COMMENTS.`;
       jobTitle: jobData.jobTitle,
       companyName: jobData.companyName,
       jobId: jobData.id,
-      jobDesc: jobData.jobDescription, // Add the job description string
       generatedAt: new Date().toISOString(),
       userId: userId,
       metadata: {

@@ -1,6 +1,8 @@
 // app/api/generate-resume/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import Groq from 'groq-sdk';
+import { db } from '@/lib/firebase'; // Adjust path to your firebase config
+import { collection, addDoc } from 'firebase/firestore';
 
 // Initialize Groq client
 const groq = new Groq({
@@ -70,8 +72,8 @@ OUTPUT ONLY THE RESUME CONTENT - NO ADDITIONAL TEXT OR COMMENTS.`;
         },
       ],
       model: 'llama3-70b-8192',
-      temperature: 0.3,
-      max_tokens: 1500,
+      temperature: 0.3, // Lower temperature for more consistent formatting
+      max_tokens: 1500, // Increased for full resume content
     });
 
     let generatedResume = completion.choices[0]?.message?.content;
@@ -86,13 +88,16 @@ OUTPUT ONLY THE RESUME CONTENT - NO ADDITIONAL TEXT OR COMMENTS.`;
     // Clean up any remaining unwanted text
     generatedResume = cleanResumeContent(generatedResume);
 
-    // Prepare resume data to return (and potentially store client-side)
+    // Prepare resume data for Firestore
     const resumeData = {
       resumeContent: generatedResume,
       jobTitle: jobData.jobTitle,
       companyName: jobData.companyName,
       jobId: jobData.id,
-      jobDesc: jobData.jobDescription, // Add the job description string
+      jobDesc: jobData.jobDescription, // Add job description text
+      jobDescId: jobData.id, // Add job description document ID
+      extractedAt: jobData.extractedAt, // Add extracted timestamp
+      createdAt: jobData.createdAt, // Add original creation timestamp
       generatedAt: new Date().toISOString(),
       userId: userId,
       metadata: {
@@ -103,12 +108,35 @@ OUTPUT ONLY THE RESUME CONTENT - NO ADDITIONAL TEXT OR COMMENTS.`;
       }
     };
 
-    // Return success response with resume data
-    return NextResponse.json({
-      success: true,
-      data: resumeData,
-      message: 'Resume generated successfully',
-    });
+    // Save to Firestore
+    try {
+      const docRef = await addDoc(collection(db, 'resumes'), resumeData);
+      console.log('Resume document written with ID: ', docRef.id);
+      
+      // Add the Firestore document ID to the response
+      const responseData = {
+        ...resumeData,
+        firestoreDocId: docRef.id
+      };
+
+      // Return success response with resume data
+      return NextResponse.json({
+        success: true,
+        data: responseData,
+        message: 'Resume generated and saved successfully',
+      });
+
+    } catch (firestoreError) {
+      console.error('Error adding document to Firestore:', firestoreError);
+      
+      // Still return the resume data even if Firestore save fails
+      return NextResponse.json({
+        success: true,
+        data: resumeData,
+        message: 'Resume generated successfully, but failed to save to database',
+        warning: 'Database save failed'
+      });
+    }
 
   } catch (error) {
     console.error('Resume Generation Error:', error);

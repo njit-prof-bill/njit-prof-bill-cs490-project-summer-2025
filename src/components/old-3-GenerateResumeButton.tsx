@@ -104,19 +104,35 @@ export default function GenerateResumeButton({
         const userAIResumesRef = collection(db, 'users', user.uid, 'userAIResumes');
         
         const resumeDocument = {
+          // Core resume content
           resumeContent: result.data.resumeContent,
+          
+          // Job information
           jobTitle: result.data.jobTitle,
           companyName: result.data.companyName,
           jobId: result.data.jobId,
-          jobDesc: result.data.jobDesc, // Add the job description string to the document
+          jobDesc: result.data.jobDesc, // Job description text
+          jobDescId: result.data.jobDescId, // Job description document ID
+          
+          // Timestamps
           generatedAt: result.data.generatedAt,
+          extractedAt: result.data.extractedAt, // When job was extracted
+          jobDescCreatedAt: result.data.jobDescCreatedAt, // Original job creation timestamp
+          
+          // User information
           userId: result.data.userId,
+          
+          // AI generation metadata
           metadata: result.data.metadata,
+          
           // Additional fields for better organization
           status: 'generated',
           isFavorite: false,
           tags: [result.data.jobTitle, result.data.companyName],
-          createdAt: new Date().toISOString(),
+          userCreatedAt: new Date().toISOString(), // When user created this resume
+          
+          // Firestore document ID from the API route (if available)
+          apiFirestoreDocId: result.data.firestoreDocId,
         };
 
         // Add the document to Firestore
@@ -133,6 +149,7 @@ export default function GenerateResumeButton({
         };
 
         console.log('Resume saved to Firebase with ID:', docRef.id);
+        console.log('Resume document data:', resumeDocument);
         
         // Show success state before completing
         setIsGenerating(false);

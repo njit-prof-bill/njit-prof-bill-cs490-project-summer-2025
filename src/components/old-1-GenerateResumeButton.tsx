@@ -108,7 +108,6 @@ export default function GenerateResumeButton({
           jobTitle: result.data.jobTitle,
           companyName: result.data.companyName,
           jobId: result.data.jobId,
-          jobDesc: result.data.jobDesc, // Add the job description string to the document
           generatedAt: result.data.generatedAt,
           userId: result.data.userId,
           metadata: result.data.metadata,
