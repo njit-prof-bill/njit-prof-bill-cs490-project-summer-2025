@@ -18,6 +18,7 @@ import GenerateCard from "@/components/GenerateCard";
 // import { useRef } from "react";
 import JobDescUploadAndListPrev from "@/components/JobDescUploadAndListPrev";
 
+import JobApplicationList from "./job-history/JobApplicationList";
 
 
 
@@ -45,6 +46,7 @@ export default function GeneratorPageLayout() {
    
     generate: "Generate",
     jobs: "Job Descriptions",
+    jobHistory: "Job Application History",
     // experience: "Experience",
 
   };
@@ -72,6 +74,7 @@ export default function GeneratorPageLayout() {
 
       {/* Tab Panel Container */}
       <div className="relative min-h-[300px] bg-[#2A2A2E] rounded-b-xl p-2 transition-all duration-300">
+       
         {activeTab === "jobs" && (
           <div className="animate-fade-in space-y-6 max-w-4xl mx-auto mt-2">
 
@@ -109,6 +112,21 @@ export default function GeneratorPageLayout() {
 
           </div>
         )}
+
+
+         {activeTab === "jobHistory" && (
+          <div className="animate-fade-in w-full max-w mx-auto mt-2">
+
+           {/* < GenerateCard    /> */}
+           {/* Add the job application history component here: */}
+
+          <JobApplicationList />
+
+
+
+          </div>
+        )}
+
 
       </div>
     </div>

@@ -66,9 +66,6 @@ export default function JobDescriptionUpload({ onJobAdded }: JobDescriptionUploa
         jobDescription: extractedData.jobDescription,
         extractedAt: extractedData.timestamp,
         createdAt: new Date(),
-        appliedTo: false,
-        applicationTime: null,
-        applicationResumeId: null,
       });
 
       setStatus("Job description processed and saved successfully.");
