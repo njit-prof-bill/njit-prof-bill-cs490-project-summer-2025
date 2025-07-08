@@ -47,7 +47,9 @@ export default function GeneratorPageLayout() {
     generate: "Generate",
     jobs: "Job Descriptions",
     jobHistory: "Job Application History",
-    // experience: "Experience",
+    template: "Template and Style Selection",
+    download: "Resume Formatting & Download",
+
 
   };
 
@@ -127,6 +129,32 @@ export default function GeneratorPageLayout() {
           </div>
         )}
 
+{/* --------------------------------------------------------------------------- */}
+
+           {activeTab === "template" && (
+          <div className="animate-fade-in w-full max-w mx-auto mt-2">
+
+            
+            {/* Add the component for the templating and styling here: */}
+
+
+          </div>
+        )}
+
+
+
+           {activeTab === "download" && (
+          <div className="animate-fade-in w-full max-w mx-auto mt-2">
+
+
+            {/* Add the component for the format and download UI here: */}
+
+
+          </div>
+        )}
+
+
+{/* --------------------------------------------------------------------------- */}
 
       </div>
     </div>
