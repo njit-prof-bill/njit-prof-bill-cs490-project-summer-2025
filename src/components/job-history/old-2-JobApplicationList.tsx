@@ -7,10 +7,10 @@ import { firestore } from "@/lib/firebase";
 interface JobDescription {
   id: string;
   appliedTo: boolean;
-  applicationTime: Timestamp | any | null;
+  applicationTime: Timestamp | null;
   applicationResumeId: string | null;
   companyName: string;
-  createdAt: Timestamp | any;
+  createdAt: Timestamp;
   extractedAt: string;
   jobTitle: string;
   jobDescription: string;
@@ -51,17 +51,22 @@ export default function JobListings() {
   // Fetch job descriptions and resumes from API
   useEffect(() => {
     const fetchJobApplications = async () => {
-      if (!user) return;
+      if (!user?.uid) return;
       
       try {
-        // Get the Firebase Auth token
-        const idToken = await user.getIdToken();
-        
+        // You'll need to adjust the headers based on your auth setup
         const response = await fetch('/api/get-jobApplications', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${idToken}`,
+            // Option 1: If using Firebase Auth tokens
+            // 'Authorization': `Bearer ${await user.getIdToken()}`,
+            
+            // Option 2: If using custom headers
+            'x-user-id': user.uid,
+            // 'x-auth-token': 'your-auth-token-here',
+            
+            // Option 3: Cookies are sent automatically if using session auth
           },
         });
 
@@ -190,18 +195,8 @@ export default function JobListings() {
     }
   };
 
-  const formatDate = (timestamp: Timestamp | any) => {
-    // Handle both Firestore Timestamp objects and serialized timestamps from API
-    if (timestamp && typeof timestamp === 'object') {
-      if (timestamp.toDate) {
-        // This is a Firestore Timestamp object
-        return timestamp.toDate().toLocaleDateString();
-      } else if (timestamp._seconds) {
-        // This is a serialized timestamp from Firebase Admin SDK
-        return new Date(timestamp._seconds * 1000).toLocaleDateString();
-      }
-    }
-    return 'N/A';
+  const formatDate = (timestamp: Timestamp) => {
+    return timestamp.toDate().toLocaleDateString();
   };
 
   const closeModal = () => {

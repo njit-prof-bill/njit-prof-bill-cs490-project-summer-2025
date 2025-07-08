@@ -1,16 +1,16 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/authContext";
-import { doc, updateDoc, Timestamp } from "firebase/firestore";
+import { collection, getDocs, doc, updateDoc, Timestamp } from "firebase/firestore";
 import { firestore } from "@/lib/firebase";
 
 interface JobDescription {
   id: string;
   appliedTo: boolean;
-  applicationTime: Timestamp | any | null;
+  applicationTime: Timestamp | null;
   applicationResumeId: string | null;
   companyName: string;
-  createdAt: Timestamp | any;
+  createdAt: Timestamp;
   extractedAt: string;
   jobTitle: string;
   jobDescription: string;
@@ -48,63 +48,59 @@ export default function JobListings() {
   const [isUnapplying, setIsUnapplying] = useState(false);
   const { user } = useAuth();
 
-  // Fetch job descriptions and resumes from API
+  // Fetch job descriptions
   useEffect(() => {
-    const fetchJobApplications = async () => {
-      if (!user) return;
+    const fetchJobs = async () => {
+      if (!user?.uid) return;
       
       try {
-        // Get the Firebase Auth token
-        const idToken = await user.getIdToken();
+        const jobsRef = collection(firestore, "users", user.uid, "userJobDescriptions");
+        const snapshot = await getDocs(jobsRef);
+        const jobsData = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as JobDescription[];
         
-        const response = await fetch('/api/get-jobApplications', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${idToken}`,
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        
-        if (data.success) {
-          setJobs(data.jobs || []);
-          setResumes(data.resumes || []);
-        } else {
-          console.error('API returned error:', data.error);
-        }
+        setJobs(jobsData.sort((a, b) => b.createdAt.seconds - a.createdAt.seconds));
       } catch (error) {
-        console.error("Error fetching job applications:", error);
+        console.error("Error fetching jobs:", error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchJobApplications();
+    fetchJobs();
   }, [user]);
 
-  // Fetch resumes when modal opens (now uses the cached resumes from initial load)
+  // Fetch resumes when modal opens
   const fetchResumes = async () => {
-    if (!selectedJob) return;
+    if (!user?.uid || !selectedJob) return;
     
-    // Sort resumes: matching job ID first, then by creation date (most recent first)
-    const sortedResumes = resumes.sort((a, b) => {
-      // First priority: matching job ID
-      const aMatches = a.jobId === selectedJob.id;
-      const bMatches = b.jobId === selectedJob.id;
+    try {
+      const resumesRef = collection(firestore, "users", user.uid, "userAIResumes");
+      const snapshot = await getDocs(resumesRef);
+      const resumesData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Resume[];
       
-      if (aMatches && !bMatches) return -1;
-      if (!aMatches && bMatches) return 1;
+      // Sort resumes: matching job ID first, then by creation date (most recent first)
+      const sortedResumes = resumesData.sort((a, b) => {
+        // First priority: matching job ID
+        const aMatches = a.jobId === selectedJob.id;
+        const bMatches = b.jobId === selectedJob.id;
+        
+        if (aMatches && !bMatches) return -1;
+        if (!aMatches && bMatches) return 1;
+        
+        // Second priority: creation date (most recent first)
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      });
       
-      // Second priority: creation date (most recent first)
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    });
-    
-    setResumes(sortedResumes);
+      setResumes(sortedResumes);
+    } catch (error) {
+      console.error("Error fetching resumes:", error);
+    }
   };
 
   const handleJobClick = (job: JobDescription) => {
@@ -190,18 +186,8 @@ export default function JobListings() {
     }
   };
 
-  const formatDate = (timestamp: Timestamp | any) => {
-    // Handle both Firestore Timestamp objects and serialized timestamps from API
-    if (timestamp && typeof timestamp === 'object') {
-      if (timestamp.toDate) {
-        // This is a Firestore Timestamp object
-        return timestamp.toDate().toLocaleDateString();
-      } else if (timestamp._seconds) {
-        // This is a serialized timestamp from Firebase Admin SDK
-        return new Date(timestamp._seconds * 1000).toLocaleDateString();
-      }
-    }
-    return 'N/A';
+  const formatDate = (timestamp: Timestamp) => {
+    return timestamp.toDate().toLocaleDateString();
   };
 
   const closeModal = () => {
