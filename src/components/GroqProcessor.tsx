@@ -150,7 +150,48 @@ The JSON MUST follow this exact structure:
   "skills": ["", "", "", "", "", ""]
 }
 
-RETURN ONLY THE VALID JSON OBJECT - NOTHING ELSE.`;
+RETURN ONLY THE VALID JSON OBJECT - NOTHING ELSE.
+
+When extracting emails and phone numbers, use the following JSON structure:
+
+{
+  "email": {
+    "primary": "",
+    "other": ""
+  },
+  "phone": {
+    "primary": "",
+    "other": ""
+  }
+}
+
+Rules:
+1. Only extract unique emails and phone numbers. Remove any duplicates **before assigning labels**.
+2. After removing duplicates:
+   - Place the first unique value in the "primary" field.
+   - Place the second unique value in the "other" field.
+3. If more than two unique values are found, add new fields at the same level:
+   - "Email 1", "Email 2", "Phone Number 1", etc.
+4. Do NOT nest any values inside the "other" field.
+5. The email and phone sections must be flat key-value objects.
+
+Example of correct structure with multiple entries:
+
+{
+  "email": {
+    "primary": "",
+    "other": "",
+    "Email 1": "",
+    "Email 2": ""
+  },
+  "phone": {
+    "primary": "",
+    "other": "",
+    "Phone Number 1": ""
+  }
+}
+
+`;
 
   const combinePrompt = `You are a data consolidation assistant. Your task is to combine multiple JSON objects containing resume data into a single, comprehensive JSON object.
 
@@ -202,6 +243,45 @@ Expected output structure (return only this JSON format):
 }
 
 RETURN ONLY THE COMBINED JSON OBJECT - NO OTHER TEXT WHATSOEVER.
+
+When extracting emails and phone numbers, use the following JSON structure:
+
+{
+  "email": {
+    "primary": "",
+    "other": ""
+  },
+  "phone": {
+    "primary": "",
+    "other": ""
+  }
+}
+
+Rules:
+1. Only extract unique emails and phone numbers. Remove any duplicates **before assigning labels**.
+2. After removing duplicates:
+   - Place the first unique value in the "primary" field.
+   - Place the second unique value in the "other" field.
+3. If more than two unique values are found, add new fields at the same level:
+   - "Email 1", "Email 2", "Phone Number 1", etc.
+4. Do NOT nest any values inside the "other" field.
+5. The email and phone sections must be flat key-value objects.
+
+Example of correct structure with multiple entries:
+
+{
+  "email": {
+    "primary": "",
+    "other": "",
+    "Email 1": "",
+    "Email 2": ""
+  },
+  "phone": {
+    "primary": "",
+    "other": "",
+    "Phone Number 1": ""
+  }
+}
 
 Combine the following JSON objects:`;
 

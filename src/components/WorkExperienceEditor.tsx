@@ -33,6 +33,20 @@ interface WorkExperienceFormProps {
   saveText: string;
 }
 
+const isDateRangeValid = (startDate: string, endDate: string): boolean => {
+  if (!startDate || !endDate || endDate.toLowerCase() === 'present') {
+    return true;
+  }
+
+  const parsedStart = Date.parse(startDate);
+  const parsedEnd = Date.parse(endDate);
+
+  if (isNaN(parsedStart) || isNaN(parsedEnd)) return true;
+
+  return parsedStart <= parsedEnd;
+};
+
+
 // Move WorkExperienceForm outside the main component to prevent re-creation
 const WorkExperienceForm: React.FC<WorkExperienceFormProps> = React.memo(({ 
   workExperienceData, 
@@ -48,6 +62,8 @@ const WorkExperienceForm: React.FC<WorkExperienceFormProps> = React.memo(({
       e.preventDefault();
     }
   };
+  
+  const isValidDateRange = isDateRangeValid(workExperienceData.startDate, workExperienceData.endDate);
 
   return (
     <div className="p-4 bg-gray-700 rounded-md space-y-3">
@@ -114,6 +130,15 @@ const WorkExperienceForm: React.FC<WorkExperienceFormProps> = React.memo(({
               className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
+
+          {!isValidDateRange && (
+            <div className="md:col-span-2">
+              <p className="text-red-400 text-sm mt-1">
+                Start date must be before or equal to end date.
+              </p>
+            </div>
+          )}
+
         </div>
         
         <div className="md:col-span-2">
@@ -147,7 +172,11 @@ const WorkExperienceForm: React.FC<WorkExperienceFormProps> = React.memo(({
         <button
           type="button"
           onClick={onSave}
-          disabled={!workExperienceData.jobTitle.trim() || !workExperienceData.company.trim()}
+          disabled={
+            !workExperienceData.jobTitle.trim() ||
+            !workExperienceData.company.trim() ||
+            !isValidDateRange
+          }
           className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors"
         >
           {saveText}
@@ -383,6 +412,8 @@ const WorkExperienceEditor: React.FC<WorkExperienceEditorProps> = ({ onSuccess, 
         endDate: '',
         responsibilities: []
       });
+    } else {
+      saveWorkExperience();
     }
   }, [editingIndex, editingWorkExperience]);
 
@@ -429,7 +460,6 @@ const WorkExperienceEditor: React.FC<WorkExperienceEditorProps> = ({ onSuccess, 
       <button
         onClick={handleOpen}
           className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded"
-
       >
         Edit Work Experience
       </button>
@@ -577,8 +607,12 @@ const WorkExperienceEditor: React.FC<WorkExperienceEditorProps> = ({ onSuccess, 
           </button>
           <button
             type="button"
-            onClick={saveWorkExperience}
-            disabled={saving || loading}
+            onClick={saveEdit}                     
+            disabled={
+              saving ||
+              loading ||
+              (editingIndex !== null && !isDateRangeValid(editingWorkExperience.startDate, editingWorkExperience.endDate))
+            }
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2 transition-colors"
           >
             {saving ? (
