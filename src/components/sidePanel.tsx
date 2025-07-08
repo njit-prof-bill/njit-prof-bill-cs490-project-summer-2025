@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link"; // Import Next.js Link component
+import { ClipboardList } from "lucide-react";
 
 interface SidePanelProps {
     isSidePanelOpen: boolean;
@@ -63,6 +64,14 @@ export default function SidePanel({ isSidePanelOpen, onForceHome, onClose }: Sid
                         <Link href="/home/job-ads" className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-pink-700 dark:text-pink-300 hover:bg-pink-100 dark:hover:bg-pink-800 transition">
                             <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path d="M17 9V7a5 5 0 00-10 0v2M5 9h14v10a2 2 0 01-2 2H7a2 2 0 01-2-2V9z" stroke="#f472b6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                             Job Ads
+                        </Link>
+                    </li>
+                    <li>
+                        <Link
+                        href="/job-application-history"
+                        className="flex items-center gap-2 px-4 py-2 rounded hover:bg-indigo-100 dark:hover:bg-gray-800 transition-colors font-semibold text-blue-500">
+                            <ClipboardList className="w-5 h-5" />
+                            Job Application History
                         </Link>
                     </li>
                     <li>
