@@ -67,7 +67,7 @@ export default function JobApplicationHistoryPage() {
                   <td className="py-2 px-4">{app.title}</td>
                   <td className="py-2 px-4">{app.company}</td>
                   <td className="py-2 px-4">
-                    {app.createdAt ? new Date(app.createdAt).toLocaleDateString() : ""}
+                    {app.createdAt ? new Date(app.createdAt).toLocaleString() : ""}
                   </td>
                   <td className="py-2 px-4">
                     <button
@@ -97,7 +97,7 @@ export default function JobApplicationHistoryPage() {
               </button>
               <h2 className="text-xl font-bold mb-2">{selectedApp.title}</h2>
               <p className="mb-1"><span className="font-semibold">Company:</span> {selectedApp.company}</p>
-              <p className="mb-1"><span className="font-semibold">Date Applied:</span> {selectedApp.createdAt ? new Date(selectedApp.createdAt).toLocaleDateString() : ""}</p>
+              <p className="mb-1"><span className="font-semibold">Date Applied:</span>{" "}{selectedApp.createdAt ? new Date(selectedApp.createdAt).toLocaleString() : ""}</p>
               {selectedApp.location && <p className="mb-1"><span className="font-semibold">Location:</span> {selectedApp.location}</p>}
               {selectedApp.pay && <p className="mb-1"><span className="font-semibold">Pay:</span> {selectedApp.pay}</p>}
               {selectedApp.overview && <p className="mb-1"><span className="font-semibold">Overview:</span> {selectedApp.overview}</p>}
