@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useAuth } from "@/context/authContext";
 
 type BioSubmissionProps = {
   bio: string;
@@ -29,6 +30,7 @@ export default function BioSubmission({
   >("idle");
   const [aiResult, setAiResult] = useState<any | null>(null);
   const [aiError, setAiError] = useState<string | null>(null);
+  const { user } = useAuth(); // Get the authenticated user
 
   const MIN_LENGTH = 20;
   const MAX_LENGTH = 10000;
@@ -54,42 +56,39 @@ export default function BioSubmission({
       setStatus("invalid");
       return;
     }
-
-    if (onSubmitSuccess) {
-      setStatus("submitting");
-      setAiResult(null);
-      setAiError(null);
-      try {
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        setStatus("success");
-        onSubmitSuccess(trimmed);
-        // Parse the bio with AI after submission
-        const res = await fetch('/api/parse', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: trimmed }),
-        });
-        if (!res.ok) throw new Error('Failed to parse with AI');
-        const data = await res.json();
-        setAiResult(data);
-        // Save bio and AI result to backend
-        const saveRes = await fetch('/api/saveResume', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            ...data,
-            bio: trimmed,
-            userId: typeof window !== 'undefined' ? localStorage.getItem('userId') : undefined,
-            displayName: 'Bio Submission',
-          }),
-        });
-        if (!saveRes.ok) throw new Error('Failed to save bio and AI result');
-        // NEW: Call onUploadSuccess after successful save
-        if (typeof onUploadSuccess === 'function') onUploadSuccess();
-      } catch (err: any) {
-        setStatus("error");
-        setAiError(err.message || 'Error parsing with AI');
-      }
+    setStatus("submitting");
+    setAiResult(null);
+    setAiError(null);
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      // Parse the bio with AI after submission
+      const res = await fetch('/api/parse', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: trimmed }),
+      });
+      if (!res.ok) throw new Error('Failed to parse with AI');
+      const data = await res.json();
+      setAiResult(data);
+      // Save bio and AI result to backend
+      // Use first 6 words of bio as displayName
+      const firstWords = trimmed.split(/\s+/).slice(0, 6).join(' ');
+      const saveRes = await fetch('/api/saveResume', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...data,
+          bio: trimmed,
+          userId: user?.uid, // Use userId from authenticated user
+          displayName: firstWords,
+        }),
+      });
+      if (!saveRes.ok) throw new Error('Failed to save bio and AI result');
+      // NEW: Call onUploadSuccess after successful save
+      if (typeof onUploadSuccess === 'function') onUploadSuccess();
+    } catch (err: any) {
+      setStatus("error");
+      setAiError(err.message || 'Error parsing with AI');
     }
   };
 
@@ -155,9 +154,6 @@ export default function BioSubmission({
         )}
 
         {/* Show status messages */}
-        {status === "success" && (
-          <div className="mt-2 text-green-600 dark:text-green-400 font-medium">Bio submitted successfully!</div>
-        )}
         {status === "error" && (
           <div className="mt-2 text-red-600 dark:text-red-400 font-medium">Error submitting bio. Please try again.</div>
         )}

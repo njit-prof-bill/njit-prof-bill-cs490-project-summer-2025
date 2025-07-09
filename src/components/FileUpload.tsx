@@ -27,9 +27,9 @@ interface FileUploadProps {
   setAiLoading?: (loading: boolean) => void; // optional callback to control spinner from parent
   onPreview?: (url: string, name: string) => void; // callback to trigger preview modal in parent
   onUploadSuccess?: () => void; // NEW: callback to refresh resume list
+  onBack?: () => void; // NEW: callback for back navigation
 }
-
-export default function FileUpload({ onParsed, setAiLoading, onPreview, onUploadSuccess }: FileUploadProps) {
+export default function FileUpload({ onParsed, setAiLoading, onPreview, onUploadSuccess, onBack }: FileUploadProps) {
   const { user } = useAuth();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -42,6 +42,8 @@ export default function FileUpload({ onParsed, setAiLoading, onPreview, onUpload
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setError(null);
+    setAiResult(null); // Reset AI result on file change
+    setAiError(null); // Reset AI error on file change
     const file = e.target.files?.[0];
     if (!file) return;
     if (!allowedTypes.includes(file.type) && !allowedExtensions.some(ext => file.name.endsWith(ext))) {
@@ -153,6 +155,7 @@ export default function FileUpload({ onParsed, setAiLoading, onPreview, onUpload
           const matches = contentXml.match(/<text:p[^>]*>(.*?)<\/text:p>/g);
           const paragraphs = matches ? matches.map(p => p.replace(/<[^>]+>/g, '').trim()) : [];
           text = paragraphs.join('\n\n') || '';
+          text = paragraphs.join('\n\n') || '';
         } else {
           text = '';
         }
@@ -188,29 +191,15 @@ export default function FileUpload({ onParsed, setAiLoading, onPreview, onUpload
         jobHistory: [],
         bio: "",
         ...data,
+        base64: doc.base64, // Add base64 for preview in DocumentList
       };
       setAiResult(fullResume);
       if (onParsed) {
         onParsed({ ...fullResume, fileName: doc.name });
       }
-      // Save parsed resume to backend
-      if (user?.uid && doc) {
-        try {
-          await fetch("/api/saveResume", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              ...fullResume,
-              userId: user.uid,
-              bio: "", // no bio at this point
-              displayName: doc.name || "Uploaded Resume",
-            }),
-          });
-          // Call the upload success callback to refresh the list
-          if (typeof onUploadSuccess === 'function') onUploadSuccess();
-        } catch (err) {
-          console.error(" Failed to save parsed resume after upload:", err);
-        }
+      // Call upload success callback to refresh document list
+      if (typeof onUploadSuccess === 'function') {
+        onUploadSuccess();
       }
     } catch (err: any) {
       setAiError(err.message || 'Error parsing with AI');
@@ -254,7 +243,7 @@ export default function FileUpload({ onParsed, setAiLoading, onPreview, onUpload
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
                     </svg>
-                    {parsingNew ? "Parsing..." : "Uploading..."}
+                    Uploading...
                   </>
                 ) : "Upload"}
               </button>
@@ -266,37 +255,38 @@ export default function FileUpload({ onParsed, setAiLoading, onPreview, onUpload
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={() => {
-                  if (selectedFile) {
-                    const reader = new FileReader();
-                    reader.onload = () => {
-                      let result = reader.result as string;
-                      if (selectedFile.name.toLowerCase().endsWith('.md') && result.startsWith('data:text/plain')) {
-                        result = result.replace('data:text/plain', 'data:text/markdown');
-                      }
-                      if (onPreview) {
-                        onPreview(result, selectedFile.name);
-                      }
-                    };
-                    reader.readAsDataURL(selectedFile);
-                  }
+                  if (!selectedFile) return;
+                  // Debug: log to verify click and file
+                  console.log('Preview clicked', selectedFile);
+                  const reader = new FileReader();
+                  reader.onload = () => {
+                    let result = reader.result as string;
+                    console.log('Preview FileReader result', result);
+                    if (selectedFile.name.toLowerCase().endsWith('.md') && result.startsWith('data:text/plain')) {
+                      result = result.replace('data:text/plain', 'data:text/markdown');
+                    }
+                    if (typeof onPreview === 'function') {
+                      console.log('Calling onPreview', result, selectedFile.name);
+                      onPreview(result, selectedFile.name);
+                    }
+                  };
+                  reader.onerror = () => {
+                    setError('Failed to read file for preview.');
+                  };
+                  reader.readAsDataURL(selectedFile);
                 }}
                 disabled={uploading || parsingNew || !selectedFile}
-                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+                className={
+                  `px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50` +
+                  (uploading || parsingNew || !selectedFile ? ' cursor-not-allowed' : ' cursor-pointer')
+                }
+                tabIndex={0}
               >
                 Preview
               </button>
             </div>
-            {/* Show parsing spinner/message */}
-            {(parsingNew || aiLoading) && (
-              <div className="flex items-center gap-2 mt-2 text-indigo-600 dark:text-indigo-300">
-                <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-                </svg>
-                Parsing file, please wait...
-              </div>
-            )}
             {/* Show success message */}
             {aiResult && !aiError && !parsingNew && !aiLoading && (
               <div className="text-green-600 dark:text-green-400 mt-2">Upload and parse successful!</div>

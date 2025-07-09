@@ -58,7 +58,11 @@ export async function POST(req: NextRequest) {
       fileType,
       timestamp,
     }, { merge: true });
-    return NextResponse.json({ success: true, resumeId });
+
+    // Fetch updated list of resumes for this user
+    const snapshot = await db.collection("resumes").where("userId", "==", resume.userId).get();
+    const resumes = snapshot.docs.map(doc => doc.data());
+    return NextResponse.json({ success: true, resumeId, resumes });
   } catch (error: any) {
     return NextResponse.json({ error: "Failed to save resume" }, { status: 500 });
   }

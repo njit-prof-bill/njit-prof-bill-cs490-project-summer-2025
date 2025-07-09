@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/context/authContext";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import React from "react";
 
 import FileUpload, { DocxPreview, OdtPreview, MarkdownPreview } from "@/components/FileUpload";
@@ -15,6 +15,7 @@ import JobHistory from "@/components/JobHistory";
 import RawToggle from "@/components/ui/RawToggle";
 import ThemeToggle from "@/components/ThemeToggle";
 import DocumentList from "@/components/DocumentList";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 
 
 export default function HomePage() {
@@ -58,6 +59,34 @@ export default function HomePage() {
 
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewName, setPreviewName] = useState<string | null>(null);
+
+  const [showUnsavedModal, setShowUnsavedModal] = useState(false);
+
+  const [activeTab, setActiveTab] = useState<'contact' | 'objective' | 'skills' | 'education' | 'jobs'>('contact');
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+
+  const [showBioSuccess, setShowBioSuccess] = useState(false);
+  const [bioLoading, setBioLoading] = useState(false);
+  const [bioSubmissionKey, setBioSubmissionKey] = useState(0);
+
+  // Show bio success message only after parsedResume is set (edit button unlocked)
+  const [pendingBioSuccess, setPendingBioSuccess] = useState(false);
+  useEffect(() => {
+    if (pendingBioSuccess && parsedResume) {
+      setSubmittedBio(parsedResume.bio || "");
+      setPendingBioSuccess(false);
+      setShowBioSuccess(true); // Show success message only after real submission
+      // Reset BioSubmission spinner by forcing a re-render
+      setBioSubmissionKey(prev => prev + 1);
+    }
+  }, [pendingBioSuccess, parsedResume]);
+
+  // Hide success message if bio is edited again
+  useEffect(() => {
+    setShowBioSuccess(false);
+  }, [bio]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -181,6 +210,9 @@ export default function HomePage() {
             }
           });
       }
+      // Update both parsedResume and editableResume to the latest saved data
+      setParsedResume(dataToSave);
+      setEditableResume(dataToSave);
       setTimeout(() => {
         setShowNameModal(false);
         setSaveStatus('idle');
@@ -258,6 +290,65 @@ export default function HomePage() {
     }
   };
 
+  // Modified back button handler
+  const handleBack = () => {
+    if (hasUnsavedChanges) {
+      setShowUnsavedModal(true);
+    } else {
+      handleReset();
+    }
+  };
+
+  // Helper to check for unsaved changes (same logic as UnsavedChangesIndicator)
+  const hasUnsavedChanges = React.useMemo(() => {
+    if (!editableResume || !parsedResume) return false;
+    const fields = ['emails', 'phones', 'objective', 'skills', 'education', 'jobHistory', 'bio'] as const;
+    type ResumeField = typeof fields[number];
+    const a: any = {};
+    const b: any = {};
+    for (const field of fields) {
+      a[field] = field === 'bio' ? bio : (editableResume as any)[field];
+      b[field] = (parsedResume as any)[field];
+    }
+    return !deepEqual(a, b);
+  }, [editableResume, parsedResume, bio]);
+
+  // Section refs for scrolling (must be inside the component)
+  const contactRef = useRef<HTMLDivElement | null>(null);
+  const objectiveRef = useRef<HTMLDivElement | null>(null);
+  const skillsRef = useRef<HTMLDivElement | null>(null);
+  const educationRef = useRef<HTMLDivElement | null>(null);
+  const jobsRef = useRef<HTMLDivElement | null>(null);
+
+  // Listen for side panel resume section scroll events
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const customEvent = e as CustomEvent<string>;
+      if (!uploaded) return;
+      switch (customEvent.detail) {
+        case 'contact':
+          contactRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          break;
+        case 'objective':
+          objectiveRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          break;
+        case 'skills':
+          skillsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          break;
+        case 'education':
+          educationRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          break;
+        case 'jobs':
+          jobsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          break;
+        default:
+          break;
+      }
+    };
+    window.addEventListener('scroll-to-resume-section', handler);
+    return () => window.removeEventListener('scroll-to-resume-section', handler);
+  }, [uploaded]);
+
   return (
     <main className="relative min-h-screen bg-gradient-to-br from-indigo-100 via-white to-blue-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 px-2 md:px-6 py-8 md:py-12 font-sans overflow-x-hidden">
       {/* Animated SVG background */}
@@ -278,7 +369,7 @@ export default function HomePage() {
           <animate attributeName="x" values="60%;10%;60%" dur="16s" repeatCount="indefinite" />
         </rect>
       </svg>
-      <header className="sticky top-0 z-30 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-md rounded-b-2xl mb-8 flex items-center justify-between px-4 md:px-8 py-3 md:py-5 border-b border-indigo-200 dark:border-gray-800">
+      <header className="z-30 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-md rounded-b-2xl mb-8 flex items-center justify-between px-4 md:px-8 py-3 md:py-5 border-b border-indigo-200 dark:border-gray-800">
         <div className="flex items-center gap-2 min-h-[40px]">{/* whitespace for alignment */}</div>
         <ThemeToggle />
       </header>
@@ -301,7 +392,8 @@ export default function HomePage() {
           </div>
         </div>
       </div>
-      <div className="mx-auto max-w-5xl space-y-12 relative z-10">
+      <div className="mx-auto max-w-5xl space-y-12 relative z-10 flex flex-row">
+        <div className={uploaded ? "flex-1 md:ml-[220px]" : "flex-1"}>
         <div className="flex flex-col items-center mb-8">
           <p className="text-lg md:text-xl text-gray-700 dark:text-gray-300 font-medium text-center max-w-2xl mb-2 md:mb-4">
         Build, edit, and manage your professional resumes with creativity and ease.
@@ -324,7 +416,7 @@ export default function HomePage() {
             </h2>
             <FileUpload
               onParsed={async (resume) => {
-                console.log("Parsed resume:", resume);
+                // Only save the parsed resume, do not re-parse or re-upload
                 const res = await fetch("/api/saveResume", {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
@@ -333,6 +425,7 @@ export default function HomePage() {
                     userId: user?.uid,
                     bio: "",  // bio is not known yet at this stage
                     displayName: resume.fileName || "Uploaded Resume",
+                    base64: resume.base64, // Ensure base64 is saved for preview
                   }),
                 });
                 const data = await res.json();
@@ -344,6 +437,10 @@ export default function HomePage() {
                     setEditableResume(loaded.resume);
                     setSelectedResumeId(data.resumeId);
                   }
+                  // If backend returns updated resumes, update the list immediately
+                  if (data.resumes) {
+                    setResumeList(data.resumes);
+                  }
                 } else {
                   console.error("Failed to save/upload resume.");
                 }
@@ -354,17 +451,20 @@ export default function HomePage() {
                 setPreviewName(name);
               }}
               onUploadSuccess={() => {
-                // Always refresh resume list after upload
+                // Always refresh resume list after upload, with a small delay to ensure backend save
                 if (user && user.uid) {
-                  fetch(`/api/saveResume?userId=${user.uid}`)
-                    .then(res => res.json())
-                    .then(data => {
-                      if (data.resumes) {
-                        setResumeList(data.resumes);
-                      }
-                    });
+                  setTimeout(() => {
+                    fetch(`/api/saveResume?userId=${user.uid}`)
+                      .then(res => res.json())
+                      .then(data => {
+                        if (data.resumes) {
+                          setResumeList(data.resumes);
+                        }
+                      });
+                  }, 300); // 300ms delay
                 }
               }}
+              onBack={handleBack}
             />
           </div>
           <div className="bg-white/95 dark:bg-gray-900/95 rounded-3xl shadow-2xl p-8 flex flex-col items-center border-2 border-pink-200 dark:border-pink-700 w-full max-w-4xl mx-auto transition-all hover:scale-[1.025] hover:shadow-2xl duration-200 relative overflow-hidden">
@@ -376,23 +476,42 @@ export default function HomePage() {
               Your Bio
             </h2>
             <BioSubmission
+          key={bioSubmissionKey}
           bio={bio}
           setBio={setBio}
           onSubmitSuccess={(submitted) => setSubmittedBio(submitted)}
           showSubmitButton={true}
-          onUploadSuccess={() => {
+          onUploadSuccess={async () => {
             // Refresh resume list after bio submission
             if (user && user.uid) {
               fetch(`/api/saveResume?userId=${user.uid}`)
                 .then(res => res.json())
-                .then(data => {
-                  if (data.resumes) {
+                .then(async data => {
+                  if (data.resumes && data.resumes.length > 0) {
                     setResumeList(data.resumes);
+                    // Find the most recently updated resume
+                    const latest = data.resumes.reduce((a: any, b: any) => (a.updatedAt > b.updatedAt ? a : b));
+                    // Fetch the full resume (in case bio is not included in the list)
+                    const res = await fetch(`/api/saveResume?userId=${user.uid}&resumeId=${latest.resumeId}`);
+                    const loaded = await res.json();
+                    if (loaded.resume) {
+                      setParsedResume(loaded.resume);
+                      setEditableResume(loaded.resume);
+                      setSelectedResumeId(latest.resumeId);
+                      // Set pending success, actual message will show after parsedResume is set
+                      setPendingBioSuccess(true);
+                    }
                   }
                 });
             }
           }}
             />
+            {/* Show green confirmation message after successful bio submission */}
+            {showBioSuccess && (
+              <div className="mt-4 text-green-600 dark:text-green-400 font-semibold text-center bg-green-50 dark:bg-green-900/40 rounded-lg py-2 px-4 shadow">
+                Bio submitted and saved successfully!
+              </div>
+            )}
           </div>
         </div>
         <button
@@ -427,67 +546,103 @@ export default function HomePage() {
             <div className="absolute -top-8 -left-8 opacity-20 pointer-events-none">
               <svg width="120" height="120" viewBox="0 0 120 120"><circle cx="60" cy="60" r="56" fill="url(#edit-grad)" /><defs><linearGradient id="edit-grad" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#38bdf8"/><stop offset="1" stopColor="#a78bfa"/></linearGradient></defs></svg>
             </div>
-        <ContactCard
-          contact={{
-            emails: editableResume?.emails || [""],
-            phones: editableResume?.phones || [""]
-          }}
-          onChange={(newContact) =>
-            setEditableResume((prev) => ({
-          ...prev,
-          emails: newContact.emails,
-          phones: newContact.phones,
-            }))
-          }
-        />
-        <div className="bg-gray-800 text-white p-6 rounded-lg shadow-md w-full mb-6">
-          <h3 className="text-xl font-semibold mb-2 tracking-tight flex items-center gap-2">
-            <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" stroke="#38bdf8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            Career Objective
-          </h3>
-          <textarea
-            className="w-full bg-gray-700 text-white rounded p-2 border border-gray-600 focus:outline-none focus:bg-gray-600 resize-y transition-all"
-            style={{ minHeight: '100px', height: 'auto', overflow: 'hidden' }}
-            value={editableResume?.objective || ""}
-            onChange={e => setEditableResume(prev => ({ ...prev, objective: e.target.value }))
-            }
-            placeholder="Enter your career objective (optional)"
-            rows={1}
-            onInput={e => {
+            {/* Section: Contact */}
+            <div ref={contactRef} className="mb-8">
+              <h2 className="text-2xl font-bold mb-2 text-indigo-700 dark:text-indigo-200 flex items-center gap-2">
+                <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path d="M16 12a4 4 0 01-8 0V8a4 4 0 018 0v4z" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                Contact
+              </h2>
+              <ContactCard
+                contact={{
+                  emails: editableResume?.emails || [""],
+                  phones: editableResume?.phones || [""]
+                }}
+                onChange={(newContact) =>
+                  setEditableResume((prev) => ({
+                    ...prev,
+                    emails: newContact.emails,
+                    phones: newContact.phones,
+                  }))
+                }
+              />
+            </div>
+            {/* Section: Objective */}
+            <div ref={objectiveRef} className="mb-8">
+              <h2 className="text-2xl font-bold mb-2 text-indigo-700 dark:text-indigo-200 flex items-center gap-2">
+                <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#f59e42" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                Career Objective
+              </h2>
+              <textarea
+                className="w-full bg-gray-700 text-white rounded p-2 border border-gray-600 focus:outline-none focus:bg-gray-600 resize-y transition-all"
+                style={{ minHeight: '100px', height: 'auto', overflow: 'hidden' }}
+                value={editableResume?.objective || ""}
+                onChange={e => setEditableResume(prev => ({ ...prev, objective: e.target.value }))
+                }
+                placeholder="Enter your career objective (optional)"
+                rows={1}
+                onInput={e => {
           const target = e.target as HTMLTextAreaElement;
           target.style.height = 'auto';
           target.style.height = target.scrollHeight + 'px';
-            }}
-          />
-        </div>
-        <SkillsList
-          skills={editableResume?.skills || []}
-          onChange={(newSkills) =>
-            setEditableResume((prev) => ({ ...prev, skills: newSkills }))
-          }
-        />
-        <EducationList
-          education={editableResume?.education || []}
-          onChange={(newEdu) =>
-            setEditableResume((prev) => ({ ...prev, education: newEdu }))
-          }
-        />
-        <JobHistory
-          jobs={editableResume?.jobHistory || []}
-          onChange={(newJobs) =>
-            setEditableResume((prev) => ({ ...prev, jobHistory: newJobs }))
-          }
-        />
-        <RawToggle label="Raw Resume Data" data={editableResume} />
-        <div className="flex flex-col md:flex-row gap-4 mt-6 max-w-3xl mx-auto">
-          <button
-            onClick={handleReset}
-            className="px-4 py-2 bg-gradient-to-r from-gray-500 via-gray-600 to-gray-700 hover:from-gray-600 hover:to-gray-800 text-white rounded font-semibold shadow-md transition-all"
-          >
-            Upload Different Resume
-          </button>
+                }}
+              />
+            </div>
+            {/* Section: Skills */}
+            <div ref={skillsRef} className="mb-8">
+              <h2 className="text-2xl font-bold mb-2 text-indigo-700 dark:text-indigo-200 flex items-center gap-2">
+                <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path d="M9 12l2 2l4-4" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                Skills
+              </h2>
+              <SkillsList
+                skills={editableResume?.skills || []}
+                onChange={(newSkills) =>
+                  setEditableResume((prev) => ({ ...prev, skills: newSkills }))
+                }
+              />
+            </div>
+            {/* Section: Education */}
+            <div ref={educationRef} className="mb-8">
+              <h2 className="text-2xl font-bold mb-2 text-indigo-700 dark:text-indigo-200 flex items-center gap-2">
+                <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path d="M12 20v-6m0 0V4m0 10l-4-4m4 4l4-4" stroke="#f59e42" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                Education
+              </h2>
+              <EducationList
+                education={editableResume?.education || []}
+                onChange={(newEdu) =>
+                  setEditableResume((prev) => ({ ...prev, education: newEdu }))
+                }
+              />
+            </div>
+            {/* Section: Job History */}
+            <div ref={jobsRef} className="mb-8">
+              <h2 className="text-2xl font-bold mb-2 text-indigo-700 dark:text-indigo-200 flex items-center gap-2">
+                <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path d="M4 17v-2a4 4 0 014-4h8a4 4 0 014 4v2" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                Job History
+              </h2>
+              <JobHistory
+                jobs={editableResume?.jobHistory || []}
+                onChange={(newJobs) =>
+                  setEditableResume((prev) => ({ ...prev, jobHistory: newJobs }))
+                }
+              />
+            </div>
+            <RawToggle label="Raw Resume Data" data={editableResume} />
+            {/* Unsaved changes indicator - moved directly above Save Changes button and always visible while editing */}
+            {editableResume && (
+              <div className="flex flex-col items-center w-full">
+                <UnsavedChangesIndicator editableResume={editableResume} parsedResume={parsedResume} bio={bio} alwaysShow={true} />
+              </div>
+            )}
+            <div className="flex flex-col md:flex-row gap-4 mt-6 max-w-3xl mx-auto">
+              <button
+                onClick={handleBack}
+                className="px-4 py-2 bg-gradient-to-r from-gray-500 via-gray-600 to-gray-700 hover:from-gray-600 hover:to-gray-800 text-white rounded font-semibold shadow-md transition-all flex items-center gap-2"
+              >
+                <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                Back
+              </button>
 
-         <button
+ <button
   onClick={async () => {
     const storedResumeId = localStorage.getItem("resumeId");
     if (!storedResumeId) {
@@ -532,16 +687,15 @@ export default function HomePage() {
 >
   {formatting ? "Formatting…" : "Format & Download"}
 </button>
-
-          <button
-            onClick={handleConfirmSave}
-            className="px-4 py-2 bg-gradient-to-r from-green-500 via-teal-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white rounded font-semibold shadow-md transition-all"
-            disabled={saveStatus === 'saving'}
-          >
-            {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'success' ? 'Saved!' : 'Save Changes'}
-          </button>
-        </div>
-          </div>
+              <button
+                onClick={handleConfirmSave}
+                className="px-4 py-2 bg-gradient-to-r from-green-500 via-teal-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white rounded font-semibold shadow-md transition-all"
+                disabled={saveStatus === 'saving'}
+              >
+                {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'success' ? 'Saved!' : 'Save Changes'}
+              </button>
+            </div>
+            </div>
         )}
         {/* DocumentList UI for all resumes */}
         {!uploaded && (
@@ -552,16 +706,9 @@ export default function HomePage() {
               type: r.fileType || r.type || 'FILE',
               createdAt: r.updatedAt || r.timestamp,
               // Optionally add previewText, onPreview, onDelete, etc.
-              onDelete: async () => {
-                if (!user?.uid || !r.resumeId) return;
-                if (!window.confirm('Are you sure you want to delete this resume?')) return;
-                const res = await fetch(`/api/saveResume?userId=${user.uid}&resumeId=${r.resumeId}`, { method: 'DELETE' });
-                if (res.ok) {
-                  setResumeList(resumeList.filter(x => x.resumeId !== r.resumeId));
-                  if (selectedResumeId === r.resumeId) setSelectedResumeId(null);
-                } else {
-                  alert('Failed to delete resume.');
-                }
+              onDelete: () => {
+                setPendingDeleteId(r.resumeId);
+                setShowDeleteModal(true);
               },
               onPreview: () => {
                 if (r.base64) {
@@ -630,6 +777,102 @@ export default function HomePage() {
           </div>
         </div>
       )}
+      {/* Unsaved Changes Modal */}
+      {showUnsavedModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl max-w-md w-full mx-4 p-6 border border-yellow-300 dark:border-yellow-700">
+            <h2 className="text-lg font-bold text-yellow-800 dark:text-yellow-200 mb-4 flex items-center gap-2">
+              <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#f59e42" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              Unsaved Changes
+            </h2>
+            <p className="mb-6 text-gray-700 dark:text-gray-200">You have unsaved changes. Are you sure you want to go back? All unsaved changes will be lost.</p>
+            <div className="flex gap-4 justify-end">
+              <button
+                onClick={() => setShowUnsavedModal(false)}
+                className="px-4 py-2 rounded bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-semibold hover:bg-gray-400 dark:hover:bg-gray-600 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => { setShowUnsavedModal(false); handleReset(); }}
+                className="px-4 py-2 rounded bg-yellow-500 text-white font-semibold hover:bg-yellow-600 transition-all"
+              >
+                Discard Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Delete Confirm Modal */}
+      <ConfirmModal
+        open={showDeleteModal}
+        title="Delete Resume"
+        message="Are you sure you want to delete this resume? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={async () => {
+          if (!user?.uid || !pendingDeleteId) return;
+          setShowDeleteModal(false);
+          const res = await fetch(`/api/saveResume?userId=${user.uid}&resumeId=${pendingDeleteId}`, { method: 'DELETE' });
+          if (res.ok) {
+            setResumeList(resumeList.filter(x => x.resumeId !== pendingDeleteId));
+            if (selectedResumeId === pendingDeleteId) setSelectedResumeId(null);
+          } else {
+            // Optionally show error toast/modal
+          }
+          setPendingDeleteId(null);
+        }}
+        onCancel={() => {
+          setShowDeleteModal(false);
+          setPendingDeleteId(null);
+        }}
+      />
+      </div> {/* <-- Add this closing tag for the flex row wrapper */}
     </main>
+  );
+}
+
+function deepEqual(a: any, b: any): boolean {
+  if (a === b) return true;
+  if (typeof a !== typeof b) return false;
+  if (typeof a !== 'object' || a === null || b === null) return false;
+  if (Array.isArray(a) !== Array.isArray(b)) return false;
+  if (Array.isArray(a)) {
+    // Treat [] and [""] as different
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) {
+      if (!deepEqual(a[i], b[i])) return false;
+    }
+    return true;
+  }
+  const aKeys = Object.keys(a);
+  const bKeys = Object.keys(b);
+  if (aKeys.length !== bKeys.length) return false;
+  for (const key of aKeys) {
+    if (!deepEqual(a[key], b[key])) return false;
+  }
+  return true;
+}
+
+function UnsavedChangesIndicator({ editableResume, parsedResume, bio, alwaysShow = false }: { editableResume: any, parsedResume: any, bio: string, alwaysShow?: boolean }) {
+  const isDirty = React.useMemo(() => {
+    if (!editableResume || !parsedResume) return false;
+    // Build a comparable object for both
+    const fields = ['emails', 'phones', 'objective', 'skills', 'education', 'jobHistory', 'bio'];
+    const a: any = {};
+    const b: any = {};
+    for (const field of fields) {
+      a[field] = field === 'bio' ? bio : editableResume[field];
+      b[field] = parsedResume[field];
+    }
+    return !deepEqual(a, b);
+  }, [editableResume, parsedResume, bio]);
+
+  if (!isDirty && !alwaysShow) return null;
+  return (
+    <div className={`flex items-center gap-2 mb-2 px-4 py-2 rounded shadow font-semibold transition-all duration-300 ${isDirty ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 animate-pulse' : 'bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-300 opacity-70'}`}>
+      <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#f59e42" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+      {isDirty ? 'You have unsaved changes' : 'No unsaved changes'}
+    </div>
   );
 }
