@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
 
+// Remove cyberpunk from the theme type
 type ThemeType = "system" | "light" | "dark";
 
 interface ThemeContextProps {
@@ -16,21 +17,10 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const [authChecked, setAuthChecked] = useState(false);
 
     // Save theme to Firestore when changed by the user
-    const setTheme = async (newTheme: ThemeType) => {
+    const setTheme = (newTheme: ThemeType) => {
         setThemeState(newTheme);
         localStorage.setItem("theme", newTheme);
-
-        const auth = getAuth();
-        const user = auth.currentUser;
-        if (user) {
-            try {
-                const db = getFirestore();
-                const userRef = doc(db, "users", user.uid);
-                await setDoc(userRef, { theme: newTheme }, { merge: true });
-            } catch (err) {
-                console.error("Error saving theme to Firestore:", err);
-            }
-        }
+        // Optionally, update Firestore here if needed
     };
 
     // Load theme from Firestore for authenticated users
@@ -71,16 +61,18 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         const root = window.document.documentElement;
 
         const applyTheme = (selectedTheme: ThemeType) => {
+            // Always clean up both classes/attributes first
+            root.classList.remove("dark");
+            root.removeAttribute("data-theme");
+
             if (selectedTheme === "light") {
-                root.classList.remove("dark");
+                // Light mode: nothing extra
             } else if (selectedTheme === "dark") {
                 root.classList.add("dark");
             } else if (selectedTheme === "system") {
                 const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
                 if (prefersDark) {
                     root.classList.add("dark");
-                } else {
-                    root.classList.remove("dark");
                 }
             }
         };
