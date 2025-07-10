@@ -7,58 +7,89 @@ import { LoginForm } from "@/components/forms/loginForm";
 import { RegistrationForm } from "@/components/forms/registrationForm";
 import { ResetPasswordForm } from "@/components/forms/resetPasswordForm";
 import Image from "next/image";
+import Link from "next/link";
 
-export default function LandingPage() {
+export default function Page() {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const [view, setView] = useState<"login" | "register" | "resetPassword">("login"); // State to toggle views
+  const [view, setView] = useState<"login" | "register" | "resetPassword">("login");
+  const [isMounted, setIsMounted] = useState(false);
 
+  // Handle authenticated redirect
   useEffect(() => {
     if (!loading && user) {
-      router.push("/home"); // Redirect to home page if authenticated
+      router.push("/home");
     }
   }, [user, loading, router]);
 
+  // Detect changes to URL manually
+  useEffect(() => {
+    const handleRouteChange = () => {
+      const params = new URLSearchParams(window.location.search);
+      const queryView = params.get("view");
+
+      if (queryView === "register") {
+        setView("register");
+      } else if (queryView === "resetPassword") {
+        setView("resetPassword");
+      } else {
+        setView("login");
+      }
+    };
+
+    handleRouteChange();
+
+    window.addEventListener("popstate", handleRouteChange);
+    window.addEventListener("pushstate", handleRouteChange);
+    window.addEventListener("replacestate", handleRouteChange);
+
+    return () => {
+      window.removeEventListener("popstate", handleRouteChange);
+      window.removeEventListener("pushstate", handleRouteChange);
+      window.removeEventListener("replacestate", handleRouteChange);
+    };
+  }, []);
+
+  // Enable transition
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   if (loading) {
-    return <p>Loading...</p>; // Show a loading state while checking auth
+    return <p>Loading...</p>;
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen px-6">
-      {/* Branding Section */}
-      <div className="relative w-full mb-6" style={{ top: "-200px" }}>
-        <div className="flex items-center justify-center">
-          {/* Left Line */}
-          <hr className="w-2/5 border-gray-300 dark:border-gray-600" />
-          {/* Branding */}
-          <div className="px-4">
-            <div className="flex items-center space-x-4 bg-transparent">
-              <Image
-                src="/logo.png"
-                alt="Marcus Logo"
-                width={60} // Increased size
-                height={60} // Increased size
-              />
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-                Marcus
-              </h2>
-            </div>
-          </div>
-          {/* Right Line */}
-          <hr className="w-2/5 border-gray-300 dark:border-gray-600" />
-        </div>
-      </div>
+    <div
+      className="min-h-screen flex flex-col items-center justify-center bg-cover bg-center relative"
+      style={{ backgroundImage: "url('/background.png')" }}
+    >
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-black/50"></div>
 
-      {/* Form Section */}
-      <div className="w-full max-w-md">
+      {/* Animated Container */}
+      <div
+        className={`
+          relative z-10 w-full max-w-md p-6 bg-white dark:bg-stone-900 rounded-lg shadow-lg
+          transform transition duration-500 ease-out
+          ${isMounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}
+        `}
+      >
+        {/* Branding */}
+        <div className="flex justify-center mb-4">
+          <Link href="/homepage" className="flex items-center space-x-2">
+            <Image src="/logo.png" alt="Kaizo Logo" width={48} height={48} />
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+              Kaizo Resume Builder
+            </h2>
+          </Link>
+        </div>
+
         {view === "login" && (
           <>
-            {/* Form Label */}
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+            <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">
               Sign in
             </h1>
-
-            {/* Helper Text */}
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
               New to this app?{" "}
               <button
@@ -68,23 +99,18 @@ export default function LandingPage() {
                 Sign up for an account
               </button>
             </p>
-
-            {/* Login Form */}
             <LoginForm
               onLogin={() => router.push("/home")}
-              onForgotPassword={() => setView("resetPassword")} // Switch to reset password view
+              onForgotPassword={() => setView("resetPassword")}
             />
           </>
         )}
 
         {view === "register" && (
           <>
-            {/* Form Label */}
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+            <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">
               Sign up
             </h1>
-
-            {/* Helper Text */}
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
               Already have an account?{" "}
               <button
@@ -94,26 +120,19 @@ export default function LandingPage() {
                 Sign in
               </button>
             </p>
-
-            {/* Registration Form */}
             <RegistrationForm onRegister={() => setView("login")} />
           </>
         )}
 
         {view === "resetPassword" && (
           <>
-            {/* Form Label */}
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+            <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">
               Reset your password
             </h1>
-
-            {/* Reset Password Form */}
             <ResetPasswordForm
               onSuccess={() => setView("login")}
               buttonText="Send reset link"
             />
-
-            {/* Helper Text */}
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-4">
               Remembered?{" "}
               <button
