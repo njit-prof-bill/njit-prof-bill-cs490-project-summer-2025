@@ -96,7 +96,7 @@
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.7 0.15 264);      /* changed to blue | original: oklch(0.553 0.013 58.071); */
+  --ring: oklch(0.7 0.15 264);
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
@@ -116,7 +116,86 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Testimonials scrolling animation */
+@keyframes marquee {
+  0% {
+    transform: translateX(0%);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee 40s linear infinite;
+}
+
+/* Optional fade-in for entire page (keep if you use .animate-fadeIn) */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.8s ease-out forwards;
+}
+
+/* Fade-in per section */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in-up {
+  opacity: 0;
+  animation: fadeInUp 0.8s ease-out forwards;
+}
+
+
+/* Force white background on all inputs inside the login popover */
+.login-popover input,
+.login-popover input:where([type="email"]),
+.login-popover input:where([type="password"]) {
+  background-color: white !important;
+  color: black !important;
+  border-color: #d1d5db !important;
+  /* Tailwind gray-300 */
+}
+
+/* Optional: also make sure placeholder text stays visible */
+.login-popover input::placeholder {
+  color: #6b7280 !important;
+  /* Tailwind gray-500 */
+}
+
+/* Make sure all inputs in the login popover have white background */
+.login-popover input {
+  background-color: white !important;
+  color: black !important;
+}
+
+.login-popover input::placeholder {
+  color: #6b7280 !important;
+  /* gray-500 */
 }

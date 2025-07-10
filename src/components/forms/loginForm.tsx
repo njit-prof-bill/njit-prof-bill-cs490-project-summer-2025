@@ -4,14 +4,25 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { signInWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
+import {
+    Form,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormControl,
+    FormMessage,
+} from "@/components/ui/form";
+import {
+    signInWithEmailAndPassword,
+    sendEmailVerification,
+    GoogleAuthProvider,
+    signInWithPopup,
+} from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { getFriendlyFirebaseErrorMessage } from "@/utils/firebaseErrorHandler";
 import { useRouter } from "next/navigation";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import { toast } from "sonner";
-import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { FcGoogle } from "react-icons/fc";
 
 interface LoginFormValues {
@@ -24,7 +35,7 @@ export function LoginForm({
     onForgotPassword,
 }: {
     onLogin: () => void;
-    onForgotPassword: () => void;
+    onForgotPassword?: () => void;
 }) {
     const [error, setError] = useState<string | null>(null);
     const [showResendLink, setShowResendLink] = useState(false);
@@ -55,14 +66,15 @@ export function LoginForm({
 
     const handleLogin = async (values: LoginFormValues) => {
         setError(null);
-
         try {
-            const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
+            const userCredential = await signInWithEmailAndPassword(
+                auth,
+                values.email,
+                values.password
+            );
             const user = userCredential.user;
 
-            // Force refresh the user's emailVerified status
             await user.reload();
-
             if (!user.emailVerified) {
                 setError("Your email is not verified.");
                 setShowResendLink(true);
@@ -79,7 +91,11 @@ export function LoginForm({
     const handleResendVerification = async () => {
         try {
             const values = form.getValues();
-            const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
+            const userCredential = await signInWithEmailAndPassword(
+                auth,
+                values.email,
+                values.password
+            );
             const user = userCredential.user;
 
             await sendEmailVerification(user);
@@ -97,6 +113,7 @@ export function LoginForm({
                 className="space-y-4 w-full"
             >
                 {error && <p className="text-sm text-red-500">{error}</p>}
+
                 {showResendLink && (
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                         Your email is not verified.{" "}
@@ -120,6 +137,7 @@ export function LoginForm({
                                 <Input
                                     id="email"
                                     placeholder="Enter your email"
+                                    className="bg-white border border-gray-400 text-black placeholder-gray-500"
                                     {...field}
                                 />
                             </FormControl>
@@ -140,6 +158,7 @@ export function LoginForm({
                                         id="password"
                                         type={showPassword ? "text" : "password"}
                                         placeholder="Enter your password"
+                                        className="bg-white border border-gray-400 text-black placeholder-gray-500"
                                         {...field}
                                     />
                                     <button
@@ -160,33 +179,34 @@ export function LoginForm({
                     )}
                 />
 
-                {/* Forgot Password Link */}
-                <div className="mt-2 text-left">
-                    <button
-                        type="button"
-                        onClick={onForgotPassword}
-                        className="text-sm text-blue-500 hover:underline"
-                    >
-                        Forgot password?
-                    </button>
-                </div>
+                {onForgotPassword && (
+                    <div className="mt-2 text-left">
+                        <button
+                            type="button"
+                            onClick={onForgotPassword}
+                            className="text-sm text-blue-500 hover:underline"
+                        >
+                            Forgot password?
+                        </button>
+                    </div>
+                )}
 
                 <Button type="submit" className="w-full">
                     Log In
                 </Button>
 
-                {/* Divider with "or" */}
                 <div className="flex items-center my-4">
                     <div className="flex-grow border-t border-gray-300 dark:border-gray-600"></div>
-                    <span className="mx-2 text-sm text-gray-500 dark:text-gray-400">or</span>
+                    <span className="mx-2 text-sm text-gray-500 dark:text-gray-400">
+                        or
+                    </span>
                     <div className="flex-grow border-t border-gray-300 dark:border-gray-600"></div>
                 </div>
 
-                {/* Google Sign-In Button */}
                 <Button
                     type="button"
                     onClick={handleGoogleSignIn}
-                    className="w-full flex items-center justify-center gap-2 dark:bg-black dark:text-stone-300 dark:border-stone-600 border-1 bg- text-black border-black"
+                    className="w-full flex items-center justify-center gap-2 dark:bg-black dark:text-stone-300 dark:border-stone-600 border border-black"
                 >
                     <FcGoogle className="h-5 w-5" />
                     Sign in with Google

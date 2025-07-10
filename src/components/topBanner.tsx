@@ -9,8 +9,8 @@ import {
     DropdownMenuTrigger,
     DropdownMenuContent,
     DropdownMenuItem,
-} from "@/components/ui/dropdown-menu"; // Import Shadcn dropdown components
-import { useRouter, usePathname } from "next/navigation"; // Import usePathname
+} from "@/components/ui/dropdown-menu";
+import { useRouter, usePathname } from "next/navigation";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 
@@ -20,12 +20,10 @@ interface TopBannerProps {
 
 export default function TopBanner({ toggleSidePanel }: TopBannerProps) {
     const router = useRouter();
-    const pathname = usePathname(); // Get the current path
+    const pathname = usePathname();
 
-    // Get current user
     const user = auth.currentUser;
 
-    // Helper to get initials from displayName
     const getInitials = (name?: string | null) => {
         if (!name) return "";
         const parts = name.trim().split(" ");
@@ -35,19 +33,18 @@ export default function TopBanner({ toggleSidePanel }: TopBannerProps) {
 
     const initials = getInitials(user?.displayName).toLowerCase();
 
-
-    // Map paths to page titles
     const pageTitles: { [key: string]: string } = {
         "/home": "Home",
         "/home/settings": "Settings",
     };
 
-    const pageTitle = pageTitles[pathname] || "Page"; // Default to "Page" if no match
+    const pageTitle = pageTitles[pathname] || "Page";
 
     const handleLogout = async () => {
         try {
             await signOut(auth);
-            router.push("/"); // Redirect to landing page
+            // Ensure a full reload to clear all user state
+            window.location.href = "/homepage";
         } catch (error) {
             console.error("Failed to log out:", error);
         }
@@ -55,7 +52,6 @@ export default function TopBanner({ toggleSidePanel }: TopBannerProps) {
 
     return (
         <header className="bg-stone-200 dark:bg-stone-800 p-2 shadow border-b border-stone-600 flex items-center justify-between">
-            {/* Left Section: Hamburger Menu, Logo, and Breadcrumb */}
             <div className="flex items-center space-x-4">
                 <button
                     onClick={toggleSidePanel}
@@ -73,16 +69,14 @@ export default function TopBanner({ toggleSidePanel }: TopBannerProps) {
                     />
                 </Link>
                 <div className="flex space-x-2 text-md">
-                    <p>{pageTitle}</p> {/* Dynamically display the page title */}
+                    <p>{pageTitle}</p>
                 </div>
             </div>
 
-            {/* Center Section: Title */}
             <div className="flex-grow flex justify-center">
-                <h1 className="text-xl font-semibold">Marcus</h1>
+                <h1 className="text-xl font-semibold">Kaizo Resume Builder</h1>
             </div>
 
-            {/* Right Section: Avatar with Dropdown */}
             <div className="flex items-center relative">
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -93,12 +87,11 @@ export default function TopBanner({ toggleSidePanel }: TopBannerProps) {
                                     {initials || "?"}
                                 </AvatarFallback>
                             </Avatar>
-                            {/* Down Arrow Indicator */}
                             <span
                                 className="absolute text-gray-800 dark:text-gray-200 text-xs"
                                 style={{
-                                    bottom: "-4px", // Move the arrow slightly lower
-                                    right: "-4px",  // Move the arrow slightly to the right
+                                    bottom: "-4px",
+                                    right: "-4px",
                                 }}
                             >
                                 ▼
